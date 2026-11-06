@@ -24,13 +24,15 @@ export type OrderRow = {
   status: OrderStatus;
   visit_billable: boolean;
   created_at: string;
+  executed_at: string | null;
+  completed_at: string | null;
   customers: { full_name: string; phone: string | null } | null;
   technicians: { full_name: string } | null;
   equipment_types: { name: string } | null;
 };
 
 const ORDER_SELECT =
-  "id, code, customer_id, equipment_type_id, reported_problem, technician_id, opened_at, scheduled_start, estimated_minutes, endereco, numero, complemento, bairro, cidade, estado, cep, ponto_referencia, notes, status, visit_billable, created_at, customers(full_name, phone), technicians(full_name), equipment_types(name)";
+  "id, code, customer_id, equipment_type_id, reported_problem, technician_id, opened_at, scheduled_start, estimated_minutes, endereco, numero, complemento, bairro, cidade, estado, cep, ponto_referencia, notes, status, visit_billable, created_at, executed_at, completed_at, customers(full_name, phone), technicians(full_name), equipment_types(name)";
 
 export const ordersQuery = queryOptions({
   queryKey: ["service-orders"],
