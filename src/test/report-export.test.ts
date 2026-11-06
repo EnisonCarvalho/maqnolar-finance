@@ -45,8 +45,7 @@ describe("exportação de relatórios", () => {
     expect(wb.SheetNames).toEqual(["Resumo", "Detalhamento"]);
     const det = wb.Sheets["Detalhamento"]!;
     // 80 linhas + cabeçalho
-    const ref = det["!ref"]!;
-    expect(ref).toContain("A81");
+    expect(det["!ref"]!).toBe("A1:G81");
     // Valor monetário é número (não texto) com formato de moeda
     const money = det["G2"]!;
     expect(typeof money.v).toBe("number");
