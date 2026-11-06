@@ -90,7 +90,7 @@ function CustomersPage() {
       </div>
 
       {/* Cartões no celular */}
-      <div className="grid gap-2 md:hidden">
+      <div className="grid gap-2 lg:hidden">
         {filtered.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">Nenhum cliente encontrado.</p>
         ) : (
@@ -108,7 +108,7 @@ function CustomersPage() {
         )}
       </div>
 
-      <Card className="hidden md:block">
+      <Card className="hidden lg:block">
         <CardContent className="p-0">
           <Table>
             <TableHeader>

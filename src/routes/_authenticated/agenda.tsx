@@ -136,9 +136,9 @@ function AgendaPage() {
           <Button size="icon" variant="outline" onClick={() => move(1)}><ChevronRight className="h-4 w-4" /></Button>
         </div>
         <span className="font-display font-medium capitalize">{title}</span>
-        <div className="ml-auto flex gap-2">
+        <div className="flex w-full gap-2 sm:ml-auto sm:w-auto">
           <Select value={tech} onValueChange={setTech}>
-            <SelectTrigger className="w-48"><SelectValue placeholder="Técnico" /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-48"><SelectValue placeholder="Técnico" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="todos">Todos os técnicos</SelectItem>
               {(technicians ?? []).map((t) => (
@@ -147,7 +147,7 @@ function AgendaPage() {
             </SelectContent>
           </Select>
           <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger className="w-52"><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-52"><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="todos">Todos os status</SelectItem>
               {Object.entries(ORDER_STATUS_LABELS).map(([k, v]) => (
