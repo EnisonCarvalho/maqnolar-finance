@@ -1525,6 +1525,7 @@ export type Database = {
           estado: string | null
           estimated_minutes: number
           executed_at: string | null
+          financial_confirmed_at: string | null
           id: string
           lead_id: string | null
           notes: string | null
@@ -1536,6 +1537,10 @@ export type Database = {
           scheduled_start: string | null
           status: Database["public"]["Enums"]["order_status"]
           technician_id: string | null
+          technician_reported_at: string | null
+          technician_reported_by: string | null
+          technician_reported_cents: number | null
+          technician_reported_name: string | null
           updated_at: string
           visit_billable: boolean
         }
@@ -1556,6 +1561,7 @@ export type Database = {
           estado?: string | null
           estimated_minutes?: number
           executed_at?: string | null
+          financial_confirmed_at?: string | null
           id?: string
           lead_id?: string | null
           notes?: string | null
@@ -1567,6 +1573,10 @@ export type Database = {
           scheduled_start?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           technician_id?: string | null
+          technician_reported_at?: string | null
+          technician_reported_by?: string | null
+          technician_reported_cents?: number | null
+          technician_reported_name?: string | null
           updated_at?: string
           visit_billable?: boolean
         }
@@ -1587,6 +1597,7 @@ export type Database = {
           estado?: string | null
           estimated_minutes?: number
           executed_at?: string | null
+          financial_confirmed_at?: string | null
           id?: string
           lead_id?: string | null
           notes?: string | null
@@ -1598,6 +1609,10 @@ export type Database = {
           scheduled_start?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           technician_id?: string | null
+          technician_reported_at?: string | null
+          technician_reported_by?: string | null
+          technician_reported_cents?: number | null
+          technician_reported_name?: string | null
           updated_at?: string
           visit_billable?: boolean
         }
@@ -1635,6 +1650,13 @@ export type Database = {
             columns: ["technician_id"]
             isOneToOne: false
             referencedRelation: "technicians"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_orders_technician_reported_by_fkey"
+            columns: ["technician_reported_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1944,6 +1966,15 @@ export type Database = {
       assert_company_account: { Args: { _id: string }; Returns: undefined }
       assert_month_open: { Args: { _d: string }; Returns: undefined }
       bootstrap_first_admin: { Args: never; Returns: undefined }
+      confirm_service_composition: {
+        Args: {
+          _order: string
+          _parts: number
+          _reason: string
+          _total: number
+        }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1952,6 +1983,10 @@ export type Database = {
         Returns: boolean
       }
       my_technician_id: { Args: never; Returns: string }
+      report_technician_value: {
+        Args: { _cents: number; _order: string }
+        Returns: undefined
+      }
       set_user_active: {
         Args: { _active: boolean; _target: string }
         Returns: undefined
