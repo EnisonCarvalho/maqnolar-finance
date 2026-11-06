@@ -36,6 +36,13 @@
       "when": 1793991234073,
       "tag": "0004_order_financials",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793995274485,
+      "tag": "0005_payments_transfers_closings",
+      "breakpoints": true
     }
   ]
 }

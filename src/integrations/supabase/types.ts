@@ -14,6 +14,84 @@ export type Database = {
   }
   public: {
     Tables: {
+      customer_payments: {
+        Row: {
+          amount_cents: number
+          authorized_reason: string | null
+          created_at: string
+          created_by: string | null
+          destination_account: string | null
+          id: string
+          method: string
+          notes: string | null
+          order_id: string
+          paid_at: string
+          receipt_path: string | null
+          receiver_label: string | null
+          receiver_technician_id: string | null
+          receiver_type: string
+          status: string
+          void_reason: string | null
+          voided_at: string | null
+          voided_by: string | null
+        }
+        Insert: {
+          amount_cents: number
+          authorized_reason?: string | null
+          created_at?: string
+          created_by?: string | null
+          destination_account?: string | null
+          id?: string
+          method: string
+          notes?: string | null
+          order_id: string
+          paid_at: string
+          receipt_path?: string | null
+          receiver_label?: string | null
+          receiver_technician_id?: string | null
+          receiver_type: string
+          status?: string
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          authorized_reason?: string | null
+          created_at?: string
+          created_by?: string | null
+          destination_account?: string | null
+          id?: string
+          method?: string
+          notes?: string | null
+          order_id?: string
+          paid_at?: string
+          receipt_path?: string | null
+          receiver_label?: string | null
+          receiver_technician_id?: string | null
+          receiver_type?: string
+          status?: string
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_payments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "service_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_payments_receiver_technician_id_fkey"
+            columns: ["receiver_technician_id"]
+            isOneToOne: false
+            referencedRelation: "technicians"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           active: boolean
@@ -86,6 +164,39 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+        }
+        Relationships: []
+      }
+      finance_audit: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          created_at: string
+          id: string
+          new_data: Json | null
+          old_data: Json | null
+          record_id: string
+          table_name: string
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id: string
+          table_name: string
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id?: string
+          table_name?: string
         }
         Relationships: []
       }
@@ -439,6 +550,7 @@ export type Database = {
           cidade: string | null
           code: string
           complemento: string | null
+          completed_at: string | null
           created_at: string
           created_by: string | null
           customer_id: string
@@ -446,6 +558,7 @@ export type Database = {
           equipment_type_id: string | null
           estado: string | null
           estimated_minutes: number
+          executed_at: string | null
           id: string
           notes: string | null
           numero: string | null
@@ -464,6 +577,7 @@ export type Database = {
           cidade?: string | null
           code?: string
           complemento?: string | null
+          completed_at?: string | null
           created_at?: string
           created_by?: string | null
           customer_id: string
@@ -471,6 +585,7 @@ export type Database = {
           equipment_type_id?: string | null
           estado?: string | null
           estimated_minutes?: number
+          executed_at?: string | null
           id?: string
           notes?: string | null
           numero?: string | null
@@ -489,6 +604,7 @@ export type Database = {
           cidade?: string | null
           code?: string
           complemento?: string | null
+          completed_at?: string | null
           created_at?: string
           created_by?: string | null
           customer_id?: string
@@ -496,6 +612,7 @@ export type Database = {
           equipment_type_id?: string | null
           estado?: string | null
           estimated_minutes?: number
+          executed_at?: string | null
           id?: string
           notes?: string | null
           numero?: string | null
@@ -567,6 +684,83 @@ export type Database = {
           },
         ]
       }
+      settlement_closings: {
+        Row: {
+          client_pending_cents: number
+          closed_at: string
+          closed_by: string | null
+          company_share_cents: number
+          id: string
+          notes: string | null
+          pending_cents: number
+          period_end: string
+          period_start: string
+          received_cents: number
+          reimbursement_cents: number
+          reopen_reason: string | null
+          reopened_at: string | null
+          reopened_by: string | null
+          settled_cents: number
+          status: string
+          technician_id: string
+          technician_share_cents: number
+          to_pay_technician_cents: number
+          to_receive_technician_cents: number
+        }
+        Insert: {
+          client_pending_cents?: number
+          closed_at?: string
+          closed_by?: string | null
+          company_share_cents?: number
+          id?: string
+          notes?: string | null
+          pending_cents?: number
+          period_end: string
+          period_start: string
+          received_cents?: number
+          reimbursement_cents?: number
+          reopen_reason?: string | null
+          reopened_at?: string | null
+          reopened_by?: string | null
+          settled_cents?: number
+          status: string
+          technician_id: string
+          technician_share_cents?: number
+          to_pay_technician_cents?: number
+          to_receive_technician_cents?: number
+        }
+        Update: {
+          client_pending_cents?: number
+          closed_at?: string
+          closed_by?: string | null
+          company_share_cents?: number
+          id?: string
+          notes?: string | null
+          pending_cents?: number
+          period_end?: string
+          period_start?: string
+          received_cents?: number
+          reimbursement_cents?: number
+          reopen_reason?: string | null
+          reopened_at?: string | null
+          reopened_by?: string | null
+          settled_cents?: number
+          status?: string
+          technician_id?: string
+          technician_share_cents?: number
+          to_pay_technician_cents?: number
+          to_receive_technician_cents?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "settlement_closings_technician_id_fkey"
+            columns: ["technician_id"]
+            isOneToOne: false
+            referencedRelation: "technicians"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       split_rules: {
         Row: {
           company_fixed_cents: number | null
@@ -602,6 +796,83 @@ export type Database = {
           valid_until?: string | null
         }
         Relationships: []
+      }
+      technician_transfers: {
+        Row: {
+          amount_cents: number
+          authorized_reason: string | null
+          created_at: string
+          created_by: string | null
+          destination_account: string | null
+          direction: string
+          id: string
+          method: string
+          notes: string | null
+          order_ids: string[]
+          payer_label: string | null
+          receipt_path: string | null
+          receiver_label: string | null
+          source_account: string | null
+          status: string
+          technician_id: string
+          transfer_date: string
+          void_reason: string | null
+          voided_at: string | null
+          voided_by: string | null
+        }
+        Insert: {
+          amount_cents: number
+          authorized_reason?: string | null
+          created_at?: string
+          created_by?: string | null
+          destination_account?: string | null
+          direction: string
+          id?: string
+          method: string
+          notes?: string | null
+          order_ids?: string[]
+          payer_label?: string | null
+          receipt_path?: string | null
+          receiver_label?: string | null
+          source_account?: string | null
+          status?: string
+          technician_id: string
+          transfer_date: string
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          authorized_reason?: string | null
+          created_at?: string
+          created_by?: string | null
+          destination_account?: string | null
+          direction?: string
+          id?: string
+          method?: string
+          notes?: string | null
+          order_ids?: string[]
+          payer_label?: string | null
+          receipt_path?: string | null
+          receiver_label?: string | null
+          source_account?: string | null
+          status?: string
+          technician_id?: string
+          transfer_date?: string
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "technician_transfers_technician_id_fkey"
+            columns: ["technician_id"]
+            isOneToOne: false
+            referencedRelation: "technicians"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       technicians: {
         Row: {
