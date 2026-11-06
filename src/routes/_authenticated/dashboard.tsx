@@ -35,7 +35,7 @@ const pct = (v: number | null) => (v === null ? "—" : `${v.toLocaleString("pt-
 
 function Dashboard() {
   const { data: session } = useSession();
-  if (session?.isAdmin) return <AdminDashboard first={session.fullName.split(" ")[0]} />;
+  if (session?.isAdmin) return <AdminDashboard first={session.fullName.split(" ")[0] ?? ""} />;
   return <TechDashboard first={session?.fullName?.split(" ")[0] ?? ""} />;
 }
 
