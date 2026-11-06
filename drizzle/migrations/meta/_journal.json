@@ -78,6 +78,13 @@
       "when": 1794000973874,
       "tag": "0010_profit_distributions",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1794002912435,
+      "tag": "0011_technician_area_read_policies",
+      "breakpoints": true
     }
   ]
 }
