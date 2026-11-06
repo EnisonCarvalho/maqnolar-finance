@@ -14,6 +14,81 @@ export type Database = {
   }
   public: {
     Tables: {
+      customers: {
+        Row: {
+          active: boolean
+          bairro: string | null
+          cep: string | null
+          cidade: string | null
+          complemento: string | null
+          created_at: string
+          email: string | null
+          endereco: string | null
+          estado: string | null
+          full_name: string
+          id: string
+          numero: string | null
+          phone: string | null
+          ponto_referencia: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          complemento?: string | null
+          created_at?: string
+          email?: string | null
+          endereco?: string | null
+          estado?: string | null
+          full_name: string
+          id?: string
+          numero?: string | null
+          phone?: string | null
+          ponto_referencia?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          complemento?: string | null
+          created_at?: string
+          email?: string | null
+          endereco?: string | null
+          estado?: string | null
+          full_name?: string
+          id?: string
+          numero?: string | null
+          phone?: string | null
+          ponto_referencia?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      equipment_types: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       permission_audit: {
         Row: {
           action: string
@@ -73,6 +148,116 @@ export type Database = {
           id?: string
           phone?: string | null
           theme?: Database["public"]["Enums"]["theme_pref"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      services: {
+        Row: {
+          active: boolean
+          created_at: string
+          equipment_type_id: string | null
+          id: string
+          name: string
+          suggested_price_cents: number | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          equipment_type_id?: string | null
+          id?: string
+          name: string
+          suggested_price_cents?: number | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          equipment_type_id?: string | null
+          id?: string
+          name?: string
+          suggested_price_cents?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_equipment_type_id_fkey"
+            columns: ["equipment_type_id"]
+            isOneToOne: false
+            referencedRelation: "equipment_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      split_rules: {
+        Row: {
+          company_fixed_cents: number | null
+          company_percent: number | null
+          created_at: string
+          id: string
+          kind: string
+          technician_fixed_cents: number | null
+          technician_percent: number | null
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          company_fixed_cents?: number | null
+          company_percent?: number | null
+          created_at?: string
+          id?: string
+          kind: string
+          technician_fixed_cents?: number | null
+          technician_percent?: number | null
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Update: {
+          company_fixed_cents?: number | null
+          company_percent?: number | null
+          created_at?: string
+          id?: string
+          kind?: string
+          technician_fixed_cents?: number | null
+          technician_percent?: number | null
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
+      technicians: {
+        Row: {
+          active: boolean
+          bairro: string | null
+          cidade: string | null
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          phone: string | null
+          profile_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          bairro?: string | null
+          cidade?: string | null
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          phone?: string | null
+          profile_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          bairro?: string | null
+          cidade?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          phone?: string | null
+          profile_id?: string | null
           updated_at?: string
         }
         Relationships: []

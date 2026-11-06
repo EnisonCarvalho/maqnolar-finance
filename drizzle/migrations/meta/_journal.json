@@ -15,6 +15,13 @@
       "when": 1793988590915,
       "tag": "0001_rbac_explicit_roles",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793990018885,
+      "tag": "0002_operational_registries",
+      "breakpoints": true
     }
   ]
 }

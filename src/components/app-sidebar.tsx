@@ -12,24 +12,28 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import type { SessionInfo } from "@/hooks/use-session";
 
-type Item = { label: string; icon: LucideIcon; to?: "/dashboard" | "/configuracoes" | "/usuarios" };
+type Item = {
+  label: string;
+  icon: LucideIcon;
+  to?: "/dashboard" | "/configuracoes" | "/usuarios" | "/clientes" | "/tecnicos" | "/equipamentos" | "/divisao-financeira";
+};
 
 const adminGroups: { label: string; items: Item[] }[] = [
   { label: "Visão geral", items: [{ label: "Dashboard", icon: LayoutDashboard, to: "/dashboard" }] },
   {
     label: "Operação",
     items: [
-      { label: "Clientes", icon: Users },
+      { label: "Clientes", icon: Users, to: "/clientes" },
       { label: "Atendimentos e agenda", icon: CalendarClock },
       { label: "Usuários e permissões", icon: UserCog, to: "/usuarios" },
-      { label: "Equipe e técnicos", icon: HardHat },
-      { label: "Equipamentos e serviços", icon: Wrench },
+      { label: "Equipe e técnicos", icon: HardHat, to: "/tecnicos" },
+      { label: "Equipamentos e serviços", icon: Wrench, to: "/equipamentos" },
     ],
   },
   {
     label: "Financeiro",
     items: [
-      { label: "Composição financeira", icon: Percent },
+      { label: "Composição financeira", icon: Percent, to: "/divisao-financeira" },
       { label: "Acerto diário", icon: Handshake },
       { label: "Receitas", icon: TrendingUp },
       { label: "Despesas", icon: TrendingDown },
