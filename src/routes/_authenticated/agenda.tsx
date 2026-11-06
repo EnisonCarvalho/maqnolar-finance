@@ -113,7 +113,7 @@ function AgendaPage() {
   const HOURS = Array.from({ length: 13 }, (_, i) => i + 7); // 7h às 19h
 
   return (
-    <div className="grid gap-6">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-semibold">Agenda operacional</h1>
