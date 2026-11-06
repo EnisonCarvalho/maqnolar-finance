@@ -276,7 +276,94 @@ function TechnicianDialog({
             {busy ? "Salvando..." : "Salvar"}
           </Button>
         </form>
+        {technician && <AccountLinkSection technician={technician} onDone={onDone} />}
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** Vínculo conta de usuário ↔ técnico (Passo 11A). Somente administradores; validado no backend. */
+function AccountLinkSection({ technician, onDone }: { technician: Technician; onDone: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [selectedUser, setSelectedUser] = useState("");
+  const { data, refetch } = useQuery({
+    queryKey: ["linkable-users"],
+    queryFn: () => listLinkableUsers(),
+  });
+
+  const link = data?.links.find((l) => l.technicianId === technician.id);
+  const available = (data?.users ?? []).filter((u) => !u.linkedTechnicianName);
+
+  async function linkAccount() {
+    if (!selectedUser) return;
+    setBusy(true);
+    try {
+      await linkTechnicianAccount({ data: { technicianId: technician.id, userId: selectedUser } });
+      toast.success("Conta vinculada ao técnico.");
+      setSelectedUser("");
+      await refetch();
+      onDone();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível vincular.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function unlinkAccount() {
+    setBusy(true);
+    try {
+      await unlinkTechnicianAccount({ data: { technicianId: technician.id } });
+      toast.success("Vínculo removido.");
+      await refetch();
+      onDone();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível desvincular.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="space-y-3 rounded-lg border p-3">
+      <p className="text-sm font-medium">Conta de acesso à área do técnico</p>
+      {link ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="secondary">
+            <Link2 className="mr-1 h-3 w-3" /> {link.userName}
+          </Badge>
+          <Button type="button" variant="outline" size="sm" disabled={busy} onClick={unlinkAccount}>
+            <Unlink className="mr-1 h-4 w-4" /> Desvincular
+          </Button>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Select value={selectedUser} onValueChange={setSelectedUser}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Selecione uma conta de usuário..." />
+            </SelectTrigger>
+            <SelectContent>
+              {available.length === 0 ? (
+                <SelectItem value="__none" disabled>
+                  Nenhuma conta disponível
+                </SelectItem>
+              ) : (
+                available.map((u) => (
+                  <SelectItem key={u.id} value={u.id}>
+                    {u.fullName} {u.email ? `(${u.email})` : ""}
+                  </SelectItem>
+                ))
+              )}
+            </SelectContent>
+          </Select>
+          <Button type="button" variant="outline" disabled={busy || !selectedUser} onClick={linkAccount}>
+            <Link2 className="mr-1 h-4 w-4" /> Vincular
+          </Button>
+        </div>
+      )}
+      <p className="text-xs text-muted-foreground">
+        O vínculo é feito somente por administradores e libera o acesso do técnico aos próprios atendimentos e ao próprio financeiro.
+      </p>
+    </div>
   );
 }
