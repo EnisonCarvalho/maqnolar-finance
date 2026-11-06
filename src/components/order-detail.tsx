@@ -16,6 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { formatBRL, parseBRLToCents, formatDateBR } from "@/lib/format";
 import { ORDER_STATUSES, ORDER_STATUS_LABELS, ORDER_STATUS_COLORS, QUOTE_STATUS_LABELS, EVENT_TYPE_LABELS, type OrderStatus } from "@/lib/order-status";
 import { orderDetailQuery, type QuoteRow } from "@/lib/orders-queries";
+import { OrderFinancials } from "@/components/order-financials";
 import { changeOrderStatus, addOrderNote, createQuote, decideQuote, scheduleOrder } from "@/lib/orders.functions";
 import { calcQuoteTotals } from "@/lib/quote-math";
 
