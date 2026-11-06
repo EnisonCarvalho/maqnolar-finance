@@ -50,6 +50,7 @@ type Campaign = {
   campaign_expense_allocations: AllocRow[];
 };
 
+const st = (s: string) => STATUS[s] ?? { label: s, variant: "outline" as const };
 const toAlloc = (a: AllocRow) => ({ amount_cents: a.amount_cents, status: a.status, expense: a.expenses ? { amount_cents: a.expenses.amount_cents, status: a.expenses.status, payments: a.expenses.expense_payments } : null });
 const platformName = (c: Campaign) => (c.platform === "outra" && c.platform_label ? c.platform_label : PLATFORM[c.platform]);
 
@@ -102,7 +103,7 @@ function Content() {
   }, { planned: 0, registered: 0, paid: 0, balance: 0 });
 
   const changeStatus = async (c: Campaign, s: string) => {
-    try { await setCampaignStatus({ data: { id: c.id, status: s } }); toast.success(`Campanha ${STATUS[s].label.toLowerCase()}.`); await refresh(); }
+    try { await setCampaignStatus({ data: { id: c.id, status: s } }); toast.success(`Campanha ${st(s).label.toLowerCase()}.`); await refresh(); }
     catch (e) { toast.error(e instanceof Error ? e.message : "Erro."); }
   };
   const detail = campaigns?.find((c) => c.id === detailId) ?? null;
@@ -145,7 +146,7 @@ function Content() {
                 <button key={c.id} type="button" onClick={() => setDetailId(c.id)} className="rounded-lg border bg-card p-3 text-left active:bg-muted">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0"><p className="truncate font-medium">{c.name}</p><p className="text-xs text-muted-foreground">{platformName(c)} · {serviceName(c)}</p></div>
-                    <Badge variant={STATUS[c.status].variant}>{STATUS[c.status].label}</Badge>
+                    <Badge variant={st(c.status).variant}>{st(c.status).label}</Badge>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">{formatISODate(c.start_date)} a {c.end_date ? formatISODate(c.end_date) : "em aberto"}</p>
                   <div className="mt-2 grid grid-cols-3 gap-1 text-xs">
@@ -171,7 +172,7 @@ function Content() {
                       <td className="p-2">{platformName(c)}</td>
                       <td className="p-2">{serviceName(c)}</td>
                       <td className="p-2 whitespace-nowrap">{formatISODate(c.start_date)} – {c.end_date ? formatISODate(c.end_date) : "aberto"}</td>
-                      <td className="p-2"><Badge variant={STATUS[c.status].variant}>{STATUS[c.status].label}</Badge></td>
+                      <td className="p-2"><Badge variant={st(c.status).variant}>{st(c.status).label}</Badge></td>
                       <td className="p-2 text-right">{formatBRL(t.planned)}</td>
                       <td className="p-2 text-right">{formatBRL(t.registered)}</td>
                       <td className="p-2 text-right">{formatBRL(t.paid)}</td>
@@ -204,10 +205,10 @@ function CampaignForm({ initial, services, onClose, onSaved }: { initial: Campai
   const set = (k: keyof typeof f) => (v: string) => setF((s) => ({ ...s, [k]: v }));
   const submit = async () => {
     const budget = f.budget.trim() ? parseBRLToCents(f.budget) : 0;
-    if (budget === null) return toast.error("Orçamento inválido.");
+    if (budget === null) { toast.error("Orçamento inválido."); return; }
     setPending(true);
     try {
-      await saveCampaign({ data: { id: initial?.id, name: f.name, platform: f.platform, platformLabel: f.platformLabel, externalCode: f.externalCode, serviceId: f.serviceId || null, serviceLabel: f.serviceId ? "" : f.serviceLabel, startDate: f.startDate, endDate: f.endDate || null, status: f.status, plannedBudgetCents: budget, notes: f.notes } });
+      await saveCampaign({ data: { id: initial?.id ?? null, name: f.name, platform: f.platform, platformLabel: f.platformLabel, externalCode: f.externalCode, serviceId: f.serviceId || null, serviceLabel: f.serviceId ? "" : f.serviceLabel, startDate: f.startDate, endDate: f.endDate || null, status: f.status, plannedBudgetCents: budget, notes: f.notes } });
       toast.success(initial ? "Campanha atualizada." : "Campanha cadastrada.");
       await onSaved(); onClose();
     } catch (e) { toast.error(e instanceof Error ? e.message : "Erro ao salvar."); }
@@ -260,7 +261,7 @@ function CampaignDetail({ campaign: c, serviceName, onClose, onEdit, onStatus, o
         <DialogHeader><DialogTitle className="pr-6">{c.name}</DialogTitle></DialogHeader>
         <div className="grid gap-4">
           <div className="flex flex-wrap items-center gap-2 text-sm">
-            <Badge variant={STATUS[c.status].variant}>{STATUS[c.status].label}</Badge>
+            <Badge variant={st(c.status).variant}>{st(c.status).label}</Badge>
             <span className="text-muted-foreground">{platformName(c)}{c.external_code ? ` · ${c.external_code}` : ""} · {serviceName}</span>
           </div>
           <p className="text-sm text-muted-foreground">{formatISODate(c.start_date)} a {c.end_date ? formatISODate(c.end_date) : "em aberto"}</p>
@@ -343,8 +344,8 @@ function LinkExpense({ campaign, onClose, onSaved }: { campaign: Campaign; onClo
   const selected = options.find((e) => e.id === expenseId);
   const submit = async () => {
     const cents = parseBRLToCents(amount);
-    if (!selected || !cents) return toast.error("Selecione a despesa e informe o valor.");
-    if (cents > selected.available) return toast.error(`Valor acima do disponível (${formatBRL(selected.available)}).`);
+    if (!selected || !cents) { toast.error("Selecione a despesa e informe o valor."); return; }
+    if (cents > selected.available) { toast.error(`Valor acima do disponível (${formatBRL(selected.available)}).`); return; }
     setPending(true);
     try { await allocateExpense({ data: { campaignId: campaign.id, expenseId, amountCents: cents, notes } }); toast.success("Despesa vinculada."); await onSaved(); onClose(); }
     catch (e) { toast.error(e instanceof Error ? e.message : "Erro ao vincular."); }
@@ -400,9 +401,9 @@ function CampaignHistory({ campaign }: { campaign: Campaign }) {
   const describe = (h: any): string => {
     if (h.table_name === "campaign_expense_allocations") {
       const amt = formatBRL(h.new_data?.amount_cents);
-      return h.action === "INSERT" ? `Despesa vinculada (${amt})` : h.new_data?.status === "removido" ? `Vínculo removido (${amt}): ${h.new_data?.remove_reason ?? ""}` : "Vínculo alterado";
+      return String(h.action).toLowerCase() === "insert" ? `Despesa vinculada (${amt})` : h.new_data?.status === "removido" ? `Vínculo removido (${amt}): ${h.new_data?.remove_reason ?? ""}` : "Vínculo alterado";
     }
-    if (h.action === "INSERT") return "Campanha cadastrada";
+    if (String(h.action).toLowerCase() === "insert") return "Campanha cadastrada";
     const changed = Object.keys(FIELD_LABELS).filter((k) => JSON.stringify(h.old_data?.[k]) !== JSON.stringify(h.new_data?.[k]));
     if (changed.includes("status") && changed.length <= 2) return `Status: ${STATUS[h.old_data?.status]?.label ?? "—"} → ${STATUS[h.new_data?.status]?.label ?? "—"}`;
     return changed.length ? `Alterado: ${[...new Set(changed.map((k) => FIELD_LABELS[k]))].join(", ")}` : "Atualizada";
