@@ -202,7 +202,7 @@ function Content() {
         </>
       )}
 
-      <CampaignPerformance start={start} end={end} campaigns={list.map((c) => ({ id: c.id, name: c.name, platformName: platformName(c), campaign_expense_allocations: c.campaign_expense_allocations.map((a) => ({ amount_cents: a.amount_cents, status: a.status, expenses: a.expenses })) }))} />
+      <CampaignPerformance start={start} end={end} campaigns={list.map((c) => ({ id: c.id, name: c.name, platformName: platformName(c) ?? "", campaign_expense_allocations: c.campaign_expense_allocations.map((a) => ({ amount_cents: a.amount_cents, status: a.status, expenses: a.expenses })) }))} />
 
       {editing && <CampaignForm initial={editing === "new" ? null : editing} services={services ?? []} onClose={() => setEditing(null)} onSaved={refresh} />}
       {detail && (
