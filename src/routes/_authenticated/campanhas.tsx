@@ -17,6 +17,7 @@ import { campaignTotals, expenseAvailable, expensePaid, allocationPaid, overlaps
 import { saveCampaign, setCampaignStatus, allocateExpense, removeAllocation } from "@/lib/campaigns.functions";
 import { PeriodFilter, ReasonDialog, StatCard, usePeriod } from "@/components/finance-ui";
 import { formatISODate, todayISO } from "@/components/finance-shared";
+import { campaignLeadStats } from "@/lib/lead-math";
 import { useSession } from "@/hooks/use-session";
 import { NoAccess } from "@/components/no-access";
 
@@ -83,6 +84,19 @@ function Content() {
       return (data ?? []) as unknown as Campaign[];
     },
   });
+  const { data: attribution } = useQuery({
+    queryKey: ["campaign-leads", start, end],
+    queryFn: async () => {
+      const [l, o] = await Promise.all([
+        supabase.from("leads").select("id, campaign_id, status, order_id").not("campaign_id", "is", null).gte("contacted_at", `${start}T00:00:00-03:00`).lte("contacted_at", `${end}T23:59:59.999-03:00`),
+        supabase.from("service_orders").select("id, campaign_id").not("campaign_id", "is", null).gte("opened_at", `${start}T00:00:00-03:00`).lte("opened_at", `${end}T23:59:59.999-03:00`),
+      ]);
+      if (l.error) throw l.error;
+      if (o.error) throw o.error;
+      return { leads: l.data ?? [], orders: o.data ?? [] };
+    },
+  });
+  const leadStats = (id: string) => campaignLeadStats(id, attribution?.leads ?? [], attribution?.orders ?? []);
   const [platform, setPlatform] = useState("todas");
   const [status, setStatus] = useState("todos");
   const [service, setService] = useState("todos");
@@ -102,6 +116,10 @@ function Content() {
     return { planned: acc.planned + t.planned, registered: acc.registered + t.registered, paid: acc.paid + t.paid, balance: acc.balance + t.balance };
   }, { planned: 0, registered: 0, paid: 0, balance: 0 });
 
+  const leadTotals = list.reduce((acc, c) => {
+    const t = leadStats(c.id);
+    return { leads: acc.leads + t.leads, converted: acc.converted + t.converted, orders: acc.orders + t.orders, lost: acc.lost + t.lost };
+  }, { leads: 0, converted: 0, orders: 0, lost: 0 });
   const changeStatus = async (c: Campaign, s: string) => {
     try { await setCampaignStatus({ data: { id: c.id, status: s } }); toast.success(`Campanha ${st(s).label.toLowerCase()}.`); await refresh(); }
     catch (e) { toast.error(e instanceof Error ? e.message : "Erro."); }
@@ -125,6 +143,7 @@ function Content() {
         <StatCard label="Efetivamente pago" cents={totals.paid} hint="Pagamentos dessas despesas" />
         <StatCard label="Saldo do orçamento" cents={totals.balance} tone="auto" />
       </div>
+      <LeadCounters t={leadTotals} />
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         <Input className="col-span-2 lg:col-span-1" placeholder="Buscar campanha ou código" value={search} onChange={(e) => setSearch(e.target.value)} aria-label="Campanha" />
         <Select value={platform} onValueChange={setPlatform}><SelectTrigger aria-label="Plataforma"><SelectValue /></SelectTrigger>
@@ -189,7 +208,7 @@ function Content() {
 
       {editing && <CampaignForm initial={editing === "new" ? null : editing} services={services ?? []} onClose={() => setEditing(null)} onSaved={refresh} />}
       {detail && (
-        <CampaignDetail campaign={detail} serviceName={serviceName(detail)} onClose={() => setDetailId(null)} onEdit={() => setEditing(detail)} onStatus={(s) => changeStatus(detail, s)} onChanged={refresh} />
+        <CampaignDetail campaign={detail} leadStats={leadStats(detail.id)} periodLabel={`${formatISODate(start)} a ${formatISODate(end)}`} serviceName={serviceName(detail)} onClose={() => setDetailId(null)} onEdit={() => setEditing(detail)} onStatus={(s) => changeStatus(detail, s)} onChanged={refresh} />
       )}
     </div>
   );
@@ -249,7 +268,16 @@ function CampaignForm({ initial, services, onClose, onSaved }: { initial: Campai
   );
 }
 
-function CampaignDetail({ campaign: c, serviceName, onClose, onEdit, onStatus, onChanged }: { campaign: Campaign; serviceName: string; onClose: () => void; onEdit: () => void; onStatus: (s: string) => void; onChanged: () => Promise<unknown> }) {
+function LeadCounters({ t }: { t: { leads: number; converted: number; orders: number; lost: number } }) {
+  const items = [["Leads vinculados", t.leads], ["Leads convertidos", t.converted], ["Atendimentos originados", t.orders], ["Leads perdidos", t.lost]] as const;
+  return (
+    <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+      {items.map(([label, n]) => <Card key={label}><CardContent className="p-3"><p className="text-xs text-muted-foreground">{label}</p><p className="font-display text-lg font-semibold sm:text-xl">{n}</p></CardContent></Card>)}
+    </div>
+  );
+}
+
+function CampaignDetail({ leadStats, periodLabel, campaign: c, serviceName, onClose, onEdit, onStatus, onChanged }: { leadStats: { leads: number; converted: number; orders: number; lost: number }; periodLabel: string; campaign: Campaign; serviceName: string; onClose: () => void; onEdit: () => void; onStatus: (s: string) => void; onChanged: () => Promise<unknown> }) {
   const t = campaignTotals(c.planned_budget_cents, c.campaign_expense_allocations.map(toAlloc));
   const [linking, setLinking] = useState(false);
   const [removing, setRemoving] = useState<AllocRow | null>(null);
@@ -272,6 +300,8 @@ function CampaignDetail({ campaign: c, serviceName, onClose, onEdit, onStatus, o
             <StatCard label="Efetivamente pago" cents={t.paid} />
             <StatCard label="Saldo do orçamento" cents={t.balance} tone="auto" />
           </div>
+          <p className="text-xs text-muted-foreground">Leads e atendimentos no período {periodLabel}:</p>
+          <LeadCounters t={leadStats} />
           <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
             <Button variant="outline" onClick={onEdit}><Pencil className="mr-1 h-4 w-4" />Editar</Button>
             {c.status !== "ativa" && c.status !== "encerrada" && <Button variant="outline" onClick={() => onStatus("ativa")}><Play className="mr-1 h-4 w-4" />Ativar</Button>}
