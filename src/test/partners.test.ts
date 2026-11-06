@@ -25,9 +25,9 @@ const mv = (p: Partial<PartnerMovement>): PartnerMovement => ({
 describe("Resumo individual por sócio", () => {
   it("aporte de capital soma em aportes e não mistura com empréstimos", () => {
     const [s] = summarizePartnerMovements([mv({})]);
-    expect(s.aportesCents).toBe(50000);
-    expect(s.emprestimosCents).toBe(0);
-    expect(s.saldoEmprestimosCents).toBe(0);
+    expect(s!.aportesCents).toBe(50000);
+    expect(s!.emprestimosCents).toBe(0);
+    expect(s!.saldoEmprestimosCents).toBe(0);
   });
 
   it("empréstimo com devolução parcial deixa saldo a devolver", () => {
@@ -35,20 +35,21 @@ describe("Resumo individual por sócio", () => {
       mv({ id: "e1", type: "emprestimo_socio", amount_cents: 100000 }),
       mv({ id: "d1", type: "devolucao_emprestimo", amount_cents: 40000 }),
     ]);
-    expect(s.emprestimosCents).toBe(100000);
-    expect(s.devolvidosCents).toBe(40000);
-    expect(s.saldoEmprestimosCents).toBe(60000);
+    expect(s!.emprestimosCents).toBe(100000);
+    expect(s!.devolvidosCents).toBe(40000);
+    expect(s!.saldoEmprestimosCents).toBe(60000);
   });
 
   it("retirada soma em retiradas, separada de aportes e empréstimos", () => {
     const [s] = summarizePartnerMovements([mv({ type: "retirada", amount_cents: 30000 })]);
-    expect(s.retiradasCents).toBe(30000);
-    expect(s.aportesCents).toBe(0);
+    expect(s!.retiradasCents).toBe(30000);
+    expect(s!.aportesCents).toBe(0);
   });
 
   it("movimentação estornada não entra nos totais", () => {
-    const [s] = summarizePartnerMovements([mv({ status: "estornado" })]);
-    expect(s.aportesCents).toBe(0);
+    expect(summarizePartnerMovements([mv({ status: "estornado" })])).toHaveLength(0);
+    const [s] = summarizePartnerMovements([mv({}), mv({ id: "m2", status: "estornado" })]);
+    expect(s!.aportesCents).toBe(50000);
   });
 
   it("sócios diferentes têm controles separados", () => {
