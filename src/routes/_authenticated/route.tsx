@@ -31,7 +31,7 @@ function AuthedLayout() {
   return (
     <SidebarProvider>
       <AppSidebar session={session} />
-      <SidebarInset>
+      <SidebarInset className="min-w-0">
         <header className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur">
           <div className="hidden md:block">
             <SidebarTrigger />
