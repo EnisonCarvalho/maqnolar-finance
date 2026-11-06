@@ -28,6 +28,7 @@ import { Route as AuthenticatedFluxoDeCaixaRouteImport } from './routes/_authent
 import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
 import { Route as AuthenticatedMinhaAreaRouteImport } from './routes/_authenticated/minha-area'
 import { Route as AuthenticatedReceitasRouteImport } from './routes/_authenticated/receitas'
+import { Route as AuthenticatedSociosRouteImport } from './routes/_authenticated/socios'
 import { Route as AuthenticatedTecnicosRouteImport } from './routes/_authenticated/tecnicos'
 import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticated/usuarios'
 
@@ -131,6 +132,11 @@ const AuthenticatedReceitasRoute = AuthenticatedReceitasRouteImport.update({
   path: '/receitas',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSociosRoute = AuthenticatedSociosRouteImport.update({
+  id: '/socios',
+  path: '/socios',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedTecnicosRoute = AuthenticatedTecnicosRouteImport.update({
   id: '/tecnicos',
   path: '/tecnicos',
@@ -161,6 +167,7 @@ export interface FileRoutesByFullPath {
   '/leads': typeof AuthenticatedLeadsRoute
   '/minha-area': typeof AuthenticatedMinhaAreaRoute
   '/receitas': typeof AuthenticatedReceitasRoute
+  '/socios': typeof AuthenticatedSociosRoute
   '/tecnicos': typeof AuthenticatedTecnicosRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
 }
@@ -183,6 +190,7 @@ export interface FileRoutesByTo {
   '/leads': typeof AuthenticatedLeadsRoute
   '/minha-area': typeof AuthenticatedMinhaAreaRoute
   '/receitas': typeof AuthenticatedReceitasRoute
+  '/socios': typeof AuthenticatedSociosRoute
   '/tecnicos': typeof AuthenticatedTecnicosRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
 }
@@ -207,6 +215,7 @@ export interface FileRoutesById {
   '/_authenticated/leads': typeof AuthenticatedLeadsRoute
   '/_authenticated/minha-area': typeof AuthenticatedMinhaAreaRoute
   '/_authenticated/receitas': typeof AuthenticatedReceitasRoute
+  '/_authenticated/socios': typeof AuthenticatedSociosRoute
   '/_authenticated/tecnicos': typeof AuthenticatedTecnicosRoute
   '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
 }
@@ -231,6 +240,7 @@ export interface FileRouteTypes {
     | '/leads'
     | '/minha-area'
     | '/receitas'
+    | '/socios'
     | '/tecnicos'
     | '/usuarios'
   fileRoutesByTo: FileRoutesByTo
@@ -253,6 +263,7 @@ export interface FileRouteTypes {
     | '/leads'
     | '/minha-area'
     | '/receitas'
+    | '/socios'
     | '/tecnicos'
     | '/usuarios'
   id:
@@ -276,6 +287,7 @@ export interface FileRouteTypes {
     | '/_authenticated/leads'
     | '/_authenticated/minha-area'
     | '/_authenticated/receitas'
+    | '/_authenticated/socios'
     | '/_authenticated/tecnicos'
     | '/_authenticated/usuarios'
   fileRoutesById: FileRoutesById
@@ -422,6 +434,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReceitasRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/socios': {
+      id: '/_authenticated/socios'
+      path: '/socios'
+      fullPath: '/socios'
+      preLoaderRoute: typeof AuthenticatedSociosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/tecnicos': {
       id: '/_authenticated/tecnicos'
       path: '/tecnicos'
@@ -455,6 +474,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRoute
   AuthenticatedMinhaAreaRoute: typeof AuthenticatedMinhaAreaRoute
   AuthenticatedReceitasRoute: typeof AuthenticatedReceitasRoute
+  AuthenticatedSociosRoute: typeof AuthenticatedSociosRoute
   AuthenticatedTecnicosRoute: typeof AuthenticatedTecnicosRoute
   AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRoute
 }
@@ -475,6 +495,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLeadsRoute: AuthenticatedLeadsRoute,
   AuthenticatedMinhaAreaRoute: AuthenticatedMinhaAreaRoute,
   AuthenticatedReceitasRoute: AuthenticatedReceitasRoute,
+  AuthenticatedSociosRoute: AuthenticatedSociosRoute,
   AuthenticatedTecnicosRoute: AuthenticatedTecnicosRoute,
   AuthenticatedUsuariosRoute: AuthenticatedUsuariosRoute,
 }
