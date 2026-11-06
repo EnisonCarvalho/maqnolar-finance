@@ -24,12 +24,22 @@ export const listLinkableUsers = createServerFn({ method: "POST" })
     if (tErr) throw new Error(tErr.message);
     const linkedByUser = new Map<string, string>();
     for (const t of techs ?? []) if (t.profile_id) linkedByUser.set(t.profile_id, t.full_name);
-    return (profiles ?? []).map((p: any) => ({
-      id: p.id as string,
-      fullName: p.full_name as string,
-      email: (p.email as string | null) ?? "",
-      linkedTechnicianName: linkedByUser.get(p.id) ?? null,
-    }));
+    const nameByUser = new Map((profiles ?? []).map((p: any) => [p.id as string, p.full_name as string]));
+    return {
+      users: (profiles ?? []).map((p: any) => ({
+        id: p.id as string,
+        fullName: p.full_name as string,
+        email: (p.email as string | null) ?? "",
+        linkedTechnicianName: linkedByUser.get(p.id) ?? null,
+      })),
+      links: (techs ?? [])
+        .filter((t: any) => t.profile_id)
+        .map((t: any) => ({
+          technicianId: t.id as string,
+          userId: t.profile_id as string,
+          userName: nameByUser.get(t.profile_id) ?? "Conta vinculada",
+        })),
+    };
   });
 
 /**
