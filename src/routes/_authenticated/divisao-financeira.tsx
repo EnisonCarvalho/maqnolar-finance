@@ -109,7 +109,7 @@ async function replaceRule(current: SplitRule | undefined, insert: Tables<"split
   return error?.message ?? null;
 }
 
-function VisitaRuleCard({ current, onDone }: { current?: SplitRule; onDone: () => void }) {
+function VisitaRuleCard({ current, onDone }: { current?: SplitRule | undefined; onDone: () => void }) {
   const [busy, setBusy] = useState(false);
   const [tecnico, setTecnico] = useState("");
   const [empresa, setEmpresa] = useState("");
@@ -177,7 +177,7 @@ function VisitaRuleCard({ current, onDone }: { current?: SplitRule; onDone: () =
   );
 }
 
-function MaoObraRuleCard({ current, onDone }: { current?: SplitRule; onDone: () => void }) {
+function MaoObraRuleCard({ current, onDone }: { current?: SplitRule | undefined; onDone: () => void }) {
   const [busy, setBusy] = useState(false);
   const [tecnico, setTecnico] = useState("");
 

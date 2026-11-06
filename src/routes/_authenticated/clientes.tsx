@@ -158,7 +158,7 @@ function CustomerDialog({
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
-  customer?: Customer;
+  customer?: Customer | undefined;
   onDone: () => void;
 }) {
   const [busy, setBusy] = useState(false);

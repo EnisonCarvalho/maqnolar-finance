@@ -203,7 +203,7 @@ function EquipmentDialog({
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
-  equipment?: EquipmentType;
+  equipment?: EquipmentType | undefined;
   onDone: () => void;
 }) {
   const [busy, setBusy] = useState(false);
@@ -260,7 +260,7 @@ function ServiceDialog({
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
-  service?: Service;
+  service?: Service | undefined;
   equipment: EquipmentType[];
   onDone: () => void;
 }) {

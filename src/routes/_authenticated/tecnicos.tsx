@@ -166,7 +166,7 @@ function TechnicianDialog({
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
-  technician?: Technician;
+  technician?: Technician | undefined;
   onDone: () => void;
 }) {
   const [busy, setBusy] = useState(false);
