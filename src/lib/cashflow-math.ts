@@ -111,7 +111,7 @@ export function computeAccountFlows(accounts: Account[], movements: Movement[], 
     accountId: a.id,
     name: a.name,
     openingCents: a.openingDate < start ? a.openingBalanceCents : 0,
-    inflowCents: a.openingDate >= start && a.openingDate <= end ? 0 : 0,
+    inflowCents: 0,
     outflowCents: 0,
     closingCents: 0,
   }));
@@ -201,9 +201,9 @@ export function nextDueDate(date: string, frequency: "semanal" | "mensal" | "anu
     const dt = new Date(Date.UTC(y, m - 1, d + 7));
     return dt.toISOString().slice(0, 10);
   }
-  const targetMonth = frequency === "mensal" ? m : m + 12;
+  const targetMonth = frequency === "mensal" ? m : m - 1 + 12; // 0-based
   const ny = y + Math.floor(targetMonth / 12);
-  const nm = targetMonth % 12; // 0-based month index of next
+  const nm = targetMonth % 12;
   const last = new Date(Date.UTC(ny, nm + 1, 0)).getUTCDate();
   const dt = new Date(Date.UTC(ny, nm, Math.min(d, last)));
   return dt.toISOString().slice(0, 10);
