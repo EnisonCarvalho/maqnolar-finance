@@ -89,7 +89,26 @@ function CustomersPage() {
         />
       </div>
 
-      <Card>
+      {/* Cartões no celular */}
+      <div className="grid gap-2 md:hidden">
+        {filtered.length === 0 ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">Nenhum cliente encontrado.</p>
+        ) : (
+          filtered.map((c) => (
+            <button key={c.id} onClick={() => setEditing(c)} className="rounded-lg border bg-card p-3 text-left">
+              <p className="font-medium">{c.full_name}</p>
+              <p className="text-sm text-muted-foreground">{c.phone ?? "Sem telefone"}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {[c.endereco, c.numero].filter(Boolean).join(", ") || "—"}
+                {c.bairro ? ` · ${c.bairro}` : ""}
+                {c.cidade ? ` · ${c.cidade}/${c.estado ?? ""}` : ""}
+              </p>
+            </button>
+          ))
+        )}
+      </div>
+
+      <Card className="hidden md:block">
         <CardContent className="p-0">
           <Table>
             <TableHeader>

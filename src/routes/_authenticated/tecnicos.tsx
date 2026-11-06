@@ -93,7 +93,33 @@ function TechniciansPage() {
         />
       </div>
 
-      <Card>
+      {/* Cartões no celular */}
+      <div className="grid gap-2 md:hidden">
+        {filtered.length === 0 ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">Nenhum técnico encontrado.</p>
+        ) : (
+          filtered.map((t) => (
+            <div key={t.id} className={`rounded-lg border bg-card p-3 ${t.active ? "" : "opacity-60"}`}>
+              <div className="flex items-center justify-between gap-2">
+                <button onClick={() => setEditing(t)} className="min-w-0 text-left font-medium">
+                  <span className="truncate">{t.full_name}</span>
+                  {!t.active && <Badge variant="secondary" className="ml-2">inativo</Badge>}
+                  {(!t.phone || !t.bairro || !t.cidade) && (
+                    <Badge variant="outline" className="ml-2">cadastro incompleto</Badge>
+                  )}
+                </button>
+                <Switch checked={t.active} onCheckedChange={(v) => toggleActive(t, v)} />
+              </div>
+              <p className="mt-1 text-sm text-muted-foreground">{t.phone ?? "Sem telefone"}</p>
+              <p className="text-xs text-muted-foreground">
+                {[t.bairro, t.cidade].filter(Boolean).join(" · ") || "Endereço não informado"}
+              </p>
+            </div>
+          ))
+        )}
+      </div>
+
+      <Card className="hidden md:block">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
