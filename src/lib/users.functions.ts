@@ -23,7 +23,7 @@ export const inviteUser = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: invited, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(data.email, {
       data: { full_name: data.fullName },
-      redirectTo: data.redirectTo || undefined,
+      ...(data.redirectTo ? { redirectTo: data.redirectTo } : {}),
     });
     if (error || !invited.user) {
       console.error("invite failed", error);
