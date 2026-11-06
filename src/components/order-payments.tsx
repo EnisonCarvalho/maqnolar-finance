@@ -58,7 +58,7 @@ function receiverName(p: PaymentRow) {
 export function OrderPayments({
   orderId, technicianId, technicianName, fin, purchases,
 }: {
-  orderId: string; technicianId: string | null; technicianName: string | null; fin: FinancialRow; purchases: PurchaseRow[] & { buyer_technician_id?: string | null }[];
+  orderId: string; technicianId: string | null; technicianName: string | null; fin: FinancialRow; purchases: PurchaseRow[];
 }) {
   const queryClient = useQueryClient();
   const { data: payments } = useQuery(orderPaymentsQuery(orderId));
@@ -87,7 +87,7 @@ export function OrderPayments({
 
   // Acerto real deste atendimento (mesmo motor usado no Acerto diário)
   const partsByTechnician: Record<string, number> = {};
-  for (const p of purchases as any[]) {
+  for (const p of purchases) {
     if (p.buyer_type === "tecnico" && p.buyer_technician_id) partsByTechnician[p.buyer_technician_id] = (partsByTechnician[p.buyer_technician_id] ?? 0) + p.total_cents;
   }
   const entries = buildEntries(
