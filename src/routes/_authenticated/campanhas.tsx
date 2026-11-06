@@ -18,6 +18,7 @@ import { saveCampaign, setCampaignStatus, allocateExpense, removeAllocation } fr
 import { PeriodFilter, ReasonDialog, StatCard, usePeriod } from "@/components/finance-ui";
 import { formatISODate, todayISO } from "@/components/finance-shared";
 import { campaignLeadStats } from "@/lib/lead-math";
+import { CampaignPerformance } from "@/components/campaign-performance";
 import { useSession } from "@/hooks/use-session";
 import { NoAccess } from "@/components/no-access";
 
@@ -103,7 +104,7 @@ function Content() {
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<Campaign | "new" | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
-  const refresh = () => Promise.all(["campaigns", "campaign-expenses"].map((k) => qc.invalidateQueries({ queryKey: [k] })));
+  const refresh = () => Promise.all(["campaigns", "campaign-expenses", "campaign-performance"].map((k) => qc.invalidateQueries({ queryKey: [k] })));
 
   const serviceName = (c: Campaign) => services?.find((s) => s.id === c.service_id)?.name ?? c.service_label ?? "—";
   const list = (campaigns ?? []).filter((c) =>
@@ -116,10 +117,6 @@ function Content() {
     return { planned: acc.planned + t.planned, registered: acc.registered + t.registered, paid: acc.paid + t.paid, balance: acc.balance + t.balance };
   }, { planned: 0, registered: 0, paid: 0, balance: 0 });
 
-  const leadTotals = list.reduce((acc, c) => {
-    const t = leadStats(c.id);
-    return { leads: acc.leads + t.leads, converted: acc.converted + t.converted, orders: acc.orders + t.orders, lost: acc.lost + t.lost };
-  }, { leads: 0, converted: 0, orders: 0, lost: 0 });
   const changeStatus = async (c: Campaign, s: string) => {
     try { await setCampaignStatus({ data: { id: c.id, status: s } }); toast.success(`Campanha ${st(s).label.toLowerCase()}.`); await refresh(); }
     catch (e) { toast.error(e instanceof Error ? e.message : "Erro."); }
@@ -139,11 +136,10 @@ function Content() {
       <PeriodFilter period={period} />
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         <StatCard label="Orçamento planejado" cents={totals.planned} />
-        <StatCard label="Investimento registrado" cents={totals.registered} hint="Despesas vinculadas" />
+        <StatCard label="Investimento registrado" cents={totals.registered} hint="Total das campanhas, sem filtro de data" />
         <StatCard label="Efetivamente pago" cents={totals.paid} hint="Pagamentos dessas despesas" />
         <StatCard label="Saldo do orçamento" cents={totals.balance} tone="auto" />
       </div>
-      <LeadCounters t={leadTotals} />
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         <Input className="col-span-2 lg:col-span-1" placeholder="Buscar campanha ou código" value={search} onChange={(e) => setSearch(e.target.value)} aria-label="Campanha" />
         <Select value={platform} onValueChange={setPlatform}><SelectTrigger aria-label="Plataforma"><SelectValue /></SelectTrigger>
@@ -205,6 +201,8 @@ function Content() {
           </div>
         </>
       )}
+
+      <CampaignPerformance start={start} end={end} campaigns={list.map((c) => ({ id: c.id, name: c.name, platformName: platformName(c) ?? "", campaign_expense_allocations: c.campaign_expense_allocations.map((a) => ({ amount_cents: a.amount_cents, status: a.status, expenses: a.expenses })) }))} />
 
       {editing && <CampaignForm initial={editing === "new" ? null : editing} services={services ?? []} onClose={() => setEditing(null)} onSaved={refresh} />}
       {detail && (
