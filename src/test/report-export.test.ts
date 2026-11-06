@@ -56,7 +56,7 @@ describe("exportação de relatórios", () => {
     expect(date.v instanceof Date || typeof date.v === "number").toBe(true);
     // Resumo: indicador monetário numérico e igual ao total da tela
     const resumo = wb.Sheets["Resumo"]!;
-    const valorTotal = resumo["B8"]!;
+    const valorTotal = resumo["B9"]!;
     expect(valorTotal.v).toBe(total / 100);
   });
 
