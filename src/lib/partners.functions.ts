@@ -116,7 +116,8 @@ export const listDistributions = createServerFn({ method: "POST" })
     dbErr(p.error);
     const distributions = (d.data ?? []) as ProfitDistribution[];
     const payments = (p.data ?? []) as DistributionPayment[];
-    return { distributions, payments, totals: { ...summarizeDistributions(distributions, payments), paidByPartner: Object.fromEntries(summarizeDistributions(distributions, payments).paidByPartner) } };
+    const totals = summarizeDistributions(distributions, payments);
+    return { distributions, payments, totals: { approvedCents: totals.approvedCents, paidCents: totals.paidCents, pendingCents: totals.pendingCents, paidByPartner: Object.fromEntries(totals.paidByPartner) as Record<string, number> } };
   });
 
 export const createDistribution = createServerFn({ method: "POST" })

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { summarizePartnerMovements, type PartnerMovement } from "@/lib/partner-math";
 import { buildMovements, computeAccountFlows, computeIndicators, type Account, type RawFinance } from "@/lib/cashflow-math";
 
-const empty: RawFinance = { customerPayments: [], otherRevenues: [], expensePayments: [], partPurchases: [], technicianTransfers: [], accountTransfers: [], partnerMovements: [] };
+const empty: RawFinance = { customerPayments: [], otherRevenues: [], expensePayments: [], partPurchases: [], technicianTransfers: [], accountTransfers: [], partnerMovements: [], distributionPayments: [] };
 const BANK: Account = { id: "bank", name: "Banco", ownership: "empresa", openingBalanceCents: 0, openingDate: "2026-10-01", active: true };
 const NOV = ["2026-11-01", "2026-11-30"] as const;
 
