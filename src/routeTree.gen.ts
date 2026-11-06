@@ -16,6 +16,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedAcertoDiarioRouteImport } from './routes/_authenticated/acerto-diario'
 import { Route as AuthenticatedAgendaRouteImport } from './routes/_authenticated/agenda'
 import { Route as AuthenticatedAtendimentosRouteImport } from './routes/_authenticated/atendimentos'
+import { Route as AuthenticatedCampanhasRouteImport } from './routes/_authenticated/campanhas'
 import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedContasRouteImport } from './routes/_authenticated/contas'
@@ -65,6 +66,11 @@ const AuthenticatedAtendimentosRoute =
     path: '/atendimentos',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedCampanhasRoute = AuthenticatedCampanhasRouteImport.update({
+  id: '/campanhas',
+  path: '/campanhas',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedClientesRoute = AuthenticatedClientesRouteImport.update({
   id: '/clientes',
   path: '/clientes',
@@ -137,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/acerto-diario': typeof AuthenticatedAcertoDiarioRoute
   '/agenda': typeof AuthenticatedAgendaRoute
   '/atendimentos': typeof AuthenticatedAtendimentosRoute
+  '/campanhas': typeof AuthenticatedCampanhasRoute
   '/clientes': typeof AuthenticatedClientesRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/contas': typeof AuthenticatedContasRoute
@@ -157,6 +164,7 @@ export interface FileRoutesByTo {
   '/acerto-diario': typeof AuthenticatedAcertoDiarioRoute
   '/agenda': typeof AuthenticatedAgendaRoute
   '/atendimentos': typeof AuthenticatedAtendimentosRoute
+  '/campanhas': typeof AuthenticatedCampanhasRoute
   '/clientes': typeof AuthenticatedClientesRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/contas': typeof AuthenticatedContasRoute
@@ -179,6 +187,7 @@ export interface FileRoutesById {
   '/_authenticated/acerto-diario': typeof AuthenticatedAcertoDiarioRoute
   '/_authenticated/agenda': typeof AuthenticatedAgendaRoute
   '/_authenticated/atendimentos': typeof AuthenticatedAtendimentosRoute
+  '/_authenticated/campanhas': typeof AuthenticatedCampanhasRoute
   '/_authenticated/clientes': typeof AuthenticatedClientesRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/_authenticated/contas': typeof AuthenticatedContasRoute
@@ -201,6 +210,7 @@ export interface FileRouteTypes {
     | '/acerto-diario'
     | '/agenda'
     | '/atendimentos'
+    | '/campanhas'
     | '/clientes'
     | '/configuracoes'
     | '/contas'
@@ -221,6 +231,7 @@ export interface FileRouteTypes {
     | '/acerto-diario'
     | '/agenda'
     | '/atendimentos'
+    | '/campanhas'
     | '/clientes'
     | '/configuracoes'
     | '/contas'
@@ -242,6 +253,7 @@ export interface FileRouteTypes {
     | '/_authenticated/acerto-diario'
     | '/_authenticated/agenda'
     | '/_authenticated/atendimentos'
+    | '/_authenticated/campanhas'
     | '/_authenticated/clientes'
     | '/_authenticated/configuracoes'
     | '/_authenticated/contas'
@@ -312,6 +324,13 @@ declare module '@tanstack/react-router' {
       path: '/atendimentos'
       fullPath: '/atendimentos'
       preLoaderRoute: typeof AuthenticatedAtendimentosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/campanhas': {
+      id: '/_authenticated/campanhas'
+      path: '/campanhas'
+      fullPath: '/campanhas'
+      preLoaderRoute: typeof AuthenticatedCampanhasRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/clientes': {
@@ -405,6 +424,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAcertoDiarioRoute: typeof AuthenticatedAcertoDiarioRoute
   AuthenticatedAgendaRoute: typeof AuthenticatedAgendaRoute
   AuthenticatedAtendimentosRoute: typeof AuthenticatedAtendimentosRoute
+  AuthenticatedCampanhasRoute: typeof AuthenticatedCampanhasRoute
   AuthenticatedClientesRoute: typeof AuthenticatedClientesRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
   AuthenticatedContasRoute: typeof AuthenticatedContasRoute
@@ -423,6 +443,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAcertoDiarioRoute: AuthenticatedAcertoDiarioRoute,
   AuthenticatedAgendaRoute: AuthenticatedAgendaRoute,
   AuthenticatedAtendimentosRoute: AuthenticatedAtendimentosRoute,
+  AuthenticatedCampanhasRoute: AuthenticatedCampanhasRoute,
   AuthenticatedClientesRoute: AuthenticatedClientesRoute,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
   AuthenticatedContasRoute: AuthenticatedContasRoute,

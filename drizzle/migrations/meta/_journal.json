@@ -50,6 +50,13 @@
       "when": 1793996103578,
       "tag": "0006_accounts_revenues_expenses_cashflow",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793997264281,
+      "tag": "0007_campaigns",
+      "breakpoints": true
     }
   ]
 }
