@@ -311,6 +311,21 @@ function Tecnicos({ start, end }: { start: string; end: string }) {
   return (
     <>
       <Criteria>participações e repasses pela data do recebimento/repasse no período; saldo pendente é o acumulado geral, sem filtro de data.</Criteria>
+      <ExportButtons data={{
+        title: "Relatório de Técnicos",
+        period: { start, end },
+        criteria: "Participações e repasses pela data do recebimento/repasse no período; saldo pendente é o acumulado geral (sem filtro de data). Positivo: MaqnoLar deve ao técnico.",
+        indicators: [
+          { label: "Participação no período", text: formatBRL(totais.share), cents: totais.share },
+          { label: "Reembolsos de peças no período", text: formatBRL(totais.reimb), cents: totais.reimb },
+          { label: "Repasses aos técnicos", text: formatBRL(totais.toTech), cents: totais.toTech },
+          { label: "Repasses dos técnicos", text: formatBRL(totais.fromTech), cents: totais.fromTech },
+          { label: "Saldo pendente (geral)", text: formatBRL(totais.pending), cents: totais.pending },
+        ],
+        columns: ["Técnico", "Serviços concluídos", "Participação", "Reembolsos", "Repasses a ele", "Repasses dele", "Saldo pendente (geral)"],
+        colTypes: ["text", "number", "money", "money", "money", "money", "money"],
+        rows: list.map((t) => [t.name, doneByTech.get(t.id) ?? 0, t.period?.technicianShareCents ?? 0, t.period?.reimbursementCents ?? 0, t.period?.transfersToTechnicianCents ?? 0, t.period?.transfersFromTechnicianCents ?? 0, t.overallPendingCents]),
+      }} />
       <div className="grid grid-cols-2 gap-2 sm:max-w-xl">
         <Select value={tech} onValueChange={setTech}><SelectTrigger aria-label="Técnico"><SelectValue /></SelectTrigger>
           <SelectContent><SelectItem value="todos">Todos os técnicos</SelectItem>{(data?.technicians ?? []).map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent></Select>
@@ -409,6 +424,20 @@ function Campanhas({ start, end }: { start: string; end: string }) {
   return (
     <>
       <Criteria>investimento pela competência da despesa; leads pela data do contato; receita atribuída pela competência do atendimento.</Criteria>
+      <ExportButtons data={{
+        title: "Relatório de Campanhas",
+        period: { start, end },
+        criteria: "Investimento pela competência da despesa vinculada; leads pela data do contato; receita atribuída pela competência do atendimento (parte da MaqnoLar).",
+        indicators: [
+          { label: "Investimento publicitário", text: formatBRL(rows.reduce((s, r) => s + r.p.investmentCents, 0)), cents: rows.reduce((s, r) => s + r.p.investmentCents, 0) },
+          { label: "Leads recebidos", text: String(rows.reduce((s, r) => s + r.p.leads, 0)) },
+          { label: "Leads convertidos", text: String(rows.reduce((s, r) => s + r.p.converted, 0)) },
+          { label: "Receita atribuída à MaqnoLar", text: formatBRL(rows.reduce((s, r) => s + r.p.companyRevenueCents, 0)), cents: rows.reduce((s, r) => s + r.p.companyRevenueCents, 0) },
+        ],
+        columns: ["Campanha", "Investimento", "Leads", "Conversões", "CPL", "Receita atribuída", "Resultado", "ROI"],
+        colTypes: ["text", "money", "number", "number", "money", "money", "money", "text"],
+        rows: rows.map(({ c, p }) => [c.name, p.investmentCents, p.leads, p.converted, p.cplCents, p.companyRevenueCents, p.resultCents, pct(p.roiPct)]),
+      }} />
       <div className="grid grid-cols-2 gap-2 sm:max-w-xl">
         <Select value={only} onValueChange={setOnly}><SelectTrigger aria-label="Campanha"><SelectValue /></SelectTrigger>
           <SelectContent><SelectItem value="todas">Todas as campanhas</SelectItem>{(campaigns ?? []).map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select>
@@ -480,6 +509,20 @@ function Socios({ start, end }: { start: string; end: string }) {
   return (
     <>
       <Criteria>movimentações pela data do lançamento; distribuições pela data da decisão. Resumos por sócio consideram todo o histórico ativo.</Criteria>
+      <ExportButtons data={{
+        title: "Relatório de Sócios",
+        period: { start, end },
+        criteria: "Movimentações pela data do lançamento; distribuições pela data da decisão. Resumos por sócio consideram todo o histórico ativo.",
+        indicators: [
+          { label: "Aportes + empréstimos (período)", text: formatBRL(totIn), cents: totIn },
+          { label: "Devoluções + retiradas (período)", text: formatBRL(totOut), cents: totOut },
+          { label: "Distribuições aprovadas (período)", text: formatBRL(approvedCents), cents: approvedCents },
+          { label: "Distribuições pagas", text: formatBRL(paidCents), cents: paidCents },
+        ],
+        columns: ["Data", "Sócio", "Tipo", "Descrição", "Status", "Valor"],
+        colTypes: ["date", "text", "text", "text", "text", "money"],
+        rows: movements.map((m) => [m.movement_date, nameOf(m.partner_id), PARTNER_TYPE_LABELS[m.type as PartnerMovementType], m.description, m.status === "ativo" ? "Ativo" : `Estornado: ${m.void_reason ?? ""}`, m.amount_cents]),
+      }} />
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         <StatCard label="Aportes + empréstimos (período)" cents={totIn} tone="pos" />
         <StatCard label="Devoluções + retiradas (período)" cents={totOut} tone="neg" />
