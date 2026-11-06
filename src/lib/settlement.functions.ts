@@ -179,7 +179,7 @@ export const registerPayment = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
-    const { error } = await context.supabase.from("customer_payments".insert({
+    const { error } = await context.supabase.from("customer_payments").insert({
       order_id: data.orderId,
       amount_cents: data.amountCents,
       paid_at: data.paidAt,

@@ -152,7 +152,7 @@ function AccountDialog({ target, onClose, onDone }: { target: FinAccount | "new"
   }
   const close = () => { setLoaded(null); onClose(); };
   const m = useMutation({
-    mutationFn: () => saveAccount({ data: { id: target !== "new" ? target?.id : null, name: form.name, institution: form.institution, holder: form.holder, accountType: form.accountType, ownership: form.ownership, openingBalanceCents: parseBRLToCents(form.opening) ?? 0, openingDate: form.openingDate, active: form.active } }),
+    mutationFn: () => saveAccount({ data: { id: target !== "new" ? target?.id ?? null : null, name: form.name, institution: form.institution, holder: form.holder, accountType: form.accountType, ownership: form.ownership, openingBalanceCents: parseBRLToCents(form.opening) ?? 0, openingDate: form.openingDate, active: form.active } }),
     onSuccess: async () => { toast.success("Conta salva."); close(); await onDone(); },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Não foi possível salvar."),
   });
