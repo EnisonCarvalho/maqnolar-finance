@@ -30,10 +30,10 @@ const reason = (r: unknown) => {
   if (!s) throw new Error("Informe o motivo.");
   return s;
 };
-const admin = () => createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]);
 
 // ---------- Contas ----------
-export const saveAccount = admin()
+export const saveAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i: { id?: string | null; name: string; institution?: string; holder?: string; accountType: string; ownership: string; openingBalanceCents: number; openingDate: string; active: boolean }) => {
     const name = clean(i.name, 120);
     if (!name) throw new Error("Informe o nome da conta.");
@@ -53,7 +53,8 @@ export const saveAccount = admin()
     return { ok: true as const };
   });
 
-export const createAccountTransfer = admin()
+export const createAccountTransfer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i: { fromAccountId: string; toAccountId: string; amountCents: number; date: string; notes?: string }) => {
     if (!isUuid(i.fromAccountId) || !isUuid(i.toAccountId)) throw new Error("Selecione as contas.");
     if (i.fromAccountId === i.toAccountId) throw new Error("Escolha contas diferentes.");
@@ -67,7 +68,8 @@ export const createAccountTransfer = admin()
   });
 
 // ---------- Categorias ----------
-export const saveCategory = admin()
+export const saveCategory = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i: { id?: string | null; name: string; kind: string; sortOrder?: number; active: boolean }) => {
     const name = clean(i.name, 80);
     if (!name) throw new Error("Informe o nome da categoria.");
@@ -84,7 +86,8 @@ export const saveCategory = admin()
   });
 
 // ---------- Receitas avulsas ----------
-export const createRevenue = admin()
+export const createRevenue = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i: { description: string; categoryId?: string | null; amountCents: number; competenceDate: string; receivedAt?: string | null; method?: string | null; accountId?: string | null; origin?: string; notes?: string; receiptPath?: string | null }) => {
     const description = clean(i.description, 200);
     if (!description) throw new Error("Informe a descrição.");
@@ -100,7 +103,8 @@ export const createRevenue = admin()
     return { ok: true as const };
   });
 
-export const receiveRevenue = admin()
+export const receiveRevenue = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i: { id: string; receivedAt: string; method: string; accountId: string }) => {
     if (!isUuid(i.id) || !isUuid(i.accountId)) throw new Error("Dados inválidos.");
     if (!METHODS.includes(i.method)) throw new Error("Forma inválida.");
@@ -114,7 +118,8 @@ export const receiveRevenue = admin()
     return { ok: true as const };
   });
 
-export const voidRevenue = admin()
+export const voidRevenue = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i: { id: string; reason: string }) => ({ id: isUuid(i.id) ? i.id : (() => { throw new Error("Registro inválido."); })(), reason: reason(i.reason) }))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
@@ -126,7 +131,8 @@ export const voidRevenue = admin()
 
 // ---------- Despesas ----------
 type ExpenseInput = { id?: string | null; description: string; categoryId?: string | null; amountCents: number; competenceDate: string; dueDate: string; plannedAccountId?: string | null; responsible?: string; notes?: string; receiptPath?: string | null; payNow?: { paidAt: string; method: string; accountId: string } | null };
-export const saveExpense = admin()
+export const saveExpense = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i: ExpenseInput) => {
     const description = clean(i.description, 200);
     if (!description) throw new Error("Informe a descrição.");
@@ -156,7 +162,8 @@ export const saveExpense = admin()
     return { ok: true as const };
   });
 
-export const payExpense = admin()
+export const payExpense = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i: { expenseId: string; amountCents: number; paidAt: string; method: string; accountId: string; notes?: string; receiptPath?: string | null }) => {
     if (!isUuid(i.expenseId) || !isUuid(i.accountId)) throw new Error("Selecione a conta utilizada.");
     if (!METHODS.includes(i.method)) throw new Error("Forma inválida.");
@@ -169,7 +176,8 @@ export const payExpense = admin()
     return { ok: true as const };
   });
 
-export const voidExpensePayment = admin()
+export const voidExpensePayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i: { id: string; reason: string }) => ({ id: isUuid(i.id) ? i.id : (() => { throw new Error("Registro inválido."); })(), reason: reason(i.reason) }))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
@@ -179,7 +187,8 @@ export const voidExpensePayment = admin()
     return { ok: true as const };
   });
 
-export const cancelExpense = admin()
+export const cancelExpense = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i: { id: string; reason: string }) => ({ id: isUuid(i.id) ? i.id : (() => { throw new Error("Registro inválido."); })(), reason: reason(i.reason) }))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
@@ -189,7 +198,8 @@ export const cancelExpense = admin()
   });
 
 // ---------- Recorrências ----------
-export const saveRecurring = admin()
+export const saveRecurring = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i: { id?: string | null; description: string; categoryId?: string | null; amountCents: number; frequency: string; nextDueDate: string; accountId?: string | null; responsible?: string; status: string; notes?: string }) => {
     const description = clean(i.description, 200);
     if (!description) throw new Error("Informe a descrição.");
@@ -206,7 +216,8 @@ export const saveRecurring = admin()
   });
 
 /** Gera as obrigações (despesas pendentes) com vencimento até a data limite. Nunca registra pagamento. */
-export const generateRecurring = admin()
+export const generateRecurring = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i: { untilDate: string }) => ({ until: reqDate(i.untilDate, "Data limite") }))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
@@ -270,7 +281,8 @@ async function loadAll(supabase: any) {
   };
 }
 
-export const getFinanceOverview = admin()
+export const getFinanceOverview = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i: { start: string; end: string }) => ({ start: reqDate(i.start, "Data inicial"), end: reqDate(i.end, "Data final") }))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
@@ -293,7 +305,8 @@ export const getFinanceOverview = admin()
     };
   });
 
-export const closeMonth = admin()
+export const closeMonth = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i: { month: string; notes?: string }) => {
     if (!/^\d{4}-\d{2}$/.test(i.month)) throw new Error("Mês inválido.");
     return { month: `${i.month}-01`, notes: clean(i.notes) || null };
@@ -311,7 +324,8 @@ export const closeMonth = admin()
     return { ok: true as const };
   });
 
-export const reopenMonth = admin()
+export const reopenMonth = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i: { id: string; reason: string }) => ({ id: isUuid(i.id) ? i.id : (() => { throw new Error("Registro inválido."); })(), reason: reason(i.reason) }))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
@@ -321,7 +335,8 @@ export const reopenMonth = admin()
     return { ok: true as const };
   });
 
-export const voidAccountTransfer = admin()
+export const voidAccountTransfer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i: { id: string; reason: string }) => ({ id: isUuid(i.id) ? i.id : (() => { throw new Error("Registro inválido."); })(), reason: reason(i.reason) }))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
