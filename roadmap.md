@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Ajuste da área do técnico — execução e valor informado
+- [ ] Correção solicitada: botão explícito "Informar valor cobrado" no cartão e no detalhe, validar na conta TESTE sem gravar
 - [x] Valor declarado separado da composição financeira, com auditoria e bloqueio após apuração
 - [x] Iniciar/concluir serviço sem exigir diagnóstico, orçamento, valor ou pagamento
 - [x] Consulta pelo administrador e apuração reutilizando os fluxos existentes
