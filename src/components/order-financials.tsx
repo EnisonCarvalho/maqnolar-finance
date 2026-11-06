@@ -15,6 +15,8 @@ import { registerPartPurchase, deletePartPurchase, setOrderReceiver, adjustShare
 import { computeSettlement } from "@/lib/settlement-math";
 import { OrderPayments } from "@/components/order-payments";
 import { AccountSelect } from "@/components/finance-ui";
+import { useServerFn } from "@tanstack/react-start";
+import { confirmServiceComposition } from "@/lib/technician-service.functions";
 
 const BUYER_LABELS: Record<string, string> = { maqnolar: "MaqnoLar", tecnico: "Técnico", outro: "Outro" };
 const STATUS_LABELS: Record<string, string> = { previsto: "Previsto", parcial: "Parcialmente realizado", realizado: "Realizado" };
@@ -30,7 +32,7 @@ function buyerName(p: PurchaseRow): string {
   return p.buyer_label ?? "Outro responsável";
 }
 
-export function OrderFinancials({ orderId, technicianId = null, technicianName = null }: { orderId: string; technicianId?: string | null; technicianName?: string | null }) {
+export function OrderFinancials({ orderId, technicianId = null, technicianName = null, reportedCents = null }: { orderId: string; technicianId?: string | null; technicianName?: string | null; reportedCents?: number | null }) {
   const queryClient = useQueryClient();
   const { data } = useQuery(orderFinancialsQuery(orderId));
   const [purchaseOpen, setPurchaseOpen] = useState(false);
@@ -66,9 +68,7 @@ export function OrderFinancials({ orderId, technicianId = null, technicianName =
 
   if (!fin) {
     return (
-      <p className="text-sm text-muted-foreground">
-        A composição financeira é gerada quando um orçamento é aprovado ou quando uma visita recusada é marcada como cobrável.
-      </p>
+      <CompositionForm orderId={orderId} totalCents={reportedCents} partsCents={0} onDone={refresh} />
     );
   }
 
@@ -170,6 +170,7 @@ export function OrderFinancials({ orderId, technicianId = null, technicianName =
       <Button variant="outline" size="sm" className="w-fit" onClick={() => setAdjustOpen(true)}>
         Ajustar participações (com registro)
       </Button>
+      {fin.kind === "servico" && <details className="border-t pt-3"><summary className="cursor-pointer text-sm font-medium">Corrigir apuração financeira</summary><div className="pt-3"><CompositionForm orderId={orderId} totalCents={fin.total_cents} partsCents={fin.parts_estimated_cents} onDone={refresh} /></div></details>}
 
       <PurchaseDialog orderId={orderId} open={purchaseOpen} onOpenChange={setPurchaseOpen} onDone={refresh} />
       <AdjustDialog orderId={orderId} open={adjustOpen} onOpenChange={setAdjustOpen} onDone={refresh} laborCents={fin.labor_cents} techCents={fin.technician_share_cents} companyCents={fin.company_share_cents} />
@@ -194,6 +195,28 @@ export function OrderFinancials({ orderId, technicianId = null, technicianName =
       </Dialog>
     </div>
   );
+}
+
+function CompositionForm({ orderId, totalCents, partsCents, onDone }: { orderId: string; totalCents: number | null; partsCents: number; onDone: () => Promise<void> }) {
+  const [total, setTotal] = useState(totalCents == null ? "" : (totalCents / 100).toFixed(2).replace(".", ","));
+  const [parts, setParts] = useState((partsCents / 100).toFixed(2).replace(".", ","));
+  const [reason, setReason] = useState("");
+  const confirm = useServerFn(confirmServiceComposition);
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: () => confirm({ data: { orderId, totalReais: total, partsReais: parts, reason } }),
+    onSuccess: async () => { toast.success("Composição financeira confirmada."); await onDone(); await queryClient.invalidateQueries(); },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Não foi possível confirmar."),
+  });
+  return <form className="grid gap-3" onSubmit={(e) => { e.preventDefault(); mutation.mutate(); }}>
+    <h3 className="font-display font-semibold">Apuração financeira do administrador</h3>
+    <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-1.5"><Label htmlFor={`total-${orderId}`}>Total confirmado (R$)</Label><Input id={`total-${orderId}`} inputMode="decimal" value={total} onChange={(e) => setTotal(e.target.value)} /></div>
+      <div className="grid gap-1.5"><Label htmlFor={`parts-${orderId}`}>Custo das peças (R$)</Label><Input id={`parts-${orderId}`} inputMode="decimal" value={parts} onChange={(e) => setParts(e.target.value)} /></div>
+    </div>
+    <div className="grid gap-1.5"><Label htmlFor={`reason-${orderId}`}>Justificativa da apuração</Label><Textarea id={`reason-${orderId}`} value={reason} onChange={(e) => setReason(e.target.value)} rows={2} /></div>
+    <Button type="submit" disabled={mutation.isPending || !total.trim() || reason.trim().length < 3}>{mutation.isPending ? "Confirmando…" : "Confirmar composição financeira"}</Button>
+  </form>;
 }
 
 function PurchaseDialog({ orderId, open, onOpenChange, onDone }: { orderId: string; open: boolean; onOpenChange: (o: boolean) => void; onDone: () => Promise<void> }) {

@@ -1,5 +1,12 @@
 # Roadmap
 
+## Ajuste da área do técnico — execução e valor informado
+- [ ] Valor declarado separado da composição financeira, com auditoria e bloqueio após apuração
+- [ ] Iniciar/concluir serviço sem exigir diagnóstico, orçamento, valor ou pagamento
+- [ ] Consulta pelo administrador e apuração reutilizando os fluxos existentes
+- [ ] Testes de regras, acesso do técnico TESTE e ações nas cinco larguras
+- [ ] Preservar dados reais e registrar eventuais bloqueios de validação
+
 ## Passo 8B — Distribuição eventual de lucros
 - [x] Migração profit_distributions + profit_distribution_payments (50/50, tetos, mês fechado, imutabilidade)
 - [x] profit-math.ts + integração cashflow (pagamento sai do caixa, nunca é despesa)

@@ -119,6 +119,12 @@ export function OrderDetailSheet({ orderId, onClose, isAdmin }: Props) {
               {order.notes && (
                 <div><p className="text-muted-foreground">Observações</p><p>{order.notes}</p></div>
               )}
+              <section className="grid gap-1 border-t pt-3">
+                <h3 className="font-display font-semibold">Valor informado pelo técnico</h3>
+                <p className="font-semibold">{order.technician_reported_cents == null ? "Não informado" : formatBRL(order.technician_reported_cents)}</p>
+                {order.technician_reported_at && <p className="text-xs text-muted-foreground">{formatDateTimeBR(order.technician_reported_at)} · {order.technician_reported_name}</p>}
+                <Badge variant="outline" className="w-fit whitespace-normal">{order.financial_confirmed_at ? "Apuração financeira confirmada" : "Apuração financeira pendente"}</Badge>
+              </section>
               {order.visit_billable && (
                 <Badge variant="outline" className="w-fit border-amber-500 text-amber-600 dark:text-amber-400">
                   Visita cobrável (R$ 30,00 — R$ 20,00 técnico / R$ 10,00 MaqnoLar)
@@ -196,7 +202,7 @@ export function OrderDetailSheet({ orderId, onClose, isAdmin }: Props) {
               {isAdmin && (
                 <>
                   <Separator />
-                  <OrderFinancials orderId={order.id} technicianId={order.technician_id} technicianName={order.technicians?.full_name ?? null} />
+                  <OrderFinancials orderId={order.id} technicianId={order.technician_id} technicianName={order.technicians?.full_name ?? null} reportedCents={order.technician_reported_cents} />
                   <Separator />
                   <OrderOrigin orderId={order.id} />
                 </>

@@ -85,6 +85,13 @@
       "when": 1794002912435,
       "tag": "0011_technician_area_read_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1794005265623,
+      "tag": "0012_technician_reported_value",
+      "breakpoints": true
     }
   ]
 }
