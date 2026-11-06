@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   LayoutDashboard, Users, CalendarClock, HardHat, Wrench, Percent, Handshake, TrendingUp,
   TrendingDown, Landmark, LineChart, Megaphone, Briefcase, PiggyBank, FileBarChart, History,
-  ShieldCheck, Settings, LogOut, type LucideIcon,
+  ShieldCheck, Settings, UserCog, LogOut, type LucideIcon,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -12,7 +12,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import type { SessionInfo } from "@/hooks/use-session";
 
-type Item = { label: string; icon: LucideIcon; to?: "/dashboard" | "/configuracoes" };
+type Item = { label: string; icon: LucideIcon; to?: "/dashboard" | "/configuracoes" | "/usuarios" };
 
 const adminGroups: { label: string; items: Item[] }[] = [
   { label: "Visão geral", items: [{ label: "Dashboard", icon: LayoutDashboard, to: "/dashboard" }] },
@@ -21,6 +21,7 @@ const adminGroups: { label: string; items: Item[] }[] = [
     items: [
       { label: "Clientes", icon: Users },
       { label: "Atendimentos e agenda", icon: CalendarClock },
+      { label: "Usuários e permissões", icon: UserCog, to: "/usuarios" },
       { label: "Equipe e técnicos", icon: HardHat },
       { label: "Equipamentos e serviços", icon: Wrench },
     ],
