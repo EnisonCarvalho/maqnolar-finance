@@ -14,9 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      permission_audit: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          created_at: string
+          id: string
+          new_value: string | null
+          old_value: string | null
+          target_user_id: string
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          target_user_id: string
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          target_user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
+          active: boolean
           created_at: string
+          email: string | null
           full_name: string
           id: string
           phone: string | null
@@ -24,7 +56,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          active?: boolean
           created_at?: string
+          email?: string | null
           full_name?: string
           id: string
           phone?: string | null
@@ -32,7 +66,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          active?: boolean
           created_at?: string
+          email?: string | null
           full_name?: string
           id?: string
           phone?: string | null
@@ -67,12 +103,26 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      active_admin_count: { Args: never; Returns: number }
+      admin_exists: { Args: never; Returns: boolean }
+      bootstrap_first_admin: { Args: never; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      set_user_active: {
+        Args: { _active: boolean; _target: string }
+        Returns: undefined
+      }
+      set_user_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _target: string
+        }
+        Returns: undefined
       }
     }
     Enums: {
