@@ -14,6 +14,11 @@ import { OrderDetailSheet, formatDateTimeBR } from "@/components/order-detail";
 import { changeOrderStatus } from "@/lib/orders.functions";
 import { getMySettlement } from "@/lib/settlement.functions";
 import { formatBRL, formatDateBR } from "@/lib/format";
+import { useServerFn } from "@tanstack/react-start";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { reportTechnicianValue } from "@/lib/technician-service.functions";
+import { canEditTechnicianValue, canStartPartnerService } from "@/lib/technician-service";
 
 export const Route = createFileRoute("/_authenticated/minha-area")({
   head: () => ({
@@ -44,10 +49,22 @@ function MinhaAreaPage() {
   const { data: orders, isLoading } = useQuery(ordersQuery);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [conclusionNote, setConclusionNote] = useState<Record<string, string>>({});
+  const [values, setValues] = useState<Record<string, string>>({});
+  const saveValue = useServerFn(reportTechnicianValue);
+  const updateStatus = useServerFn(changeOrderStatus);
+  const valueMutation = useMutation({
+    mutationFn: (orderId: string) => saveValue({ data: { orderId, valueReais: values[orderId] ?? "" } }),
+    onSuccess: async () => {
+      toast.success("Valor informado registrado.");
+      await queryClient.invalidateQueries({ queryKey: ["service-orders"] });
+      await queryClient.invalidateQueries({ queryKey: ["service-order"] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Não foi possível informar o valor."),
+  });
 
   const statusMutation = useMutation({
     mutationFn: ({ orderId, status, note }: { orderId: string; status: OrderStatus; note?: string | undefined }) =>
-      changeOrderStatus({ data: { orderId, status, note } }),
+      updateStatus({ data: { orderId, status, note } }),
     onSuccess: async () => {
       toast.success("Atualização registrada.");
       await queryClient.invalidateQueries({ queryKey: ["service-orders"] });
@@ -64,7 +81,7 @@ function MinhaAreaPage() {
       return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
     };
     return {
-      today: all.filter((o) => isToday(o.scheduled_start) && o.status !== "finalizado"),
+      today: all.filter((o) => isToday(o.scheduled_start) && !["finalizado", "servico_concluido", "aguardando_pagamento"].includes(o.status)),
       upcoming: all.filter((o) => !isToday(o.scheduled_start) && !["finalizado", "servico_concluido", "aguardando_pagamento"].includes(o.status)),
       done: all.filter((o) => ["servico_concluido", "aguardando_pagamento", "finalizado"].includes(o.status)),
     };
@@ -75,12 +92,15 @@ function MinhaAreaPage() {
   }
 
   function renderOrder(o: NonNullable<typeof orders>[number]) {
-    const actions = NEXT_ACTIONS[o.status] ?? [];
+    const actions = (NEXT_ACTIONS[o.status] ?? []).filter((a) => a.status !== "em_diagnostico");
+    if (canStartPartnerService(o.status) && !actions.some((a) => a.status === "servico_em_andamento")) {
+      actions.push({ label: "Iniciar serviço", status: "servico_em_andamento", icon: Wrench });
+    }
     return (
       <Card key={o.id}>
         <CardContent className="grid gap-3 p-4">
           <div className="flex flex-wrap items-center gap-2">
-            <button className="font-display font-semibold hover:underline" onClick={() => setDetailId(o.id)}>{o.code}</button>
+            <Button variant="link" className="h-auto p-0 font-display font-semibold" onClick={() => setDetailId(o.id)}>{o.code}</Button>
             <Badge className={ORDER_STATUS_COLORS[o.status]} variant="secondary">{ORDER_STATUS_LABELS[o.status]}</Badge>
             <span className="ml-auto text-sm text-muted-foreground">{formatDateTimeBR(o.scheduled_start)}</span>
           </div>
@@ -121,6 +141,21 @@ function MinhaAreaPage() {
               onChange={(e) => setConclusionNote({ ...conclusionNote, [o.id]: e.target.value })}
             />
           )}
+          <div className="grid min-w-0 gap-2 border-t pt-3">
+            <p className="text-sm font-medium">Valor informado pelo técnico</p>
+            <p className="font-display font-semibold">{o.technician_reported_cents == null ? "Não informado" : formatBRL(o.technician_reported_cents)}</p>
+            {o.technician_reported_at && <p className="text-xs text-muted-foreground">{formatDateTimeBR(o.technician_reported_at)} · {o.technician_reported_name}</p>}
+            <Badge variant="outline" className="w-fit whitespace-normal">{o.financial_confirmed_at ? "Apuração financeira confirmada" : "Apuração financeira pendente"}</Badge>
+            {session?.isTecnico && canEditTechnicianValue(o.status, o.financial_confirmed_at) && (
+              <form className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end" onSubmit={(e) => { e.preventDefault(); valueMutation.mutate(o.id); }}>
+                <div className="grid gap-1.5">
+                  <Label htmlFor={`value-${o.id}`}>Total cobrado do cliente (R$)</Label>
+                  <Input id={`value-${o.id}`} inputMode="decimal" placeholder="0,00" value={values[o.id] ?? ""} onChange={(e) => setValues({ ...values, [o.id]: e.target.value })} />
+                </div>
+                <Button type="submit" variant="outline" disabled={valueMutation.isPending || !values[o.id]?.trim()}>Salvar valor informado</Button>
+              </form>
+            )}
+          </div>
         </CardContent>
       </Card>
     );
