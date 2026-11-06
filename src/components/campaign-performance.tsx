@@ -64,7 +64,7 @@ export function CampaignPerformance({ campaigns, start, end }: { campaigns: Perf
 
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         <Kpi label="Investimento registrado" value={money(total.investmentCents)} hint={`Pago: ${formatBRL(total.investmentPaidCents)}`} />
-        <Kpi label="Receita da MaqnoLar atribuída" value={money(total.companyRevenueCents)} hint={`Faturamento bruto: ${formatBRL(total.grossCents)}`} />
+        <Kpi label="Receita da MaqnoLar atribuída" value={money(total.companyRevenueCents)} hint={`Bruto: ${formatBRL(total.grossCents)} · já recebido: ${formatBRL(total.companyRevenueReceivedCents)}`} />
         <Kpi label="Resultado após publicidade" value={money(total.resultCents)} tone={total.resultCents < 0 ? "neg" : "pos"} />
         <Kpi label="ROI publicitário" value={pct(total.roiPct)} tone={total.roiPct !== null && total.roiPct < 0 ? "neg" : "pos"} />
         <Kpi label="Leads (perdidos)" value={`${total.leads} (${total.lost})`} hint={`Convertidos: ${total.converted}`} />
