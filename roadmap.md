@@ -6,5 +6,5 @@
 - [x] Funções de servidor (aprovar, pagar com validação de saldo, estornos)
 - [x] UI na página Gestão dos Sócios (aprovação com confirmação, pagamentos, histórico)
 - [x] Testes automatizados (74 passando) + testes no navegador (mobile/desktop)
-- [ ] Limpeza dos dados de teste: SOMENTE estorno com justificativa dos registros identificados por ID + desativação da conta "Banco TESTE 8B" (sem exclusão, sem desativar proteções) — pedido explícito do Enison
+- [x] Limpeza dos dados de teste: estorno com justificativa dos registros identificados por ID + desativação da conta "Banco TESTE 8B" (sem exclusão, sem desativar proteções) — pedido explícito do Enison
 - [ ] Verificação final (build, testes, banco limpo de valores ativos de teste)
