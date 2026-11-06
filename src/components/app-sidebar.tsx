@@ -15,7 +15,7 @@ import type { SessionInfo } from "@/hooks/use-session";
 type Item = {
   label: string;
   icon: LucideIcon;
-  to?: "/dashboard" | "/configuracoes" | "/usuarios" | "/clientes" | "/tecnicos" | "/equipamentos" | "/divisao-financeira" | "/atendimentos" | "/agenda" | "/minha-area" | "/acerto-diario" | "/receitas" | "/despesas" | "/contas" | "/fluxo-de-caixa" | "/campanhas" | "/leads" | "/socios";
+  to?: "/dashboard" | "/configuracoes" | "/usuarios" | "/clientes" | "/tecnicos" | "/equipamentos" | "/divisao-financeira" | "/atendimentos" | "/agenda" | "/minha-area" | "/acerto-diario" | "/receitas" | "/despesas" | "/contas" | "/fluxo-de-caixa" | "/campanhas" | "/leads" | "/socios" | "/relatorios";
 };
 
 const adminGroups: { label: string; items: Item[] }[] = [
@@ -49,7 +49,7 @@ const adminGroups: { label: string; items: Item[] }[] = [
       { label: "Leads", icon: UserPlus, to: "/leads" },
       { label: "Sócios", icon: Briefcase, to: "/socios" },
       { label: "Investimentos", icon: PiggyBank },
-      { label: "Relatórios", icon: FileBarChart },
+      { label: "Relatórios", icon: FileBarChart, to: "/relatorios" },
       { label: "Histórico", icon: History },
       { label: "Notas de garantia", icon: ShieldCheck },
     ],
