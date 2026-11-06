@@ -7,7 +7,13 @@ const rows: (string | number | null)[][] = Array.from({ length: 80 }, (_, i) => 
 ]);
 const total = rows.reduce((s, r) => s + Number(r[6]), 0);
 
-const toBuffer = async (blob: Blob) => Buffer.from(await new Response(blob).arrayBuffer());
+const toBuffer = (blob: Blob) =>
+  new Promise<Buffer>((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(Buffer.from(r.result as ArrayBuffer));
+    r.onerror = () => rej(r.error);
+    r.readAsArrayBuffer(blob);
+  });
 
 const data: ReportData = {
   title: "Relatório de Atendimentos",
