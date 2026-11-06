@@ -77,7 +77,7 @@ function Content() {
     setSaving(true);
     try {
       const receiptPath = draft.receipt ? await uploadReceipt(draft.receipt) : null;
-      await createPartnerMovement({ data: { partnerId: draft.partnerId, type: draft.type, amountCents, date: draft.date, accountId: draft.accountId, description: draft.description, notes: draft.notes || undefined, receiptPath } });
+      await createPartnerMovement({ data: { partnerId: draft.partnerId, type: draft.type, amountCents, date: draft.date, accountId: draft.accountId, description: draft.description, notes: draft.notes, receiptPath } });
       toast.success("Movimentação registrada.");
       setConfirming(false);
       setFormOpen(false);
