@@ -15,7 +15,7 @@ import type { SessionInfo } from "@/hooks/use-session";
 type Item = {
   label: string;
   icon: LucideIcon;
-  to?: "/dashboard" | "/configuracoes" | "/usuarios" | "/clientes" | "/tecnicos" | "/equipamentos" | "/divisao-financeira" | "/atendimentos" | "/agenda" | "/minha-area";
+  to?: "/dashboard" | "/configuracoes" | "/usuarios" | "/clientes" | "/tecnicos" | "/equipamentos" | "/divisao-financeira" | "/atendimentos" | "/agenda" | "/minha-area" | "/acerto-diario";
 };
 
 const adminGroups: { label: string; items: Item[] }[] = [
@@ -35,7 +35,7 @@ const adminGroups: { label: string; items: Item[] }[] = [
     label: "Financeiro",
     items: [
       { label: "Composição financeira", icon: Percent, to: "/divisao-financeira" },
-      { label: "Acerto diário", icon: Handshake },
+      { label: "Acerto diário", icon: Handshake, to: "/acerto-diario" },
       { label: "Receitas", icon: TrendingUp },
       { label: "Despesas", icon: TrendingDown },
       { label: "Contas bancárias", icon: Landmark },
