@@ -13,6 +13,7 @@ import { formatBRL, parseBRLToCents, formatDateBR } from "@/lib/format";
 import { orderFinancialsQuery, techniciansQuery, type PurchaseRow } from "@/lib/orders-queries";
 import { registerPartPurchase, deletePartPurchase, setOrderReceiver, adjustShares } from "@/lib/finance.functions";
 import { computeSettlement } from "@/lib/settlement-math";
+import { OrderPayments } from "@/components/order-payments";
 
 const BUYER_LABELS: Record<string, string> = { maqnolar: "MaqnoLar", tecnico: "Técnico", outro: "Outro" };
 const STATUS_LABELS: Record<string, string> = { previsto: "Previsto", parcial: "Parcialmente realizado", realizado: "Realizado" };
@@ -28,7 +29,7 @@ function buyerName(p: PurchaseRow): string {
   return p.buyer_label ?? "Outro responsável";
 }
 
-export function OrderFinancials({ orderId }: { orderId: string }) {
+export function OrderFinancials({ orderId, technicianId = null, technicianName = null }: { orderId: string; technicianId?: string | null; technicianName?: string | null }) {
   const queryClient = useQueryClient();
   const { data } = useQuery(orderFinancialsQuery(orderId));
   const [purchaseOpen, setPurchaseOpen] = useState(false);
@@ -147,7 +148,7 @@ export function OrderFinancials({ orderId }: { orderId: string }) {
       </div>
 
       <div className="grid gap-1 rounded-md bg-muted p-3 text-sm">
-        <p className="font-medium">Acerto previsto</p>
+        <p className="font-medium">Acerto previsto (antes dos recebimentos)</p>
         {fin.receiver_type === "maqnolar" && (
           <p>A MaqnoLar recebe e repassa ao técnico: <strong>{formatBRL(settlement.transferToTechnicianCents)}</strong>
             {settlement.partsPaidByTechnicianCents > 0 && ` (${formatBRL(settlement.partsPaidByTechnicianCents)} de reembolso de peças + ${formatBRL(fin.technician_share_cents)} de participação)`}.
@@ -160,8 +161,10 @@ export function OrderFinancials({ orderId }: { orderId: string }) {
         )}
         {!fin.receiver_type && <p className="text-muted-foreground">Defina quem receberá o pagamento do cliente para calcular o acerto previsto.</p>}
         {fin.receiver_type === "outro" && <p className="text-muted-foreground">Recebedor externo — acerto calculado na etapa de recebimentos.</p>}
-        <p className="text-xs text-muted-foreground">Valores previstos — nenhum pagamento foi registrado ainda.</p>
+        <p className="text-xs text-muted-foreground">Estimativa. O acerto real usa os recebimentos registrados abaixo.</p>
       </div>
+
+      <OrderPayments orderId={orderId} technicianId={technicianId} technicianName={technicianName} fin={fin} purchases={data.purchases} />
 
       <Button variant="outline" size="sm" className="w-fit" onClick={() => setAdjustOpen(true)}>
         Ajustar participações (com registro)

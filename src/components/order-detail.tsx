@@ -94,6 +94,8 @@ export function OrderDetailSheet({ orderId, onClose, isAdmin }: Props) {
                 <div><p className="text-muted-foreground">Equipamento</p><p className="font-medium">{order.equipment_types?.name ?? "—"}</p></div>
                 <div><p className="text-muted-foreground">Técnico</p><p className="font-medium">{order.technicians?.full_name ?? "Não atribuído"}</p></div>
                 <div><p className="text-muted-foreground">Abertura</p><p className="font-medium">{formatDateTimeBR(order.opened_at)}</p></div>
+                <div><p className="text-muted-foreground">Execução</p><p className="font-medium">{order.executed_at ? formatDateTimeBR(order.executed_at) : "—"}</p></div>
+                <div><p className="text-muted-foreground">Conclusão</p><p className="font-medium">{order.completed_at ? formatDateTimeBR(order.completed_at) : "—"}</p></div>
                 <div>
                   <p className="text-muted-foreground">Agendado para</p>
                   <p className="font-medium">{formatDateTimeBR(order.scheduled_start)} ({order.estimated_minutes} min)</p>
@@ -193,7 +195,7 @@ export function OrderDetailSheet({ orderId, onClose, isAdmin }: Props) {
               {isAdmin && (
                 <>
                   <Separator />
-                  <OrderFinancials orderId={order.id} />
+                  <OrderFinancials orderId={order.id} technicianId={order.technician_id} technicianName={order.technicians?.full_name ?? null} />
                 </>
               )}
 

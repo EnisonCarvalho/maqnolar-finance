@@ -34,3 +34,4 @@ use the editor.
 - Signed-in pages live under `src/routes/_authenticated/` (client-only gate); sign-in is `/auth`.
 - Financial writes must go through server functions/SQL functions that compute amounts server-side, with values stored in integer cents (auditable, no client-trusted totals).
 - Theme preference is stored per user in `profiles.theme` and mirrored to localStorage for instant apply.
+- Settlement balances are computed only from actual customer payments via `src/lib/ledger-math.ts` (shared by server functions and UI); payments, transfers and closings are never deleted or edited in place — they are voided/reopened with a reason, enforced by DB triggers. Why: auditable money trail.
