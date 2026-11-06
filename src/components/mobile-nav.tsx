@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { LayoutDashboard, CalendarClock, CalendarDays, Users, Menu, type LucideIcon } from "lucide-react";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { useSidebar } from "@/components/ui/sidebar";
 import type { SessionInfo } from "@/hooks/use-session";
 
 type NavItem = { label: string; icon: LucideIcon; to: string };
@@ -19,6 +19,7 @@ const techItems: NavItem[] = [
 
 export function MobileNav({ session }: { session: SessionInfo | null | undefined }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { toggleSidebar } = useSidebar();
   const items = session?.isAdmin ? adminItems : techItems;
 
   return (
@@ -42,10 +43,14 @@ export function MobileNav({ session }: { session: SessionInfo | null | undefined
             </Link>
           );
         })}
-        <div className="flex min-h-14 flex-col items-center justify-center gap-0.5 py-1.5 text-[11px] font-medium text-muted-foreground">
-          <SidebarTrigger className="h-5 w-5" icon={<Menu className="h-5 w-5" />} />
+        <button
+          type="button"
+          onClick={toggleSidebar}
+          className="flex min-h-14 flex-col items-center justify-center gap-0.5 py-1.5 text-[11px] font-medium text-muted-foreground"
+        >
+          <Menu className="h-5 w-5" />
           Menu
-        </div>
+        </button>
       </div>
     </nav>
   );
