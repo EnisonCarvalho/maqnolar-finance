@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { calcQuoteTotals, type QuotePartInput } from "@/lib/quote-math";
+import { splitLabor, type SplitRuleSnapshot } from "@/lib/settlement-math";
 import { ORDER_STATUSES, type OrderStatus } from "@/lib/order-status";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -406,7 +407,7 @@ export const decideQuote = createServerFn({ method: "POST" })
     await assertAdmin(context.supabase, context.userId);
     const { data: quote } = await context.supabase
       .from("quotes")
-      .select("id, order_id, version, status, total_cents")
+      .select("id, order_id, version, status, total_cents, labor_cents, parts_total_cents")
       .eq("id", data.quoteId)
       .single();
     if (!quote) throw new Error("Orçamento não encontrado.");
@@ -426,6 +427,80 @@ export const decideQuote = createServerFn({ method: "POST" })
     if (data.decision === "recusado") orderPatch.visit_billable = data.billVisit;
     if (data.decision === "aprovado") orderPatch.visit_billable = false;
     await context.supabase.from("service_orders").update(orderPatch).eq("id", quote.order_id);
+
+    // Composição financeira com cópia da regra vigente (histórico preservado).
+    const { data: rule } = await context.supabase
+      .from("split_rules")
+      .select("kind, technician_percent, company_percent, technician_fixed_cents, company_fixed_cents")
+      .eq("kind", data.decision === "aprovado" ? "mao_obra" : "visita")
+      .lte("valid_from", new Date().toISOString())
+      .order("valid_from", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (data.decision === "aprovado") {
+      // Orçamento aprovado: a visita não é cobrada novamente — remove composição de visita existente.
+      await context.supabase.from("order_financials").delete().eq("order_id", quote.order_id).eq("kind", "visita");
+      const snapshot: SplitRuleSnapshot = {
+        technicianPercent: rule?.technician_percent ?? null,
+        companyPercent: rule?.company_percent ?? null,
+        technicianFixedCents: rule?.technician_fixed_cents ?? null,
+        companyFixedCents: rule?.company_fixed_cents ?? null,
+      };
+      const shares = splitLabor(quote.labor_cents, snapshot);
+      const { error: finErr } = await context.supabase.from("order_financials").upsert(
+        {
+          order_id: quote.order_id,
+          quote_id: quote.id,
+          kind: "servico",
+          total_cents: quote.total_cents,
+          labor_cents: quote.labor_cents,
+          parts_estimated_cents: quote.parts_total_cents,
+          rule_technician_percent: snapshot.technicianPercent,
+          rule_company_percent: snapshot.companyPercent,
+          rule_technician_fixed_cents: snapshot.technicianFixedCents,
+          rule_company_fixed_cents: snapshot.companyFixedCents,
+          technician_share_cents: shares.technicianShareCents,
+          company_share_cents: shares.companyShareCents,
+          status: "previsto",
+          created_by: context.userId,
+        },
+        { onConflict: "order_id" },
+      );
+      throwIfError(finErr);
+    } else if (data.billVisit) {
+      const snapshot: SplitRuleSnapshot = {
+        technicianPercent: rule?.technician_percent ?? null,
+        companyPercent: rule?.company_percent ?? null,
+        technicianFixedCents: rule?.technician_fixed_cents ?? null,
+        companyFixedCents: rule?.company_fixed_cents ?? null,
+      };
+      const shares = splitLabor(0, snapshot);
+      const visitTotal = shares.technicianShareCents + shares.companyShareCents;
+      const { error: finErr } = await context.supabase.from("order_financials").upsert(
+        {
+          order_id: quote.order_id,
+          quote_id: null,
+          kind: "visita",
+          total_cents: visitTotal,
+          labor_cents: 0,
+          parts_estimated_cents: 0,
+          rule_technician_percent: snapshot.technicianPercent,
+          rule_company_percent: snapshot.companyPercent,
+          rule_technician_fixed_cents: snapshot.technicianFixedCents,
+          rule_company_fixed_cents: snapshot.companyFixedCents,
+          technician_share_cents: shares.technicianShareCents,
+          company_share_cents: shares.companyShareCents,
+          status: "previsto",
+          created_by: context.userId,
+        },
+        { onConflict: "order_id" },
+      );
+      throwIfError(finErr);
+    } else {
+      // Visita dispensada: não gera valor a receber.
+      await context.supabase.from("order_financials").delete().eq("order_id", quote.order_id).eq("kind", "visita");
+    }
     await context.supabase.from("service_order_events").insert({
       order_id: quote.order_id,
       event_type: "orcamento",

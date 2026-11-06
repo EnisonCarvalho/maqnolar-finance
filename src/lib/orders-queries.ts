@@ -97,6 +97,57 @@ export const orderDetailQuery = (orderId: string) =>
     },
   });
 
+export type FinancialRow = {
+  id: string;
+  order_id: string;
+  kind: "servico" | "visita";
+  total_cents: number;
+  labor_cents: number;
+  parts_estimated_cents: number;
+  rule_technician_percent: number | null;
+  rule_company_percent: number | null;
+  rule_technician_fixed_cents: number | null;
+  rule_company_fixed_cents: number | null;
+  technician_share_cents: number;
+  company_share_cents: number;
+  receiver_type: "maqnolar" | "tecnico" | "outro" | null;
+  receiver_label: string | null;
+  status: "previsto" | "parcial" | "realizado";
+};
+
+export type PurchaseRow = {
+  id: string;
+  description: string;
+  quantity: number;
+  unit_price_cents: number;
+  total_cents: number;
+  buyer_type: "maqnolar" | "tecnico" | "outro";
+  buyer_label: string | null;
+  purchased_at: string;
+  notes: string | null;
+  technicians: { full_name: string } | null;
+};
+
+export const orderFinancialsQuery = (orderId: string) =>
+  queryOptions({
+    queryKey: ["order-financials", orderId],
+    queryFn: async () => {
+      const [{ data: fin }, { data: purchases, error }] = await Promise.all([
+        supabase.from("order_financials").select("*").eq("order_id", orderId).maybeSingle(),
+        supabase
+          .from("part_purchases")
+          .select("id, description, quantity, unit_price_cents, total_cents, buyer_type, buyer_label, purchased_at, notes, technicians(full_name)")
+          .eq("order_id", orderId)
+          .order("purchased_at", { ascending: false }),
+      ]);
+      if (error) throw error;
+      return {
+        financial: (fin ?? null) as FinancialRow | null,
+        purchases: (purchases ?? []) as unknown as PurchaseRow[],
+      };
+    },
+  });
+
 export type CustomerOption = {
   id: string;
   full_name: string;

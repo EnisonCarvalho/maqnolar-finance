@@ -89,6 +89,163 @@ export type Database = {
         }
         Relationships: []
       }
+      order_financials: {
+        Row: {
+          company_share_cents: number
+          created_at: string
+          created_by: string | null
+          id: string
+          kind: string
+          labor_cents: number
+          order_id: string
+          parts_estimated_cents: number
+          quote_id: string | null
+          receiver_label: string | null
+          receiver_type: string | null
+          rule_company_fixed_cents: number | null
+          rule_company_percent: number | null
+          rule_technician_fixed_cents: number | null
+          rule_technician_percent: number | null
+          status: string
+          technician_share_cents: number
+          total_cents: number
+          updated_at: string
+        }
+        Insert: {
+          company_share_cents?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          labor_cents?: number
+          order_id: string
+          parts_estimated_cents?: number
+          quote_id?: string | null
+          receiver_label?: string | null
+          receiver_type?: string | null
+          rule_company_fixed_cents?: number | null
+          rule_company_percent?: number | null
+          rule_technician_fixed_cents?: number | null
+          rule_technician_percent?: number | null
+          status?: string
+          technician_share_cents?: number
+          total_cents?: number
+          updated_at?: string
+        }
+        Update: {
+          company_share_cents?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          labor_cents?: number
+          order_id?: string
+          parts_estimated_cents?: number
+          quote_id?: string | null
+          receiver_label?: string | null
+          receiver_type?: string | null
+          rule_company_fixed_cents?: number | null
+          rule_company_percent?: number | null
+          rule_technician_fixed_cents?: number | null
+          rule_technician_percent?: number | null
+          status?: string
+          technician_share_cents?: number
+          total_cents?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_financials_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "service_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_financials_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      part_purchases: {
+        Row: {
+          buyer_label: string | null
+          buyer_technician_id: string | null
+          buyer_type: string
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          notes: string | null
+          order_id: string
+          purchased_at: string
+          quantity: number
+          quote_part_id: string | null
+          receipt_url: string | null
+          total_cents: number
+          unit_price_cents: number
+        }
+        Insert: {
+          buyer_label?: string | null
+          buyer_technician_id?: string | null
+          buyer_type: string
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id?: string
+          notes?: string | null
+          order_id: string
+          purchased_at?: string
+          quantity?: number
+          quote_part_id?: string | null
+          receipt_url?: string | null
+          total_cents?: number
+          unit_price_cents?: number
+        }
+        Update: {
+          buyer_label?: string | null
+          buyer_technician_id?: string | null
+          buyer_type?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          notes?: string | null
+          order_id?: string
+          purchased_at?: string
+          quantity?: number
+          quote_part_id?: string | null
+          receipt_url?: string | null
+          total_cents?: number
+          unit_price_cents?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "part_purchases_buyer_technician_id_fkey"
+            columns: ["buyer_technician_id"]
+            isOneToOne: false
+            referencedRelation: "technicians"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "part_purchases_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "service_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "part_purchases_quote_part_id_fkey"
+            columns: ["quote_part_id"]
+            isOneToOne: false
+            referencedRelation: "quote_parts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       permission_audit: {
         Row: {
           action: string
