@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { Link2, Pencil, Unlink, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -213,6 +213,13 @@ function TechnicianDialog({
         : emptyForm,
     );
   }
+
+  // Preenche o formulário sempre que o diálogo abre (o onOpenChange controlado
+  // não dispara quando a abertura vem do estado externo).
+  useEffect(() => {
+    if (open) reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, technician?.id]);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
