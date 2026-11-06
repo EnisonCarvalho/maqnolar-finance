@@ -245,13 +245,7 @@ function TechnicianDialog({
   }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(o) => {
-        if (o) reset();
-        onOpenChange(o);
-      }}
-    >
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{technician ? `Editar ${technician.full_name}` : "Adicionar técnico"}</DialogTitle>
