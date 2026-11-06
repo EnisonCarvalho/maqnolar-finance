@@ -24,6 +24,7 @@ import { Route as AuthenticatedDivisaoFinanceiraRouteImport } from './routes/_au
 import { Route as AuthenticatedEquipamentosRouteImport } from './routes/_authenticated/equipamentos'
 import { Route as AuthenticatedFluxoDeCaixaRouteImport } from './routes/_authenticated/fluxo-de-caixa'
 import { Route as AuthenticatedMinhaAreaRouteImport } from './routes/_authenticated/minha-area'
+import { Route as AuthenticatedReceitasRouteImport } from './routes/_authenticated/receitas'
 import { Route as AuthenticatedTecnicosRouteImport } from './routes/_authenticated/tecnicos'
 import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticated/usuarios'
 
@@ -107,6 +108,11 @@ const AuthenticatedMinhaAreaRoute = AuthenticatedMinhaAreaRouteImport.update({
   path: '/minha-area',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedReceitasRoute = AuthenticatedReceitasRouteImport.update({
+  id: '/receitas',
+  path: '/receitas',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedTecnicosRoute = AuthenticatedTecnicosRouteImport.update({
   id: '/tecnicos',
   path: '/tecnicos',
@@ -133,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/equipamentos': typeof AuthenticatedEquipamentosRoute
   '/fluxo-de-caixa': typeof AuthenticatedFluxoDeCaixaRoute
   '/minha-area': typeof AuthenticatedMinhaAreaRoute
+  '/receitas': typeof AuthenticatedReceitasRoute
   '/tecnicos': typeof AuthenticatedTecnicosRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
 }
@@ -151,6 +158,7 @@ export interface FileRoutesByTo {
   '/equipamentos': typeof AuthenticatedEquipamentosRoute
   '/fluxo-de-caixa': typeof AuthenticatedFluxoDeCaixaRoute
   '/minha-area': typeof AuthenticatedMinhaAreaRoute
+  '/receitas': typeof AuthenticatedReceitasRoute
   '/tecnicos': typeof AuthenticatedTecnicosRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
 }
@@ -171,6 +179,7 @@ export interface FileRoutesById {
   '/_authenticated/equipamentos': typeof AuthenticatedEquipamentosRoute
   '/_authenticated/fluxo-de-caixa': typeof AuthenticatedFluxoDeCaixaRoute
   '/_authenticated/minha-area': typeof AuthenticatedMinhaAreaRoute
+  '/_authenticated/receitas': typeof AuthenticatedReceitasRoute
   '/_authenticated/tecnicos': typeof AuthenticatedTecnicosRoute
   '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
 }
@@ -191,6 +200,7 @@ export interface FileRouteTypes {
     | '/equipamentos'
     | '/fluxo-de-caixa'
     | '/minha-area'
+    | '/receitas'
     | '/tecnicos'
     | '/usuarios'
   fileRoutesByTo: FileRoutesByTo
@@ -209,6 +219,7 @@ export interface FileRouteTypes {
     | '/equipamentos'
     | '/fluxo-de-caixa'
     | '/minha-area'
+    | '/receitas'
     | '/tecnicos'
     | '/usuarios'
   id:
@@ -228,6 +239,7 @@ export interface FileRouteTypes {
     | '/_authenticated/equipamentos'
     | '/_authenticated/fluxo-de-caixa'
     | '/_authenticated/minha-area'
+    | '/_authenticated/receitas'
     | '/_authenticated/tecnicos'
     | '/_authenticated/usuarios'
   fileRoutesById: FileRoutesById
@@ -346,6 +358,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMinhaAreaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/receitas': {
+      id: '/_authenticated/receitas'
+      path: '/receitas'
+      fullPath: '/receitas'
+      preLoaderRoute: typeof AuthenticatedReceitasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/tecnicos': {
       id: '/_authenticated/tecnicos'
       path: '/tecnicos'
@@ -375,6 +394,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedEquipamentosRoute: typeof AuthenticatedEquipamentosRoute
   AuthenticatedFluxoDeCaixaRoute: typeof AuthenticatedFluxoDeCaixaRoute
   AuthenticatedMinhaAreaRoute: typeof AuthenticatedMinhaAreaRoute
+  AuthenticatedReceitasRoute: typeof AuthenticatedReceitasRoute
   AuthenticatedTecnicosRoute: typeof AuthenticatedTecnicosRoute
   AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRoute
 }
@@ -391,6 +411,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedEquipamentosRoute: AuthenticatedEquipamentosRoute,
   AuthenticatedFluxoDeCaixaRoute: AuthenticatedFluxoDeCaixaRoute,
   AuthenticatedMinhaAreaRoute: AuthenticatedMinhaAreaRoute,
+  AuthenticatedReceitasRoute: AuthenticatedReceitasRoute,
   AuthenticatedTecnicosRoute: AuthenticatedTecnicosRoute,
   AuthenticatedUsuariosRoute: AuthenticatedUsuariosRoute,
 }

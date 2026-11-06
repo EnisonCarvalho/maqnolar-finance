@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, CalendarClock, CalendarDays, Handshake, Menu, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, CalendarClock, LineChart, Handshake, Menu, type LucideIcon } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import type { SessionInfo } from "@/hooks/use-session";
 
@@ -8,7 +8,7 @@ type NavItem = { label: string; icon: LucideIcon; to: string };
 const adminItems: NavItem[] = [
   { label: "Início", icon: LayoutDashboard, to: "/dashboard" },
   { label: "Atendimentos", icon: CalendarClock, to: "/atendimentos" },
-  { label: "Agenda", icon: CalendarDays, to: "/agenda" },
+  { label: "Caixa", icon: LineChart, to: "/fluxo-de-caixa" },
   { label: "Acerto", icon: Handshake, to: "/acerto-diario" },
 ];
 

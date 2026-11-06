@@ -15,7 +15,7 @@ import type { SessionInfo } from "@/hooks/use-session";
 type Item = {
   label: string;
   icon: LucideIcon;
-  to?: "/dashboard" | "/configuracoes" | "/usuarios" | "/clientes" | "/tecnicos" | "/equipamentos" | "/divisao-financeira" | "/atendimentos" | "/agenda" | "/minha-area" | "/acerto-diario";
+  to?: "/dashboard" | "/configuracoes" | "/usuarios" | "/clientes" | "/tecnicos" | "/equipamentos" | "/divisao-financeira" | "/atendimentos" | "/agenda" | "/minha-area" | "/acerto-diario" | "/receitas" | "/despesas" | "/contas" | "/fluxo-de-caixa";
 };
 
 const adminGroups: { label: string; items: Item[] }[] = [
@@ -36,10 +36,10 @@ const adminGroups: { label: string; items: Item[] }[] = [
     items: [
       { label: "Composição financeira", icon: Percent, to: "/divisao-financeira" },
       { label: "Acerto diário", icon: Handshake, to: "/acerto-diario" },
-      { label: "Receitas", icon: TrendingUp },
-      { label: "Despesas", icon: TrendingDown },
-      { label: "Contas bancárias", icon: Landmark },
-      { label: "Fluxo de caixa", icon: LineChart },
+      { label: "Receitas", icon: TrendingUp, to: "/receitas" },
+      { label: "Despesas", icon: TrendingDown, to: "/despesas" },
+      { label: "Contas bancárias", icon: Landmark, to: "/contas" },
+      { label: "Fluxo de caixa", icon: LineChart, to: "/fluxo-de-caixa" },
     ],
   },
   {
