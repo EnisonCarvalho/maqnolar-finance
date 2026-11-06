@@ -115,6 +115,7 @@ export const convertLead = createServerFn({ method: "POST" })
     // Cliente: usa o escolhido; senão reaproveita por telefone; senão cadastra.
     let customerId = data.customerId;
     let customer: any = null;
+    let createdCustomer = false;
     if (customerId) {
       const { data: c } = await sb.from("customers").select("*").eq("id", customerId).maybeSingle();
       if (!c) throw new Error("Cliente não encontrado.");
@@ -129,6 +130,7 @@ export const convertLead = createServerFn({ method: "POST" })
       dbErr(error);
       customer = c;
       customerId = c!.id;
+      createdCustomer = true;
     }
 
     const { data: order, error: oErr } = await sb.from("service_orders").insert({
@@ -144,7 +146,7 @@ export const convertLead = createServerFn({ method: "POST" })
 
     const { error: lErr } = await sb.from("leads").update({ status: "convertido", order_id: order!.id, customer_id: customerId, converted_at: new Date().toISOString(), lost_reason_id: null, lost_notes: null }).eq("id", lead.id).is("order_id", null);
     dbErr(lErr);
-    return { ok: true as const, orderId: order!.id, code: order!.code, reusedCustomer: Boolean(data.customerId || (customer && customer.full_name !== undefined && customerId && customer.created_at && new Date(customer.created_at).getTime() < Date.now() - 5000)) };
+    return { ok: true as const, orderId: order!.id, code: order!.code, reusedCustomer: !createdCustomer };
   });
 
 export const correctOrigin = createServerFn({ method: "POST" })
