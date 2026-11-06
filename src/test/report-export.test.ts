@@ -7,6 +7,8 @@ const rows: (string | number | null)[][] = Array.from({ length: 80 }, (_, i) => 
 ]);
 const total = rows.reduce((s, r) => s + Number(r[6]), 0);
 
+const toBuffer = async (blob: Blob) => Buffer.from(await new Response(blob).arrayBuffer());
+
 const data: ReportData = {
   title: "Relatório de Atendimentos",
   period: { start: "2026-01-01", end: "2026-12-31" },
@@ -25,15 +27,15 @@ describe("exportação de relatórios", () => {
     const blob = await exportReportPdf(data);
     expect(blob.size).toBeGreaterThan(5000);
     expect(blob.type).toBe("application/pdf");
-    writeFileSync("/tmp/multi.pdf", Buffer.from(await blob.arrayBuffer()));
+    writeFileSync("/tmp/multi.pdf", await toBuffer(blob));
   });
 
   it("gera Excel com abas Resumo e Detalhamento, valores numéricos e datas reais", async () => {
     const blob = await exportReportXlsx(data);
     expect(blob.size).toBeGreaterThan(3000);
-    writeFileSync("/tmp/multi.xlsx", Buffer.from(await blob.arrayBuffer()));
+    writeFileSync("/tmp/multi.xlsx", await toBuffer(blob));
     const XLSX = await import("xlsx");
-    const wb = XLSX.read(Buffer.from(await blob.arrayBuffer()), { type: "buffer", cellDates: true });
+    const wb = XLSX.read(await toBuffer(blob), { type: "buffer", cellDates: true });
     expect(wb.SheetNames).toEqual(["Resumo", "Detalhamento"]);
     const det = wb.Sheets["Detalhamento"]!;
     // 80 linhas + cabeçalho
