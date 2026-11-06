@@ -136,7 +136,7 @@ function Content() {
       <PeriodFilter period={period} />
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         <StatCard label="Orçamento planejado" cents={totals.planned} />
-        <StatCard label="Investimento registrado" cents={totals.registered} hint="Despesas vinculadas" />
+        <StatCard label="Investimento registrado" cents={totals.registered} hint="Total das campanhas, sem filtro de data" />
         <StatCard label="Efetivamente pago" cents={totals.paid} hint="Pagamentos dessas despesas" />
         <StatCard label="Saldo do orçamento" cents={totals.balance} tone="auto" />
       </div>
