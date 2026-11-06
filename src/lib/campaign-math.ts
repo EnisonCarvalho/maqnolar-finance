@@ -88,7 +88,7 @@ export function campaignPerformance(input: { allocs: PerfAlloc[]; leads: PerfLea
     grossCents, companyRevenueCents, companyRevenueReceivedCents, resultCents,
     cplCents: leads.length ? Math.round(investmentCents / leads.length) : null,
     costPerOrderCents: orders ? Math.round(investmentCents / orders) : null,
-    conversionPct: pct(safeDiv(converted * 100, leads.length) === null ? null : (converted / leads.length) * 100),
+    conversionPct: leads.length ? pct((converted / leads.length) * 100) : null,
     roiPct: investmentCents > 0 ? pct((resultCents / investmentCents) * 100) : null,
     outsidePeriod,
   };
