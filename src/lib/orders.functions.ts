@@ -124,6 +124,7 @@ export const createOrder = createServerFn({ method: "POST" })
       .select("id, code")
       .single();
     throwIfError(error);
+    if (!inserted) throw new Error("Não foi possível criar o atendimento.");
     return { ok: true as const, id: inserted.id, code: inserted.code };
   });
 

@@ -88,7 +88,7 @@ export function OrderFormDialog({ open, onOpenChange, order }: Props) {
       return createOrder({ data: payload });
     },
     onSuccess: async (res) => {
-      toast.success(order ? "Atendimento atualizado." : `Atendimento ${res.code} criado.`);
+      toast.success(order ? "Atendimento atualizado." : `Atendimento ${"code" in res ? res.code : ""} criado.`);
       await queryClient.invalidateQueries({ queryKey: ["service-orders"] });
       if (order) await queryClient.invalidateQueries({ queryKey: ["service-order", order.id] });
       onOpenChange(false);

@@ -44,7 +44,7 @@ function MinhaAreaPage() {
   const [conclusionNote, setConclusionNote] = useState<Record<string, string>>({});
 
   const statusMutation = useMutation({
-    mutationFn: ({ orderId, status, note }: { orderId: string; status: OrderStatus; note?: string }) =>
+    mutationFn: ({ orderId, status, note }: { orderId: string; status: OrderStatus; note?: string | undefined }) =>
       changeOrderStatus({ data: { orderId, status, note } }),
     onSuccess: async () => {
       toast.success("Atualização registrada.");
