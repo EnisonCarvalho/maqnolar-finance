@@ -16,6 +16,7 @@ import { MOVEMENT_LABELS, type MovementKind } from "@/lib/cashflow-math";
 import { ORDER_STATUS_LABELS, type OrderStatus } from "@/lib/order-status";
 import { PARTNER_TYPE_LABELS, type PartnerMovementType } from "@/lib/partner-math";
 import { PeriodFilter, StatCard, accountsQuery, usePeriod } from "@/components/finance-ui";
+import { ExportButtons } from "@/components/report-export-buttons";
 import { formatISODate } from "@/components/finance-shared";
 import { techniciansQuery } from "@/lib/orders-queries";
 import { formatBRL } from "@/lib/format";
@@ -107,6 +108,24 @@ function Financeiro({ start, end }: { start: string; end: string }) {
   return (
     <>
       <Criteria>indicadores por competência; movimentações pela data efetiva; contas a pagar/receber são totais em aberto (sem filtro de data).</Criteria>
+      <ExportButtons data={{
+        title: "Relatório Financeiro",
+        period: { start, end },
+        criteria: "Indicadores por competência; movimentações pela data efetiva; contas a pagar/receber são totais em aberto (sem filtro de data). Saldo das contas é a posição acumulada até a data final.",
+        indicators: [
+          { label: "Faturamento bruto", text: formatBRL(i.grossBillingCents), cents: i.grossBillingCents },
+          { label: "Receita econômica MaqnoLar", text: formatBRL(i.companyEconomicRevenueCents), cents: i.companyEconomicRevenueCents },
+          { label: "Despesas operacionais", text: formatBRL(i.operationalExpensesCents), cents: i.operationalExpensesCents },
+          { label: "Resultado econômico", text: formatBRL(i.economicResultCents), cents: i.economicResultCents },
+          { label: "Recebimentos efetivos (empresa)", text: formatBRL(i.receivedByCompanyCents), cents: i.receivedByCompanyCents },
+          { label: "Contas a pagar (em aberto)", text: formatBRL(i.payablesCents), cents: i.payablesCents },
+          { label: "Contas a receber (em aberto)", text: formatBRL(i.receivablesCents), cents: i.receivablesCents },
+          { label: `Saldo das contas (até ${formatISODate(end)})`, text: formatBRL(data.cash.totals.closingCents), cents: data.cash.totals.closingCents },
+        ],
+        columns: ["Data", "Descrição", "Tipo", "Conta", "Valor"],
+        colTypes: ["date", "text", "text", "text", "money"],
+        rows: movements.map((m) => [m.date, m.description, MOVEMENT_LABELS[m.kind as MovementKind], accName(m.accountId), m.amountCents]),
+      }} />
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         <StatCard label="Faturamento bruto" cents={i.grossBillingCents} />
         <StatCard label="Receita econômica MaqnoLar" cents={i.companyEconomicRevenueCents} tone="pos" />
@@ -202,6 +221,20 @@ function Atendimentos({ start, end }: { start: string; end: string }) {
   return (
     <>
       <Criteria>data de abertura do atendimento. Valores vêm da composição financeira de cada atendimento.</Criteria>
+      <ExportButtons data={{
+        title: "Relatório de Atendimentos",
+        period: { start, end },
+        criteria: "Data de abertura do atendimento. Valores vêm da composição financeira de cada atendimento.",
+        indicators: [
+          { label: "Atendimentos", text: String(list.length) },
+          { label: "Valor total dos serviços", text: formatBRL(totalCents), cents: totalCents },
+          { label: "Participação MaqnoLar", text: formatBRL(companyCents), cents: companyCents },
+          { label: "Participação técnicos", text: formatBRL(techCents), cents: techCents },
+        ],
+        columns: ["Abertura", "Código", "Cliente", "Equipamento", "Técnico", "Status", "Valor"],
+        colTypes: ["date", "text", "text", "text", "text", "text", "money"],
+        rows: list.map((o) => [fzDate(o.opened_at), o.code, o.customers?.full_name ?? "—", o.equipment_types?.name ?? "—", o.technicians?.full_name ?? "Sem técnico", ORDER_STATUS_LABELS[o.status], finOf(o)?.total_cents ?? null]),
+      }} />
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Atendimentos</p><p className="font-display text-lg font-semibold sm:text-xl">{list.length}</p></CardContent></Card>
         <StatCard label="Valor total dos serviços" cents={totalCents} />
@@ -278,6 +311,21 @@ function Tecnicos({ start, end }: { start: string; end: string }) {
   return (
     <>
       <Criteria>participações e repasses pela data do recebimento/repasse no período; saldo pendente é o acumulado geral, sem filtro de data.</Criteria>
+      <ExportButtons data={{
+        title: "Relatório de Técnicos",
+        period: { start, end },
+        criteria: "Participações e repasses pela data do recebimento/repasse no período; saldo pendente é o acumulado geral (sem filtro de data). Positivo: MaqnoLar deve ao técnico.",
+        indicators: [
+          { label: "Participação no período", text: formatBRL(totais.share), cents: totais.share },
+          { label: "Reembolsos de peças no período", text: formatBRL(totais.reimb), cents: totais.reimb },
+          { label: "Repasses aos técnicos", text: formatBRL(totais.toTech), cents: totais.toTech },
+          { label: "Repasses dos técnicos", text: formatBRL(totais.fromTech), cents: totais.fromTech },
+          { label: "Saldo pendente (geral)", text: formatBRL(totais.pending), cents: totais.pending },
+        ],
+        columns: ["Técnico", "Serviços concluídos", "Participação", "Reembolsos", "Repasses a ele", "Repasses dele", "Saldo pendente (geral)"],
+        colTypes: ["text", "number", "money", "money", "money", "money", "money"],
+        rows: list.map((t) => [t.name, doneByTech.get(t.id) ?? 0, t.period?.technicianShareCents ?? 0, t.period?.reimbursementCents ?? 0, t.period?.transfersToTechnicianCents ?? 0, t.period?.transfersFromTechnicianCents ?? 0, t.overallPendingCents]),
+      }} />
       <div className="grid grid-cols-2 gap-2 sm:max-w-xl">
         <Select value={tech} onValueChange={setTech}><SelectTrigger aria-label="Técnico"><SelectValue /></SelectTrigger>
           <SelectContent><SelectItem value="todos">Todos os técnicos</SelectItem>{(data?.technicians ?? []).map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent></Select>
@@ -376,6 +424,20 @@ function Campanhas({ start, end }: { start: string; end: string }) {
   return (
     <>
       <Criteria>investimento pela competência da despesa; leads pela data do contato; receita atribuída pela competência do atendimento.</Criteria>
+      <ExportButtons data={{
+        title: "Relatório de Campanhas",
+        period: { start, end },
+        criteria: "Investimento pela competência da despesa vinculada; leads pela data do contato; receita atribuída pela competência do atendimento (parte da MaqnoLar).",
+        indicators: [
+          { label: "Investimento publicitário", text: formatBRL(rows.reduce((s, r) => s + r.p.investmentCents, 0)), cents: rows.reduce((s, r) => s + r.p.investmentCents, 0) },
+          { label: "Leads recebidos", text: String(rows.reduce((s, r) => s + r.p.leads, 0)) },
+          { label: "Leads convertidos", text: String(rows.reduce((s, r) => s + r.p.converted, 0)) },
+          { label: "Receita atribuída à MaqnoLar", text: formatBRL(rows.reduce((s, r) => s + r.p.companyRevenueCents, 0)), cents: rows.reduce((s, r) => s + r.p.companyRevenueCents, 0) },
+        ],
+        columns: ["Campanha", "Investimento", "Leads", "Conversões", "CPL", "Receita atribuída", "Resultado", "ROI"],
+        colTypes: ["text", "money", "number", "number", "money", "money", "money", "text"],
+        rows: rows.map(({ c, p }) => [c.name, p.investmentCents, p.leads, p.converted, p.cplCents, p.companyRevenueCents, p.resultCents, pct(p.roiPct)]),
+      }} />
       <div className="grid grid-cols-2 gap-2 sm:max-w-xl">
         <Select value={only} onValueChange={setOnly}><SelectTrigger aria-label="Campanha"><SelectValue /></SelectTrigger>
           <SelectContent><SelectItem value="todas">Todas as campanhas</SelectItem>{(campaigns ?? []).map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select>
@@ -447,6 +509,20 @@ function Socios({ start, end }: { start: string; end: string }) {
   return (
     <>
       <Criteria>movimentações pela data do lançamento; distribuições pela data da decisão. Resumos por sócio consideram todo o histórico ativo.</Criteria>
+      <ExportButtons data={{
+        title: "Relatório de Sócios",
+        period: { start, end },
+        criteria: "Movimentações pela data do lançamento; distribuições pela data da decisão. Resumos por sócio consideram todo o histórico ativo.",
+        indicators: [
+          { label: "Aportes + empréstimos (período)", text: formatBRL(totIn), cents: totIn },
+          { label: "Devoluções + retiradas (período)", text: formatBRL(totOut), cents: totOut },
+          { label: "Distribuições aprovadas (período)", text: formatBRL(approvedCents), cents: approvedCents },
+          { label: "Distribuições pagas", text: formatBRL(paidCents), cents: paidCents },
+        ],
+        columns: ["Data", "Sócio", "Tipo", "Descrição", "Status", "Valor"],
+        colTypes: ["date", "text", "text", "text", "text", "money"],
+        rows: movements.map((m) => [m.movement_date, nameOf(m.partner_id), PARTNER_TYPE_LABELS[m.type as PartnerMovementType], m.description, m.status === "ativo" ? "Ativo" : `Estornado: ${m.void_reason ?? ""}`, m.amount_cents]),
+      }} />
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         <StatCard label="Aportes + empréstimos (período)" cents={totIn} tone="pos" />
         <StatCard label="Devoluções + retiradas (período)" cents={totOut} tone="neg" />
