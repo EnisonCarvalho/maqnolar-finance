@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildMovements, computeAccountFlows, computeIndicators, nextDueDate, periodRange, type RawFinance, type Account } from "@/lib/cashflow-math";
 
-const empty: RawFinance = { customerPayments: [], otherRevenues: [], expensePayments: [], partPurchases: [], technicianTransfers: [], accountTransfers: [] };
+const empty: RawFinance = { customerPayments: [], otherRevenues: [], expensePayments: [], partPurchases: [], technicianTransfers: [], accountTransfers: [], partnerMovements: [] };
 const BANK: Account = { id: "bank", name: "Banco", ownership: "empresa", openingBalanceCents: 100000, openingDate: "2026-10-01", active: true };
 const CASH: Account = { id: "cash", name: "Caixa", ownership: "empresa", openingBalanceCents: 0, openingDate: "2026-10-01", active: true };
 const SOCIO: Account = { id: "socio", name: "Conta pessoal", ownership: "socio", openingBalanceCents: 999999, openingDate: "2026-10-01", active: true };
