@@ -135,7 +135,7 @@ function AgendaPage() {
           <Button variant="outline" onClick={() => setCursor(startOfDay(new Date()))}>Hoje</Button>
           <Button size="icon" variant="outline" onClick={() => move(1)}><ChevronRight className="h-4 w-4" /></Button>
         </div>
-        <span className="font-display font-medium capitalize">{title}</span>
+        <span className="w-full font-display font-medium first-letter:uppercase sm:w-auto">{title}</span>
         <div className="flex w-full gap-2 sm:ml-auto sm:w-auto">
           <Select value={tech} onValueChange={setTech}>
             <SelectTrigger className="w-full sm:w-48"><SelectValue placeholder="Técnico" /></SelectTrigger>
