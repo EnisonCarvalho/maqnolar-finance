@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/password-input";
 import { Label } from "@/components/ui/label";
 import { Wrench } from "lucide-react";
 
@@ -83,7 +84,7 @@ function AuthPage() {
           {mode === "login" && (
             <div className="space-y-2">
               <Label htmlFor="password">Senha</Label>
-              <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+              <PasswordInput id="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
           )}
           <Button type="submit" className="w-full" disabled={loading}>
