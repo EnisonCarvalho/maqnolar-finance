@@ -375,7 +375,7 @@ function RecurringDialog({ target, onClose, onDone }: { target: Recurring | "new
   const set = (k: keyof typeof f) => (v: string) => setF((x) => ({ ...x, [k]: v }));
   const cents = parseBRLToCents(f.amount) ?? 0;
   const m = useMutation({
-    mutationFn: () => saveRecurring({ data: { id: target !== "new" ? target?.id : null, description: f.description, categoryId: f.categoryId || null, amountCents: cents, frequency: f.frequency, nextDueDate: f.next, accountId: f.accountId || null, responsible: f.responsible, status: f.status, notes: f.notes } }),
+    mutationFn: () => saveRecurring({ data: { id: target !== "new" ? target?.id ?? null : null, description: f.description, categoryId: f.categoryId || null, amountCents: cents, frequency: f.frequency, nextDueDate: f.next, accountId: f.accountId || null, responsible: f.responsible, status: f.status, notes: f.notes } }),
     onSuccess: async () => { toast.success("Recorrência salva."); close(); await onDone(); },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Não foi possível salvar."),
   });
@@ -419,7 +419,7 @@ function CategoriesTab() {
   const [editing, setEditing] = useState<{ id: string; name: string; sort: string } | null>(null);
   const refresh = () => qc.invalidateQueries({ queryKey: ["fin-categories"] });
   const save = async (c: Partial<FinCategory> & { name: string; kind: string; active: boolean }) => {
-    try { await saveCategory({ data: { id: c.id ?? null, name: c.name, kind: c.kind, sortOrder: c.sort_order, active: c.active } }); toast.success("Categoria salva."); await refresh(); }
+    try { await saveCategory({ data: { id: c.id ?? null, name: c.name, kind: c.kind, sortOrder: c.sort_order ?? 100, active: c.active } }); toast.success("Categoria salva."); await refresh(); }
     catch (e) { toast.error(e instanceof Error ? e.message : "Não foi possível salvar."); }
   };
   const list = (data ?? []).filter((c) => c.kind === kind);

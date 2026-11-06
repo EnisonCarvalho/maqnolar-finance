@@ -140,7 +140,7 @@ export const saveExpense = admin()
   })
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
-    const row: Record<string, unknown> = { description: data.description, category_id: data.categoryId, amount_cents: data.amount, competence_date: data.competence, due_date: data.due, planned_account_id: data.planned, responsible: data.responsible, notes: data.notes };
+    const row: any = { description: data.description, category_id: data.categoryId, amount_cents: data.amount, competence_date: data.competence, due_date: data.due, planned_account_id: data.planned, responsible: data.responsible, notes: data.notes };
     if (data.receiptPath) row["receipt_path"] = data.receiptPath;
     if (data.id) {
       const { error } = await context.supabase.from("expenses").update(row).eq("id", data.id).neq("status", "cancelada");
@@ -150,7 +150,7 @@ export const saveExpense = admin()
     const { data: created, error } = await context.supabase.from("expenses").insert(row).select("id").single();
     dbErr(error);
     if (data.payNow) {
-      const { error: pe } = await context.supabase.from("expense_payments").insert({ expense_id: created.id, amount_cents: data.amount, paid_at: data.payNow.paidAt, method: data.payNow.method, account_id: data.payNow.accountId, receipt_path: data.receiptPath });
+      const { error: pe } = await context.supabase.from("expense_payments").insert({ expense_id: created!.id, amount_cents: data.amount, paid_at: data.payNow.paidAt, method: data.payNow.method, account_id: data.payNow.accountId, receipt_path: data.receiptPath });
       if (pe) throw new Error(`Despesa criada como pendente, mas o pagamento não foi registrado: ${pe.message.replace(/^.*?ERROR:\s*/, "")}`);
     }
     return { ok: true as const };
@@ -221,7 +221,7 @@ export const generateRecurring = admin()
         const { error: ie } = await context.supabase.from("expenses").insert({ description: r.description, category_id: r.category_id, amount_cents: r.amount_cents, competence_date: due, due_date: due, planned_account_id: r.account_id, responsible: r.responsible, recurring_id: r.id, notes: "Gerada pela recorrência" });
         if (ie && !ie.message.includes("duplicate")) throw new Error(ie.message.replace(/^.*?ERROR:\s*/, ""));
         if (!ie) created += 1;
-        due = nextDueDate(due, r.frequency);
+        due = nextDueDate(due, r.frequency as "semanal" | "mensal" | "anual");
       }
       const { error: ue } = await context.supabase.from("recurring_expenses").update({ next_due_date: due }).eq("id", r.id);
       dbErr(ue);
