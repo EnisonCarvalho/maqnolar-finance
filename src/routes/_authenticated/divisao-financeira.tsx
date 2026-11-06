@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { formatBRL, parseBRLToCents, formatDateBR } from "@/lib/format";
-import type { Tables } from "@/integrations/supabase/types";
+import type { Tables, TablesInsert } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -97,7 +97,7 @@ function SplitRulesPage() {
   );
 }
 
-async function replaceRule(current: SplitRule | undefined, insert: Tables<"split_rules">["Insert"]) {
+async function replaceRule(current: SplitRule | undefined, insert: TablesInsert<"split_rules">) {
   if (current) {
     const { error } = await supabase
       .from("split_rules")
