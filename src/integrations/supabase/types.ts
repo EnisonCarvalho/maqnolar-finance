@@ -74,6 +74,125 @@ export type Database = {
           },
         ]
       }
+      campaign_expense_allocations: {
+        Row: {
+          amount_cents: number
+          campaign_id: string
+          created_at: string
+          created_by: string | null
+          expense_id: string
+          id: string
+          notes: string | null
+          remove_reason: string | null
+          removed_at: string | null
+          removed_by: string | null
+          status: string
+        }
+        Insert: {
+          amount_cents: number
+          campaign_id: string
+          created_at?: string
+          created_by?: string | null
+          expense_id: string
+          id?: string
+          notes?: string | null
+          remove_reason?: string | null
+          removed_at?: string | null
+          removed_by?: string | null
+          status?: string
+        }
+        Update: {
+          amount_cents?: number
+          campaign_id?: string
+          created_at?: string
+          created_by?: string | null
+          expense_id?: string
+          id?: string
+          notes?: string | null
+          remove_reason?: string | null
+          removed_at?: string | null
+          removed_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_expense_allocations_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_expense_allocations_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaigns: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          end_date: string | null
+          external_code: string | null
+          id: string
+          name: string
+          notes: string | null
+          planned_budget_cents: number
+          platform: string
+          platform_label: string | null
+          service_id: string | null
+          service_label: string | null
+          start_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          end_date?: string | null
+          external_code?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          planned_budget_cents?: number
+          platform: string
+          platform_label?: string | null
+          service_id?: string | null
+          service_label?: string | null
+          start_date: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          end_date?: string | null
+          external_code?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          planned_budget_cents?: number
+          platform?: string
+          platform_label?: string | null
+          service_id?: string | null
+          service_label?: string | null
+          start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_payments: {
         Row: {
           account_id: string | null
