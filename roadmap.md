@@ -7,4 +7,4 @@
 - [x] UI na página Gestão dos Sócios (aprovação com confirmação, pagamentos, histórico)
 - [x] Testes automatizados (74 passando) + testes no navegador (mobile/desktop)
 - [x] Limpeza dos dados de teste: estorno com justificativa dos registros identificados por ID + desativação da conta "Banco TESTE 8B" (sem exclusão, sem desativar proteções) — pedido explícito do Enison
-- [ ] Verificação final (build, testes, banco limpo de valores ativos de teste)
+- [x] Verificação final (build OK, 74 testes, nenhum registro de teste ativo no banco)
