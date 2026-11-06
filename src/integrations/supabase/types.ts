@@ -1206,6 +1206,121 @@ export type Database = {
         }
         Relationships: []
       }
+      profit_distribution_payments: {
+        Row: {
+          account_id: string
+          amount_cents: number
+          created_at: string
+          created_by: string
+          distribution_id: string
+          id: string
+          notes: string | null
+          paid_at: string
+          partner_id: string
+          receipt_path: string | null
+          status: string
+          void_reason: string | null
+          voided_at: string | null
+          voided_by: string | null
+        }
+        Insert: {
+          account_id: string
+          amount_cents: number
+          created_at?: string
+          created_by?: string
+          distribution_id: string
+          id?: string
+          notes?: string | null
+          paid_at: string
+          partner_id: string
+          receipt_path?: string | null
+          status?: string
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
+        }
+        Update: {
+          account_id?: string
+          amount_cents?: number
+          created_at?: string
+          created_by?: string
+          distribution_id?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string
+          partner_id?: string
+          receipt_path?: string | null
+          status?: string
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profit_distribution_payments_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profit_distribution_payments_distribution_id_fkey"
+            columns: ["distribution_id"]
+            isOneToOne: false
+            referencedRelation: "profit_distributions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profit_distribution_payments_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profit_distributions: {
+        Row: {
+          created_at: string
+          created_by: string
+          decision_date: string
+          id: string
+          notes: string | null
+          status: string
+          total_cents: number
+          validated_distributable: boolean
+          void_reason: string | null
+          voided_at: string | null
+          voided_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          decision_date: string
+          id?: string
+          notes?: string | null
+          status?: string
+          total_cents: number
+          validated_distributable?: boolean
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          decision_date?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          total_cents?: number
+          validated_distributable?: boolean
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
+        }
+        Relationships: []
+      }
       quote_parts: {
         Row: {
           description: string

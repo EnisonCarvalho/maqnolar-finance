@@ -22,7 +22,8 @@ export type MovementKind =
   | "aporte_socio"
   | "emprestimo_socio"
   | "devolucao_emprestimo"
-  | "retirada_socio";
+  | "retirada_socio"
+  | "distribuicao_lucros";
 
 export const MOVEMENT_LABELS: Record<MovementKind, string> = {
   recebimento_cliente: "Recebimento de cliente",
@@ -37,6 +38,7 @@ export const MOVEMENT_LABELS: Record<MovementKind, string> = {
   emprestimo_socio: "Empréstimo do sócio",
   devolucao_emprestimo: "Devolução de empréstimo ao sócio",
   retirada_socio: "Retirada de sócio",
+  distribuicao_lucros: "Distribuição de lucros",
 };
 
 export type Movement = {
@@ -69,6 +71,7 @@ export type RawFinance = {
   technicianTransfers: { id: string; technician_id: string; amount_cents: number; transfer_date: string; direction: string; account_id: string | null; status: string }[];
   accountTransfers: { id: string; from_account_id: string; to_account_id: string; amount_cents: number; transfer_date: string; status: string }[];
   partnerMovements: { id: string; partner_id: string; type: string; amount_cents: number; movement_date: string; account_id: string; status: string; description: string }[];
+  distributionPayments: { id: string; distribution_id: string; partner_id: string; amount_cents: number; paid_at: string; account_id: string; status: string }[];
 };
 
 /** Converte os registros dos módulos em movimentações de caixa (somente efetivas, sem duplicar). */
@@ -106,6 +109,11 @@ export function buildMovements(raw: RawFinance): Movement[] {
     const inflow = p.type === "aporte" || p.type === "emprestimo_socio";
     const kind: MovementKind = p.type === "aporte" ? "aporte_socio" : p.type === "emprestimo_socio" ? "emprestimo_socio" : p.type === "devolucao_emprestimo" ? "devolucao_emprestimo" : "retirada_socio";
     m.push({ id: `pm-${p.id}`, kind, date: p.movement_date, accountId: p.account_id, amountCents: inflow ? p.amount_cents : -p.amount_cents, description: p.description });
+  }
+  for (const p of raw.distributionPayments) {
+    if (p.status !== "ativo") continue;
+    // Pagamento de distribuição de lucros sai do caixa, mas NUNCA é despesa operacional.
+    m.push({ id: `dp-${p.id}`, kind: "distribuicao_lucros", date: p.paid_at, accountId: p.account_id, amountCents: -p.amount_cents, description: "Distribuição de lucros" });
   }
   return m.sort((a, b) => a.date.localeCompare(b.date));
 }
