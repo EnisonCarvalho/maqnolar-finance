@@ -1,11 +1,12 @@
 # Roadmap
 
 ## Ajuste da área do técnico — execução e valor informado
-- [ ] Valor declarado separado da composição financeira, com auditoria e bloqueio após apuração
-- [ ] Iniciar/concluir serviço sem exigir diagnóstico, orçamento, valor ou pagamento
-- [ ] Consulta pelo administrador e apuração reutilizando os fluxos existentes
-- [ ] Testes de regras, acesso do técnico TESTE e ações nas cinco larguras
-- [ ] Preservar dados reais e registrar eventuais bloqueios de validação
+- [x] Valor declarado separado da composição financeira, com auditoria e bloqueio após apuração
+- [x] Iniciar/concluir serviço sem exigir diagnóstico, orçamento, valor ou pagamento
+- [x] Consulta pelo administrador e apuração reutilizando os fluxos existentes
+- [x] 92 testes automatizados; consulta/formulário admin verificados em 360/390/430/768/1440px sem salvar, sem overflow ou erros
+- [ ] Fluxo completo e isolamento do técnico TESTE: acesso de teste recusado pelo usuário; conclusão sem valor, declaração posterior e bloqueios reais aguardam autorização de acesso
+- [x] Nenhum atendimento, pagamento ou configuração existente alterado durante os testes; sem exclusões ou proteções desativadas
 
 ## Passo 8B — Distribuição eventual de lucros
 - [x] Migração profit_distributions + profit_distribution_payments (50/50, tetos, mês fechado, imutabilidade)
