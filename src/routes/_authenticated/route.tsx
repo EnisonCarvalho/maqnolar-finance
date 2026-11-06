@@ -25,7 +25,12 @@ function AuthedLayout() {
     if (session?.theme) setTheme(session.theme, false);
   }, [session?.theme, setTheme]);
 
-  if (session === undefined) return null;
+  if (session === undefined)
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background text-sm text-muted-foreground">
+        Carregando…
+      </div>
+    );
   if (!session || (!session.isAdmin && !session.isTecnico)) return <NoAccess />;
 
   return (
