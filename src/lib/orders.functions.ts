@@ -2,6 +2,9 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { calcQuoteTotals, type QuotePartInput } from "@/lib/quote-math";
 import { ORDER_STATUSES, type OrderStatus } from "@/lib/order-status";
+import type { Database } from "@/integrations/supabase/types";
+
+type OrderUpdate = Database["public"]["Tables"]["service_orders"]["Update"];
 
 type AddressInput = {
   endereco?: string;
@@ -230,7 +233,7 @@ export const scheduleOrder = createServerFn({ method: "POST" })
 
 export const changeOrderStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { orderId: string; status: string; note?: string }) => {
+  .inputValidator((input: { orderId: string; status: string; note?: string | undefined }) => {
     if (!isUuid(input.orderId)) throw new Error("Atendimento inválido.");
     if (!(ORDER_STATUSES as readonly string[]).includes(input.status)) throw new Error("Status inválido.");
     return { orderId: input.orderId, status: input.status as OrderStatus, note: clean(input.note, 500) || null };
@@ -256,7 +259,7 @@ export const changeOrderStatus = createServerFn({ method: "POST" })
         throw new Error("Atendimento já encerrado.");
       }
     }
-    const patch: Record<string, unknown> = { status: data.status };
+    const patch: OrderUpdate = { status: data.status };
     if (data.status === "cancelado") patch.scheduled_start = null;
     const { error } = await context.supabase.from("service_orders").update(patch).eq("id", data.orderId);
     throwIfError(error);
@@ -368,6 +371,7 @@ export const createQuote = createServerFn({ method: "POST" })
       .select("id")
       .single();
     throwIfError(error);
+    if (!quote) throw new Error("Não foi possível criar o orçamento.");
     if (totals.parts.length) {
       const { error: partsErr } = await context.supabase.from("quote_parts").insert(
         totals.parts.map((p) => ({
@@ -413,7 +417,7 @@ export const decideQuote = createServerFn({ method: "POST" })
       .update({ status: data.decision })
       .eq("id", data.quoteId);
     throwIfError(error);
-    const orderPatch: Record<string, unknown> = {
+    const orderPatch: OrderUpdate = {
       status: data.decision === "aprovado" ? "orcamento_aprovado" : "orcamento_recusado",
     };
     // Orçamento recusado: visita pode ser marcada como cobrável (R$ 30: R$ 20 técnico / R$ 10 MaqnoLar).

@@ -15,8 +15,8 @@ describe("calcQuoteTotals", () => {
       { description: "Correia", quantity: 2, unitPriceCents: 3500 },
       { description: "Rolamento", quantity: 3, unitPriceCents: 1000 },
     ]);
-    expect(t.parts[0].totalCents).toBe(7000);
-    expect(t.parts[1].totalCents).toBe(3000);
+    expect(t.parts[0]!.totalCents).toBe(7000);
+    expect(t.parts[1]!.totalCents).toBe(3000);
     expect(t.partsTotalCents).toBe(10000);
     expect(t.totalCents).toBe(25000);
   });
@@ -29,7 +29,7 @@ describe("calcQuoteTotals", () => {
 
   it("arredonda totais de peças com quantidade fracionária", () => {
     const t = calcQuoteTotals(0, [{ description: "Cabo (m)", quantity: 2.5, unitPriceCents: 333 }]);
-    expect(t.parts[0].totalCents).toBe(833);
+    expect(t.parts[0]!.totalCents).toBe(833);
     expect(t.totalCents).toBe(833);
   });
 });
