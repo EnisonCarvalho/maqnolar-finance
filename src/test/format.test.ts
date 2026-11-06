@@ -3,9 +3,9 @@ import { formatBRL, parseBRLToCents } from "@/lib/format";
 
 describe("formatBRL", () => {
   it("formata centavos em reais no padrão brasileiro", () => {
-    expect(formatBRL(3000)).toBe("R$ 30,00");
-    expect(formatBRL(2000)).toBe("R$ 20,00");
-    expect(formatBRL(100000)).toBe("R$ 1.000,00");
+    expect(formatBRL(3000)).toBe("R$ 30,00");
+    expect(formatBRL(2000)).toBe("R$ 20,00");
+    expect(formatBRL(100000)).toBe("R$ 1.000,00");
   });
 
   it("retorna traço para valores ausentes", () => {
