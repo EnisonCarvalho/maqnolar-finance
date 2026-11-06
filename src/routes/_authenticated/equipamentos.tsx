@@ -97,7 +97,7 @@ function CatalogPage() {
             <Plus className="mr-2 h-4 w-4" />Adicionar
           </Button>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="overflow-x-auto p-0">
           <Table>
             <TableHeader>
               <TableRow>
@@ -137,7 +137,7 @@ function CatalogPage() {
             <Plus className="mr-2 h-4 w-4" />Adicionar
           </Button>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="overflow-x-auto p-0">
           <Table>
             <TableHeader>
               <TableRow>

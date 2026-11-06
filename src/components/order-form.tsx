@@ -157,7 +157,7 @@ export function OrderFormDialog({ open, onOpenChange, order }: Props) {
             </div>
             <div className="grid gap-1.5">
               <Label>Duração estimada (min)</Label>
-              <Input type="number" min={15} step={15} value={minutes} onChange={(e) => setMinutes(e.target.value)} />
+              <Input type="number" inputMode="numeric" min={15} step={15} value={minutes} onChange={(e) => setMinutes(e.target.value)} />
             </div>
           </div>
           <fieldset className="grid gap-3 rounded-md border p-3">

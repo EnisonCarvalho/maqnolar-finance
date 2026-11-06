@@ -86,7 +86,7 @@ function AtendimentosPage() {
   }, [orders]);
 
   return (
-    <div className="grid gap-6">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-semibold">Atendimentos e agenda</h1>
@@ -148,15 +148,39 @@ function AtendimentosPage() {
         </Select>
       </div>
 
-      <Card>
+      {/* Cartões no celular */}
+      <div className="grid gap-2 md:hidden">
+        {isLoading ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">Carregando…</p>
+        ) : filtered.length === 0 ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">Nenhum atendimento encontrado.</p>
+        ) : (
+          filtered.map((o) => (
+            <button key={o.id} onClick={() => setDetailId(o.id)} className="rounded-lg border bg-card p-3 text-left">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-display font-semibold">{o.code}</span>
+                <Badge className={ORDER_STATUS_COLORS[o.status]} variant="secondary">{ORDER_STATUS_LABELS[o.status]}</Badge>
+              </div>
+              <p className="mt-1 font-medium">{o.customers?.full_name ?? "—"}</p>
+              <p className="text-sm text-muted-foreground">
+                {o.equipment_types?.name ?? "—"} · {o.technicians?.full_name ?? "Sem técnico"}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">Agendado: {formatDateTimeBR(o.scheduled_start)}</p>
+            </button>
+          ))
+        )}
+      </div>
+
+      {/* Tabela em telas maiores */}
+      <Card className="hidden md:block">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Código</TableHead>
                 <TableHead>Cliente</TableHead>
-                <TableHead className="hidden md:table-cell">Equipamento</TableHead>
-                <TableHead className="hidden md:table-cell">Técnico</TableHead>
+                <TableHead>Equipamento</TableHead>
+                <TableHead>Técnico</TableHead>
                 <TableHead className="hidden lg:table-cell">Agendado</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
@@ -172,8 +196,8 @@ function AtendimentosPage() {
                   <TableRow key={o.id} className="cursor-pointer" onClick={() => setDetailId(o.id)}>
                     <TableCell className="font-medium">{o.code}</TableCell>
                     <TableCell>{o.customers?.full_name ?? "—"}</TableCell>
-                    <TableCell className="hidden md:table-cell">{o.equipment_types?.name ?? "—"}</TableCell>
-                    <TableCell className="hidden md:table-cell">{o.technicians?.full_name ?? "—"}</TableCell>
+                    <TableCell>{o.equipment_types?.name ?? "—"}</TableCell>
+                    <TableCell>{o.technicians?.full_name ?? "—"}</TableCell>
                     <TableCell className="hidden lg:table-cell">{formatDateTimeBR(o.scheduled_start)}</TableCell>
                     <TableCell>
                       <Badge className={ORDER_STATUS_COLORS[o.status]} variant="secondary">{ORDER_STATUS_LABELS[o.status]}</Badge>
