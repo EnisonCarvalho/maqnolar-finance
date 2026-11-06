@@ -15,7 +15,7 @@ import type { SessionInfo } from "@/hooks/use-session";
 type Item = {
   label: string;
   icon: LucideIcon;
-  to?: "/dashboard" | "/configuracoes" | "/usuarios" | "/clientes" | "/tecnicos" | "/equipamentos" | "/divisao-financeira";
+  to?: "/dashboard" | "/configuracoes" | "/usuarios" | "/clientes" | "/tecnicos" | "/equipamentos" | "/divisao-financeira" | "/atendimentos" | "/agenda" | "/minha-area";
 };
 
 const adminGroups: { label: string; items: Item[] }[] = [
@@ -24,7 +24,8 @@ const adminGroups: { label: string; items: Item[] }[] = [
     label: "Operação",
     items: [
       { label: "Clientes", icon: Users, to: "/clientes" },
-      { label: "Atendimentos e agenda", icon: CalendarClock },
+      { label: "Atendimentos", icon: CalendarClock, to: "/atendimentos" },
+      { label: "Agenda", icon: CalendarClock, to: "/agenda" },
       { label: "Usuários e permissões", icon: UserCog, to: "/usuarios" },
       { label: "Equipe e técnicos", icon: HardHat, to: "/tecnicos" },
       { label: "Equipamentos e serviços", icon: Wrench, to: "/equipamentos" },
@@ -59,7 +60,7 @@ const techGroups: { label: string; items: Item[] }[] = [
     label: "Minha área",
     items: [
       { label: "Início", icon: LayoutDashboard, to: "/dashboard" },
-      { label: "Meus atendimentos", icon: CalendarClock },
+      { label: "Meus atendimentos", icon: CalendarClock, to: "/minha-area" },
       { label: "Meus acertos", icon: Handshake },
     ],
   },

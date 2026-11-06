@@ -152,6 +152,229 @@ export type Database = {
         }
         Relationships: []
       }
+      quote_parts: {
+        Row: {
+          description: string
+          id: string
+          quantity: number
+          quote_id: string
+          total_cents: number
+          unit_price_cents: number
+        }
+        Insert: {
+          description: string
+          id?: string
+          quantity?: number
+          quote_id: string
+          total_cents?: number
+          unit_price_cents?: number
+        }
+        Update: {
+          description?: string
+          id?: string
+          quantity?: number
+          quote_id?: string
+          total_cents?: number
+          unit_price_cents?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_parts_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quotes: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          labor_cents: number
+          notes: string | null
+          order_id: string
+          parts_total_cents: number
+          status: Database["public"]["Enums"]["quote_status"]
+          total_cents: number
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          labor_cents?: number
+          notes?: string | null
+          order_id: string
+          parts_total_cents?: number
+          status?: Database["public"]["Enums"]["quote_status"]
+          total_cents?: number
+          version: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          labor_cents?: number
+          notes?: string | null
+          order_id?: string
+          parts_total_cents?: number
+          status?: Database["public"]["Enums"]["quote_status"]
+          total_cents?: number
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotes_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "service_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_order_events: {
+        Row: {
+          actor_name: string | null
+          actor_user_id: string | null
+          created_at: string
+          description: string
+          event_type: string
+          id: string
+          order_id: string
+        }
+        Insert: {
+          actor_name?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          description: string
+          event_type: string
+          id?: string
+          order_id: string
+        }
+        Update: {
+          actor_name?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          description?: string
+          event_type?: string
+          id?: string
+          order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_order_events_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "service_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_orders: {
+        Row: {
+          bairro: string | null
+          cep: string | null
+          cidade: string | null
+          code: string
+          complemento: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          endereco: string | null
+          equipment_type_id: string | null
+          estado: string | null
+          estimated_minutes: number
+          id: string
+          notes: string | null
+          numero: string | null
+          opened_at: string
+          ponto_referencia: string | null
+          reported_problem: string
+          scheduled_start: string | null
+          status: Database["public"]["Enums"]["order_status"]
+          technician_id: string | null
+          updated_at: string
+          visit_billable: boolean
+        }
+        Insert: {
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          code?: string
+          complemento?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          endereco?: string | null
+          equipment_type_id?: string | null
+          estado?: string | null
+          estimated_minutes?: number
+          id?: string
+          notes?: string | null
+          numero?: string | null
+          opened_at?: string
+          ponto_referencia?: string | null
+          reported_problem?: string
+          scheduled_start?: string | null
+          status?: Database["public"]["Enums"]["order_status"]
+          technician_id?: string | null
+          updated_at?: string
+          visit_billable?: boolean
+        }
+        Update: {
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          code?: string
+          complemento?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          endereco?: string | null
+          equipment_type_id?: string | null
+          estado?: string | null
+          estimated_minutes?: number
+          id?: string
+          notes?: string | null
+          numero?: string | null
+          opened_at?: string
+          ponto_referencia?: string | null
+          reported_problem?: string
+          scheduled_start?: string | null
+          status?: Database["public"]["Enums"]["order_status"]
+          technician_id?: string | null
+          updated_at?: string
+          visit_billable?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_orders_equipment_type_id_fkey"
+            columns: ["equipment_type_id"]
+            isOneToOne: false
+            referencedRelation: "equipment_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_orders_technician_id_fkey"
+            columns: ["technician_id"]
+            isOneToOne: false
+            referencedRelation: "technicians"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       services: {
         Row: {
           active: boolean
@@ -298,6 +521,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      my_technician_id: { Args: never; Returns: string }
       set_user_active: {
         Args: { _active: boolean; _target: string }
         Returns: undefined
@@ -312,6 +536,28 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "tecnico"
+      order_status:
+        | "novo"
+        | "aguardando_agendamento"
+        | "visita_agendada"
+        | "tecnico_a_caminho"
+        | "em_diagnostico"
+        | "orcamento_enviado"
+        | "aguardando_aprovacao"
+        | "orcamento_aprovado"
+        | "orcamento_recusado"
+        | "aguardando_peca"
+        | "servico_em_andamento"
+        | "servico_concluido"
+        | "aguardando_pagamento"
+        | "finalizado"
+        | "cancelado"
+      quote_status:
+        | "rascunho"
+        | "enviado"
+        | "aprovado"
+        | "recusado"
+        | "substituido"
       theme_pref: "light" | "dark" | "system"
     }
     CompositeTypes: {
@@ -441,6 +687,30 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "tecnico"],
+      order_status: [
+        "novo",
+        "aguardando_agendamento",
+        "visita_agendada",
+        "tecnico_a_caminho",
+        "em_diagnostico",
+        "orcamento_enviado",
+        "aguardando_aprovacao",
+        "orcamento_aprovado",
+        "orcamento_recusado",
+        "aguardando_peca",
+        "servico_em_andamento",
+        "servico_concluido",
+        "aguardando_pagamento",
+        "finalizado",
+        "cancelado",
+      ],
+      quote_status: [
+        "rascunho",
+        "enviado",
+        "aprovado",
+        "recusado",
+        "substituido",
+      ],
       theme_pref: ["light", "dark", "system"],
     },
   },
