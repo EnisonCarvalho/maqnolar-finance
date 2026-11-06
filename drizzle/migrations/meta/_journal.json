@@ -43,6 +43,13 @@
       "when": 1793995274485,
       "tag": "0005_payments_transfers_closings",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793996103578,
+      "tag": "0006_accounts_revenues_expenses_cashflow",
+      "breakpoints": true
     }
   ]
 }
