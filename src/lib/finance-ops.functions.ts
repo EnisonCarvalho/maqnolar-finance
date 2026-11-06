@@ -252,9 +252,10 @@ async function loadAll(supabase: any) {
     supabase.from("account_transfers").select("id, from_account_id, to_account_id, amount_cents, transfer_date, status"),
     supabase.from("order_financials").select("order_id, total_cents, company_share_cents, technician_share_cents, parts_estimated_cents, labor_cents, kind, created_at, service_orders(status, completed_at, opened_at)"),
     supabase.from("expenses").select("id, amount_cents, competence_date, due_date, status"),
+    supabase.from("partner_movements").select("id, partner_id, type, amount_cents, movement_date, account_id, status, description"),
   ]);
   for (const r of q) dbErr(r.error);
-  const [acc, cp, or, ep, pp, tt, at, of, ex] = q.map((r: any) => r.data ?? []);
+  const [acc, cp, or, ep, pp, tt, at, of, ex, pm] = q.map((r: any) => r.data ?? []);
   const paidByExpense = new Map<string, number>();
   for (const p of ep) if (p.status === "ativo") paidByExpense.set(p.expense_id, (paidByExpense.get(p.expense_id) ?? 0) + p.amount_cents);
   return {
@@ -266,6 +267,7 @@ async function loadAll(supabase: any) {
       partPurchases: pp,
       technicianTransfers: tt,
       accountTransfers: at,
+      partnerMovements: pm,
     },
     orders: of.map((f: any) => ({
       orderId: f.order_id,

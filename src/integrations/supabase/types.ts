@@ -1074,6 +1074,75 @@ export type Database = {
           },
         ]
       }
+      partner_movements: {
+        Row: {
+          account_id: string
+          amount_cents: number
+          created_at: string
+          created_by: string
+          description: string
+          id: string
+          movement_date: string
+          notes: string | null
+          partner_id: string
+          receipt_path: string | null
+          status: string
+          type: string
+          void_reason: string | null
+          voided_at: string | null
+          voided_by: string | null
+        }
+        Insert: {
+          account_id: string
+          amount_cents: number
+          created_at?: string
+          created_by?: string
+          description: string
+          id?: string
+          movement_date: string
+          notes?: string | null
+          partner_id: string
+          receipt_path?: string | null
+          status?: string
+          type: string
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
+        }
+        Update: {
+          account_id?: string
+          amount_cents?: number
+          created_at?: string
+          created_by?: string
+          description?: string
+          id?: string
+          movement_date?: string
+          notes?: string | null
+          partner_id?: string
+          receipt_path?: string | null
+          status?: string
+          type?: string
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_movements_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_movements_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       permission_audit: {
         Row: {
           action: string

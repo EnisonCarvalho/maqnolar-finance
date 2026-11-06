@@ -18,7 +18,11 @@ export type MovementKind =
   | "repasse_do_tecnico"
   | "repasse_ao_tecnico"
   | "transferencia_entrada"
-  | "transferencia_saida";
+  | "transferencia_saida"
+  | "aporte_socio"
+  | "emprestimo_socio"
+  | "devolucao_emprestimo"
+  | "retirada_socio";
 
 export const MOVEMENT_LABELS: Record<MovementKind, string> = {
   recebimento_cliente: "Recebimento de cliente",
@@ -29,6 +33,10 @@ export const MOVEMENT_LABELS: Record<MovementKind, string> = {
   repasse_ao_tecnico: "Repasse pago a técnico",
   transferencia_entrada: "Transferência entre contas (entrada)",
   transferencia_saida: "Transferência entre contas (saída)",
+  aporte_socio: "Aporte de capital (sócio)",
+  emprestimo_socio: "Empréstimo do sócio",
+  devolucao_emprestimo: "Devolução de empréstimo ao sócio",
+  retirada_socio: "Retirada de sócio",
 };
 
 export type Movement = {
@@ -60,6 +68,7 @@ export type RawFinance = {
   partPurchases: { id: string; order_id: string; total_cents: number; purchased_at: string; buyer_type: string; account_id: string | null; description: string }[];
   technicianTransfers: { id: string; technician_id: string; amount_cents: number; transfer_date: string; direction: string; account_id: string | null; status: string }[];
   accountTransfers: { id: string; from_account_id: string; to_account_id: string; amount_cents: number; transfer_date: string; status: string }[];
+  partnerMovements: { id: string; partner_id: string; type: string; amount_cents: number; movement_date: string; account_id: string; status: string; description: string }[];
 };
 
 /** Converte os registros dos módulos em movimentações de caixa (somente efetivas, sem duplicar). */
@@ -90,6 +99,13 @@ export function buildMovements(raw: RawFinance): Movement[] {
     if (t.status !== "ativo") continue;
     m.push({ id: `at-out-${t.id}`, kind: "transferencia_saida", date: t.transfer_date, accountId: t.from_account_id, amountCents: -t.amount_cents, description: "Transferência entre contas" });
     m.push({ id: `at-in-${t.id}`, kind: "transferencia_entrada", date: t.transfer_date, accountId: t.to_account_id, amountCents: t.amount_cents, description: "Transferência entre contas" });
+  }
+  for (const p of raw.partnerMovements) {
+    if (p.status !== "ativo") continue;
+    // Aporte/empréstimo entram no caixa; devolução/retirada saem. Nunca contam como receita ou despesa.
+    const inflow = p.type === "aporte" || p.type === "emprestimo_socio";
+    const kind: MovementKind = p.type === "aporte" ? "aporte_socio" : p.type === "emprestimo_socio" ? "emprestimo_socio" : p.type === "devolucao_emprestimo" ? "devolucao_emprestimo" : "retirada_socio";
+    m.push({ id: `pm-${p.id}`, kind, date: p.movement_date, accountId: p.account_id, amountCents: inflow ? p.amount_cents : -p.amount_cents, description: p.description });
   }
   return m.sort((a, b) => a.date.localeCompare(b.date));
 }
