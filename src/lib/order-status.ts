@@ -71,6 +71,7 @@ export const EVENT_TYPE_LABELS: Record<string, string> = {
   diagnostico: "Diagnóstico",
   observacao: "Observação",
   orcamento: "Orçamento",
+  financeiro: "Financeiro",
   conclusao: "Conclusão",
   cancelamento: "Cancelamento",
 };

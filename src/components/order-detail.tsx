@@ -190,6 +190,13 @@ export function OrderDetailSheet({ orderId, onClose, isAdmin }: Props) {
                 )}
               </div>
 
+              {isAdmin && (
+                <>
+                  <Separator />
+                  <OrderFinancials orderId={order.id} />
+                </>
+              )}
+
               <Separator />
 
               <div>
