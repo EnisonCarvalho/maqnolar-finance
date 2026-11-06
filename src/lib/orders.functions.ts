@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { calcQuoteTotals, type QuotePartInput } from "@/lib/quote-math";
+import { splitLabor, type SplitRuleSnapshot } from "@/lib/settlement-math";
 import { ORDER_STATUSES, type OrderStatus } from "@/lib/order-status";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -406,7 +407,7 @@ export const decideQuote = createServerFn({ method: "POST" })
     await assertAdmin(context.supabase, context.userId);
     const { data: quote } = await context.supabase
       .from("quotes")
-      .select("id, order_id, version, status, total_cents")
+      .select("id, order_id, version, status, total_cents, labor_cents, parts_total_cents")
       .eq("id", data.quoteId)
       .single();
     if (!quote) throw new Error("Orçamento não encontrado.");
