@@ -1,11 +1,12 @@
 # Roadmap
 
 ## Ajuste da área do técnico — execução e valor informado
+- [x] Correção solicitada: botão explícito "Informar valor cobrado" no cartão e no detalhe; conta TESTE validada em 360/390/430/768/1440px, abrindo campo, digitando e cancelando sem gravar
 - [x] Valor declarado separado da composição financeira, com auditoria e bloqueio após apuração
 - [x] Iniciar/concluir serviço sem exigir diagnóstico, orçamento, valor ou pagamento
 - [x] Consulta pelo administrador e apuração reutilizando os fluxos existentes
 - [x] 92 testes automatizados; consulta/formulário admin verificados em 360/390/430/768/1440px sem salvar, sem overflow ou erros
-- [ ] Fluxo completo e isolamento do técnico TESTE: acesso de teste recusado pelo usuário; conclusão sem valor, declaração posterior e bloqueios reais aguardam autorização de acesso
+- [ ] Gravação e confirmação financeira ponta a ponta: não executadas nesta revisão porque o usuário proibiu alterações de registros; testes automatizados aprovados, interface validada com sessão real TESTE
 - [x] Nenhum atendimento, pagamento ou configuração existente alterado durante os testes; sem exclusões ou proteções desativadas
 
 ## Passo 8B — Distribuição eventual de lucros

@@ -30,6 +30,7 @@ use the editor.
 <!-- LOVABLE:END -->
 
 ## Project rules
+- Technician value entry uses one shared button/dialog in the order card and detail, calling the existing declaration function. Why: consistent visibility without duplicate financial flows.
 - Technician-declared totals live only on service orders and are audited by database triggers; all order-financial writes permanently lock declarations, and admin-only composition RPCs populate the existing ledger without creating payments. Why: operational completion and unconfirmed declarations must never alter confirmed cash or settlements.
 - Roles live only in `public.user_roles`, are assigned explicitly by admins via `set_user_role` (never by signup order), and are checked with `has_role()` which also requires `profiles.active`; first admin only via `bootstrap_first_admin()` while no active admin exists. Triggers audit every change and block removing the last active admin.
 - Signed-in pages live under `src/routes/_authenticated/` (client-only gate); sign-in is `/auth`.
