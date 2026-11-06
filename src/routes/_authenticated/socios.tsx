@@ -250,6 +250,219 @@ function Content() {
 
       <ReasonDialog open={Boolean(voiding)} title="Estornar movimentação" description={voiding ? <>Estornar <strong>{voiding.description}</strong> ({formatBRL(voiding.amount_cents)})? O lançamento original fica preservado no histórico.</> : null} action="Estornar" onClose={() => setVoiding(null)}
         onConfirm={async (reason) => { await voidPartnerMovement({ data: { id: voiding!.id, reason } }); toast.success("Movimentação estornada."); await refresh(); }} />
+
+      <DistributionSection partners={partners} period={period} />
     </div>
+  );
+}
+
+function DistributionSection({ partners, period }: { partners: { id: string; full_name: string }[]; period: ReturnType<typeof usePeriod> }) {
+  const qc = useQueryClient();
+  const listFn = useServerFn(listDistributions);
+  const overviewFn = useServerFn(getFinanceOverview);
+  const { data } = useQuery({ queryKey: ["distributions"], queryFn: () => listFn({}) });
+  const { data: overview } = useQuery({ queryKey: ["fin-overview", period.range.start, period.range.end], queryFn: () => overviewFn({ data: period.range }) });
+  const [approveOpen, setApproveOpen] = useState(false);
+  const [total, setTotal] = useState("");
+  const [decisionDate, setDecisionDate] = useState(todayISO());
+  const [notes, setNotes] = useState("");
+  const [validated, setValidated] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [paying, setPaying] = useState<{ dist: ProfitDistribution; partnerId: string } | null>(null);
+  const [payAmount, setPayAmount] = useState("");
+  const [payDate, setPayDate] = useState(todayISO());
+  const [payAccount, setPayAccount] = useState("");
+  const [payNotes, setPayNotes] = useState("");
+  const [payReceipt, setPayReceipt] = useState<File | null>(null);
+  const [voidingDist, setVoidingDist] = useState<ProfitDistribution | null>(null);
+  const [voidingPay, setVoidingPay] = useState<DistributionPayment | null>(null);
+
+  const partnerName = (id: string) => partners.find((p) => p.id === id)?.full_name ?? "Sócio";
+  const refresh = async () => {
+    await qc.invalidateQueries({ queryKey: ["distributions"] });
+    await qc.invalidateQueries({ queryKey: ["fin-overview"] });
+  };
+
+  const totals = data?.totals;
+  const totalCents = parseBRLToCents(total);
+  const approveValid = Boolean(totalCents && totalCents > 0 && decisionDate && validated);
+
+  async function submitApproval() {
+    if (!totalCents) return;
+    setSaving(true);
+    try {
+      await createDistribution({ data: { totalCents, decisionDate, notes, validatedDistributable: validated } });
+      toast.success("Distribuição aprovada. O caixa só será reduzido quando houver pagamento efetivo.");
+      setApproveOpen(false); setConfirming(false); setTotal(""); setNotes(""); setValidated(false);
+      await refresh();
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Não foi possível aprovar."); }
+    finally { setSaving(false); }
+  }
+
+  async function submitPayment() {
+    if (!paying) return;
+    const amount = parseBRLToCents(payAmount);
+    if (!amount || amount <= 0) { toast.error("Informe um valor válido."); return; }
+    if (!payAccount) { toast.error("Selecione a conta utilizada."); return; }
+    setSaving(true);
+    try {
+      const receiptPath = payReceipt ? await uploadReceipt(payReceipt) : null;
+      await payDistribution({ data: { distributionId: paying.dist.id, partnerId: paying.partnerId, amountCents: amount, paidAt: payDate, accountId: payAccount, notes: payNotes, receiptPath } });
+      toast.success("Pagamento registrado.");
+      setPaying(null); setPayAmount(""); setPayNotes(""); setPayReceipt(null); setPayAccount("");
+      await refresh();
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Não foi possível registrar o pagamento."); }
+    finally { setSaving(false); }
+  }
+
+  const distributions = data?.distributions ?? [];
+  const payments = data?.payments ?? [];
+
+  return (
+    <section className="grid gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h2 className="font-display text-base font-semibold">Distribuição eventual de lucros</h2>
+          <p className="text-xs text-muted-foreground">Divisão 50/50 entre Enison e Jonathan. A aprovação não movimenta o caixa — somente o pagamento efetivo. Não é despesa operacional.</p>
+        </div>
+        <Button variant="outline" onClick={() => setApproveOpen(true)}><HandCoins className="mr-1 h-4 w-4" />Distribuir lucros</Button>
+      </div>
+
+      {overview && (
+        <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+          <StatCard label="Lucro apurado no período" cents={overview.indicators.economicResultCents} hint="Resultado econômico (competência)" tone="auto" />
+          <StatCard label="Saldo em contas" cents={overview.cash.totals.closingCents} hint="Caixa efetivo — não é tudo distribuível" tone="auto" />
+          <StatCard label="Total aprovado p/ distribuição" cents={totals?.approvedCents ?? 0} />
+          <StatCard label="Saldo pendente de pagamento" cents={totals?.pendingCents ?? 0} tone="auto" />
+        </div>
+      )}
+      {totals && partners.length > 0 && (
+        <div className="grid grid-cols-2 gap-2 sm:max-w-xl">
+          {partners.map((p) => (
+            <StatCard key={p.id} label={`Pago a ${p.full_name}`} cents={totals.paidByPartner[p.id] ?? 0} />
+          ))}
+        </div>
+      )}
+
+      {distributions.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma distribuição aprovada.</p>}
+      <div className="grid gap-2">
+        {distributions.map((d) => {
+          const st = distributionStatus(d, payments);
+          const pays = payments.filter((p) => p.distribution_id === d.id);
+          return (
+            <Card key={d.id}>
+              <CardContent className="grid gap-3 p-4">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <p className="font-medium">Distribuição de {formatBRL(d.total_cents)} {d.status === "estornada" && <Badge variant="secondary" className="ml-1">Estornada</Badge>}</p>
+                    <p className="text-xs text-muted-foreground">Decisão em {formatISODate(d.decision_date)}{d.notes ? ` · ${d.notes}` : ""}</p>
+                    {d.void_reason && <p className="text-xs text-muted-foreground">Estorno: {d.void_reason}</p>}
+                  </div>
+                  <div className="text-right text-sm">
+                    <p className="font-semibold">{formatBRL(st.paidTotalCents)} pagos</p>
+                    <p className="text-xs text-muted-foreground">Pendente: {formatBRL(st.pendingCents)}</p>
+                  </div>
+                </div>
+                {d.status === "ativa" && st.pendingCents > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {partners.map((p) => {
+                      const pending = st.pendingByPartner(p.id);
+                      return (
+                        <Button key={p.id} size="sm" variant="outline" disabled={pending <= 0}
+                          onClick={() => { setPaying({ dist: d, partnerId: p.id }); setPayAmount((pending / 100).toFixed(2).replace(".", ",")); setPayDate(todayISO()); }}>
+                          Pagar {p.full_name} ({formatBRL(pending)})
+                        </Button>
+                      );
+                    })}
+                    <Button size="sm" variant="ghost" onClick={() => setVoidingDist(d)}><Ban className="mr-1 h-3.5 w-3.5" />Estornar distribuição</Button>
+                  </div>
+                )}
+                {pays.length > 0 && (
+                  <div className="grid gap-1.5">
+                    {pays.map((p) => (
+                      <div key={p.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-muted/50 p-2 text-sm">
+                        <div className="min-w-0">
+                          <p className="font-medium">{partnerName(p.partner_id)} — {formatBRL(p.amount_cents)}</p>
+                          <p className="text-xs text-muted-foreground">Pago em {formatISODate(p.paid_at)}{p.notes ? ` · ${p.notes}` : ""}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {p.status === "estornado" ? <Badge variant="secondary" title={p.void_reason ?? undefined}>Estornado</Badge> : <Badge>Pago</Badge>}
+                          <ReceiptLink path={p.receipt_path} />
+                          {p.status === "ativo" && <Button size="sm" variant="ghost" onClick={() => setVoidingPay(p)}><Ban className="h-3.5 w-3.5" /></Button>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      <Dialog open={approveOpen} onOpenChange={(o) => { if (!o) { setApproveOpen(false); setConfirming(false); } }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader><DialogTitle>{confirming ? "Confirmar aprovação" : "Distribuir lucros"}</DialogTitle></DialogHeader>
+          {!confirming ? (
+            <div className="grid gap-3">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="grid gap-1.5"><Label>Valor total aprovado *</Label><Input inputMode="decimal" placeholder="0,00" value={total} onChange={(e) => setTotal(e.target.value)} /></div>
+                <div className="grid gap-1.5"><Label>Data da decisão *</Label><Input type="date" value={decisionDate} onChange={(e) => setDecisionDate(e.target.value)} /></div>
+              </div>
+              {totalCents != null && totalCents > 0 && (
+                <p className="text-xs text-muted-foreground">Divisão 50/50: {formatBRL(Math.ceil(totalCents / 2))} e {formatBRL(Math.floor(totalCents / 2))} para cada sócio. Os pagamentos podem ser feitos em datas e contas diferentes.</p>
+              )}
+              <div className="grid gap-1.5"><Label>Observações</Label><Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
+              <label className="flex items-start gap-2 text-sm">
+                <Checkbox checked={validated} onCheckedChange={(v) => setValidated(v === true)} className="mt-0.5" />
+                <span>Confirmo que o valor foi validado como <strong>lucro distribuível</strong>. O saldo do sistema não garante, por si só, disponibilidade jurídica ou contábil.</span>
+              </label>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setApproveOpen(false)}>Cancelar</Button>
+                <Button disabled={!approveValid} onClick={() => setConfirming(true)}>Revisar e confirmar</Button>
+              </div>
+            </div>
+          ) : (
+            <div className="grid gap-3">
+              <div className="rounded-md bg-muted/50 p-3 text-sm">
+                <p className="font-medium">Distribuição de lucros — {formatBRL(totalCents)}</p>
+                <p className="text-xs text-muted-foreground">Decisão em {formatISODate(decisionDate)} · 50% para cada sócio · validado como lucro distribuível</p>
+                {notes && <p className="mt-1">{notes}</p>}
+              </div>
+              <p className="text-xs text-muted-foreground">A aprovação não reduz o caixa. Cada pagamento será registrado separadamente, com conta e data efetiva.</p>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" disabled={saving} onClick={() => setConfirming(false)}>Voltar</Button>
+                <Button disabled={saving} onClick={submitApproval}>{saving ? "Aprovando…" : "Confirmar aprovação"}</Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(paying)} onOpenChange={(o) => { if (!o) setPaying(null); }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader><DialogTitle>Pagar distribuição — {paying ? partnerName(paying.partnerId) : ""}</DialogTitle></DialogHeader>
+          <div className="grid gap-3">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="grid gap-1.5"><Label>Valor *</Label><Input inputMode="decimal" placeholder="0,00" value={payAmount} onChange={(e) => setPayAmount(e.target.value)} /></div>
+              <div className="grid gap-1.5"><Label>Data efetiva *</Label><Input type="date" value={payDate} onChange={(e) => setPayDate(e.target.value)} /></div>
+            </div>
+            <AccountSelect value={payAccount} onChange={setPayAccount} label="Conta utilizada" required />
+            <div className="grid gap-1.5"><Label>Observações</Label><Textarea rows={2} value={payNotes} onChange={(e) => setPayNotes(e.target.value)} /></div>
+            <ReceiptInput file={payReceipt} onChange={setPayReceipt} />
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setPaying(null)}>Cancelar</Button>
+              <Button disabled={saving} onClick={submitPayment}>{saving ? "Registrando…" : "Registrar pagamento"}</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <ReasonDialog open={Boolean(voidingDist)} title="Estornar distribuição" description={voidingDist ? <>Estornar a distribuição de <strong>{formatBRL(voidingDist.total_cents)}</strong>? Só é possível sem pagamentos ativos. O registro original fica preservado.</> : null} action="Estornar" onClose={() => setVoidingDist(null)}
+        onConfirm={async (reason) => { await voidDistribution({ data: { id: voidingDist!.id, reason } }); toast.success("Distribuição estornada."); await refresh(); }} />
+      <ReasonDialog open={Boolean(voidingPay)} title="Estornar pagamento" description={voidingPay ? <>Estornar o pagamento de <strong>{formatBRL(voidingPay.amount_cents)}</strong> a {partnerName(voidingPay.partner_id)}? O valor volta ao saldo da conta.</> : null} action="Estornar" onClose={() => setVoidingPay(null)}
+        onConfirm={async (reason) => { await voidDistributionPayment({ data: { id: voidingPay!.id, reason } }); toast.success("Pagamento estornado."); await refresh(); }} />
+    </section>
   );
 }
