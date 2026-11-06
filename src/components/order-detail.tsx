@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { OrderOrigin } from "@/components/lead-ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus, Trash2 } from "lucide-react";
@@ -196,6 +197,8 @@ export function OrderDetailSheet({ orderId, onClose, isAdmin }: Props) {
                 <>
                   <Separator />
                   <OrderFinancials orderId={order.id} technicianId={order.technician_id} technicianName={order.technicians?.full_name ?? null} />
+                  <Separator />
+                  <OrderOrigin orderId={order.id} />
                 </>
               )}
 

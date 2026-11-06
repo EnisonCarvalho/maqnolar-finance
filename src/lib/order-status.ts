@@ -64,6 +64,7 @@ export const QUOTE_STATUS_LABELS: Record<string, string> = {
 
 export const EVENT_TYPE_LABELS: Record<string, string> = {
   criacao: "Criação",
+  origem_corrigida: "Origem corrigida",
   designacao: "Técnico",
   agendamento: "Agendamento",
   reagendamento: "Reagendamento",

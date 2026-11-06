@@ -57,6 +57,13 @@
       "when": 1793997264281,
       "tag": "0007_campaigns",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793997989062,
+      "tag": "0008_leads_attribution",
+      "breakpoints": true
     }
   ]
 }

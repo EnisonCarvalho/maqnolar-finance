@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   LayoutDashboard, Users, CalendarClock, HardHat, Wrench, Percent, Handshake, TrendingUp,
   TrendingDown, Landmark, LineChart, Megaphone, Briefcase, PiggyBank, FileBarChart, History,
-  ShieldCheck, Settings, UserCog, LogOut, type LucideIcon,
+  ShieldCheck, Settings, UserPlus, UserCog, LogOut, type LucideIcon,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -15,7 +15,7 @@ import type { SessionInfo } from "@/hooks/use-session";
 type Item = {
   label: string;
   icon: LucideIcon;
-  to?: "/dashboard" | "/configuracoes" | "/usuarios" | "/clientes" | "/tecnicos" | "/equipamentos" | "/divisao-financeira" | "/atendimentos" | "/agenda" | "/minha-area" | "/acerto-diario" | "/receitas" | "/despesas" | "/contas" | "/fluxo-de-caixa" | "/campanhas";
+  to?: "/dashboard" | "/configuracoes" | "/usuarios" | "/clientes" | "/tecnicos" | "/equipamentos" | "/divisao-financeira" | "/atendimentos" | "/agenda" | "/minha-area" | "/acerto-diario" | "/receitas" | "/despesas" | "/contas" | "/fluxo-de-caixa" | "/campanhas" | "/leads";
 };
 
 const adminGroups: { label: string; items: Item[] }[] = [
@@ -46,6 +46,7 @@ const adminGroups: { label: string; items: Item[] }[] = [
     label: "Gestão",
     items: [
       { label: "Campanhas", icon: Megaphone, to: "/campanhas" },
+      { label: "Leads", icon: UserPlus, to: "/leads" },
       { label: "Sócios e pró-labore", icon: Briefcase },
       { label: "Investimentos", icon: PiggyBank },
       { label: "Relatórios", icon: FileBarChart },

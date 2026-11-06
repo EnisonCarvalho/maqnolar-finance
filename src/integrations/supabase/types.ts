@@ -603,6 +603,151 @@ export type Database = {
         }
         Relationships: []
       }
+      lead_lost_reasons: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      leads: {
+        Row: {
+          bairro: string | null
+          campaign_id: string | null
+          cidade: string | null
+          contacted_at: string
+          converted_at: string | null
+          created_at: string
+          created_by: string | null
+          creative_code: string | null
+          customer_id: string | null
+          equipment_type_id: string | null
+          full_name: string
+          id: string
+          interest_label: string | null
+          lost_notes: string | null
+          lost_reason_id: string | null
+          notes: string | null
+          order_id: string | null
+          origin: string
+          phone: string | null
+          phone_digits: string | null
+          service_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          bairro?: string | null
+          campaign_id?: string | null
+          cidade?: string | null
+          contacted_at?: string
+          converted_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          creative_code?: string | null
+          customer_id?: string | null
+          equipment_type_id?: string | null
+          full_name: string
+          id?: string
+          interest_label?: string | null
+          lost_notes?: string | null
+          lost_reason_id?: string | null
+          notes?: string | null
+          order_id?: string | null
+          origin: string
+          phone?: string | null
+          phone_digits?: string | null
+          service_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          bairro?: string | null
+          campaign_id?: string | null
+          cidade?: string | null
+          contacted_at?: string
+          converted_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          creative_code?: string | null
+          customer_id?: string | null
+          equipment_type_id?: string | null
+          full_name?: string
+          id?: string
+          interest_label?: string | null
+          lost_notes?: string | null
+          lost_reason_id?: string | null
+          notes?: string | null
+          order_id?: string | null
+          origin?: string
+          phone?: string | null
+          phone_digits?: string | null
+          service_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_equipment_type_id_fkey"
+            columns: ["equipment_type_id"]
+            isOneToOne: false
+            referencedRelation: "equipment_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_lost_reason_id_fkey"
+            columns: ["lost_reason_id"]
+            isOneToOne: false
+            referencedRelation: "lead_lost_reasons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "service_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       monthly_closings: {
         Row: {
           closed_at: string
@@ -722,6 +867,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      origin_corrections: {
+        Row: {
+          actor_user_id: string | null
+          created_at: string
+          entity_id: string
+          entity_type: string
+          id: string
+          new_campaign_id: string | null
+          new_creative_code: string | null
+          new_origin: string | null
+          old_campaign_id: string | null
+          old_creative_code: string | null
+          old_origin: string | null
+          reason: string
+        }
+        Insert: {
+          actor_user_id?: string | null
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          id?: string
+          new_campaign_id?: string | null
+          new_creative_code?: string | null
+          new_origin?: string | null
+          old_campaign_id?: string | null
+          old_creative_code?: string | null
+          old_origin?: string | null
+          reason: string
+        }
+        Update: {
+          actor_user_id?: string | null
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          new_campaign_id?: string | null
+          new_creative_code?: string | null
+          new_origin?: string | null
+          old_campaign_id?: string | null
+          old_creative_code?: string | null
+          old_origin?: string | null
+          reason?: string
+        }
+        Relationships: []
       }
       other_revenues: {
         Row: {
@@ -1136,6 +1326,7 @@ export type Database = {
       service_orders: {
         Row: {
           bairro: string | null
+          campaign_id: string | null
           cep: string | null
           cidade: string | null
           code: string
@@ -1143,6 +1334,7 @@ export type Database = {
           completed_at: string | null
           created_at: string
           created_by: string | null
+          creative_code: string | null
           customer_id: string
           endereco: string | null
           equipment_type_id: string | null
@@ -1150,9 +1342,11 @@ export type Database = {
           estimated_minutes: number
           executed_at: string | null
           id: string
+          lead_id: string | null
           notes: string | null
           numero: string | null
           opened_at: string
+          origin: string | null
           ponto_referencia: string | null
           reported_problem: string
           scheduled_start: string | null
@@ -1163,6 +1357,7 @@ export type Database = {
         }
         Insert: {
           bairro?: string | null
+          campaign_id?: string | null
           cep?: string | null
           cidade?: string | null
           code?: string
@@ -1170,6 +1365,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
+          creative_code?: string | null
           customer_id: string
           endereco?: string | null
           equipment_type_id?: string | null
@@ -1177,9 +1373,11 @@ export type Database = {
           estimated_minutes?: number
           executed_at?: string | null
           id?: string
+          lead_id?: string | null
           notes?: string | null
           numero?: string | null
           opened_at?: string
+          origin?: string | null
           ponto_referencia?: string | null
           reported_problem?: string
           scheduled_start?: string | null
@@ -1190,6 +1388,7 @@ export type Database = {
         }
         Update: {
           bairro?: string | null
+          campaign_id?: string | null
           cep?: string | null
           cidade?: string | null
           code?: string
@@ -1197,6 +1396,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
+          creative_code?: string | null
           customer_id?: string
           endereco?: string | null
           equipment_type_id?: string | null
@@ -1204,9 +1404,11 @@ export type Database = {
           estimated_minutes?: number
           executed_at?: string | null
           id?: string
+          lead_id?: string | null
           notes?: string | null
           numero?: string | null
           opened_at?: string
+          origin?: string | null
           ponto_referencia?: string | null
           reported_problem?: string
           scheduled_start?: string | null
@@ -1216,6 +1418,13 @@ export type Database = {
           visit_billable?: boolean
         }
         Relationships: [
+          {
+            foreignKeyName: "service_orders_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "service_orders_customer_id_fkey"
             columns: ["customer_id"]
@@ -1228,6 +1437,13 @@ export type Database = {
             columns: ["equipment_type_id"]
             isOneToOne: false
             referencedRelation: "equipment_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_orders_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
             referencedColumns: ["id"]
           },
           {
