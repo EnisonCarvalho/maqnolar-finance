@@ -28,6 +28,7 @@ import { Route as AuthenticatedFluxoDeCaixaRouteImport } from './routes/_authent
 import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
 import { Route as AuthenticatedMinhaAreaRouteImport } from './routes/_authenticated/minha-area'
 import { Route as AuthenticatedReceitasRouteImport } from './routes/_authenticated/receitas'
+import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
 import { Route as AuthenticatedSociosRouteImport } from './routes/_authenticated/socios'
 import { Route as AuthenticatedTecnicosRouteImport } from './routes/_authenticated/tecnicos'
 import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticated/usuarios'
@@ -132,6 +133,11 @@ const AuthenticatedReceitasRoute = AuthenticatedReceitasRouteImport.update({
   path: '/receitas',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedRelatoriosRoute = AuthenticatedRelatoriosRouteImport.update({
+  id: '/relatorios',
+  path: '/relatorios',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSociosRoute = AuthenticatedSociosRouteImport.update({
   id: '/socios',
   path: '/socios',
@@ -167,6 +173,7 @@ export interface FileRoutesByFullPath {
   '/leads': typeof AuthenticatedLeadsRoute
   '/minha-area': typeof AuthenticatedMinhaAreaRoute
   '/receitas': typeof AuthenticatedReceitasRoute
+  '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/socios': typeof AuthenticatedSociosRoute
   '/tecnicos': typeof AuthenticatedTecnicosRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
@@ -190,6 +197,7 @@ export interface FileRoutesByTo {
   '/leads': typeof AuthenticatedLeadsRoute
   '/minha-area': typeof AuthenticatedMinhaAreaRoute
   '/receitas': typeof AuthenticatedReceitasRoute
+  '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/socios': typeof AuthenticatedSociosRoute
   '/tecnicos': typeof AuthenticatedTecnicosRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
@@ -215,6 +223,7 @@ export interface FileRoutesById {
   '/_authenticated/leads': typeof AuthenticatedLeadsRoute
   '/_authenticated/minha-area': typeof AuthenticatedMinhaAreaRoute
   '/_authenticated/receitas': typeof AuthenticatedReceitasRoute
+  '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/socios': typeof AuthenticatedSociosRoute
   '/_authenticated/tecnicos': typeof AuthenticatedTecnicosRoute
   '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
@@ -240,6 +249,7 @@ export interface FileRouteTypes {
     | '/leads'
     | '/minha-area'
     | '/receitas'
+    | '/relatorios'
     | '/socios'
     | '/tecnicos'
     | '/usuarios'
@@ -263,6 +273,7 @@ export interface FileRouteTypes {
     | '/leads'
     | '/minha-area'
     | '/receitas'
+    | '/relatorios'
     | '/socios'
     | '/tecnicos'
     | '/usuarios'
@@ -287,6 +298,7 @@ export interface FileRouteTypes {
     | '/_authenticated/leads'
     | '/_authenticated/minha-area'
     | '/_authenticated/receitas'
+    | '/_authenticated/relatorios'
     | '/_authenticated/socios'
     | '/_authenticated/tecnicos'
     | '/_authenticated/usuarios'
@@ -434,6 +446,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReceitasRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/relatorios': {
+      id: '/_authenticated/relatorios'
+      path: '/relatorios'
+      fullPath: '/relatorios'
+      preLoaderRoute: typeof AuthenticatedRelatoriosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/socios': {
       id: '/_authenticated/socios'
       path: '/socios'
@@ -474,6 +493,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRoute
   AuthenticatedMinhaAreaRoute: typeof AuthenticatedMinhaAreaRoute
   AuthenticatedReceitasRoute: typeof AuthenticatedReceitasRoute
+  AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
   AuthenticatedSociosRoute: typeof AuthenticatedSociosRoute
   AuthenticatedTecnicosRoute: typeof AuthenticatedTecnicosRoute
   AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRoute
@@ -495,6 +515,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLeadsRoute: AuthenticatedLeadsRoute,
   AuthenticatedMinhaAreaRoute: AuthenticatedMinhaAreaRoute,
   AuthenticatedReceitasRoute: AuthenticatedReceitasRoute,
+  AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
   AuthenticatedSociosRoute: AuthenticatedSociosRoute,
   AuthenticatedTecnicosRoute: AuthenticatedTecnicosRoute,
   AuthenticatedUsuariosRoute: AuthenticatedUsuariosRoute,
