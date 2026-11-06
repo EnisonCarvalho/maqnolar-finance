@@ -3,7 +3,7 @@ import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/password-input";
 import { Label } from "@/components/ui/label";
 
 export const Route = createFileRoute("/reset-password")({
@@ -41,7 +41,7 @@ function ResetPage() {
         <h1 className="text-2xl font-semibold">Definir nova senha</h1>
         <div className="space-y-2">
           <Label htmlFor="pw">Nova senha</Label>
-          <Input id="pw" type="password" minLength={8} required value={password} onChange={(e) => setPassword(e.target.value)} />
+          <PasswordInput id="pw" minLength={8} required value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" />
         </div>
         <Button type="submit" className="w-full" disabled={loading}>Salvar</Button>
       </form>
