@@ -40,7 +40,7 @@ async function logEvent(supabase: any, userId: string, orderId: string, descript
 const brl = (c: number) => `R$ ${(c / 100).toFixed(2).replace(".", ",")}`;
 
 /** Carrega os dados financeiros e monta os lançamentos do acerto (sempre no servidor). */
-async function loadLedger(supabase: any) {
+export async function loadLedger(supabase: any) {
   const [fin, pays, parts, transfers, techs] = await Promise.all([
     supabase
       .from("order_financials")
@@ -148,6 +148,73 @@ export const getSettlement = createServerFn({ method: "POST" })
       };
     });
     return { technicians, closings: closings ?? [] };
+  });
+
+/**
+ * Acerto do próprio técnico logado (Passo 11A): mesmos cálculos do acerto diário,
+ * mas escopados ao técnico vinculado à conta. Administradores sem vínculo de
+ * técnico recebem { linked: false } e usam o acerto diário normal.
+ */
+export const getMySettlement = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { start?: string | null; end?: string | null }) => {
+    const start = input?.start || null;
+    const end = input?.end || null;
+    if (start && !isDate(start)) throw new Error("Data inicial inválida.");
+    if (end && !isDate(end)) throw new Error("Data final inválida.");
+    return { start, end };
+  })
+  .handler(async ({ data, context }) => {
+    const { data: tech } = await context.supabase
+      .from("technicians")
+      .select("id, full_name, active")
+      .eq("profile_id", context.userId)
+      .maybeSingle();
+    if (!tech) return { linked: false as const };
+    if (!tech.active) return { linked: true as const, inactive: true as const, technician: { id: tech.id, name: tech.full_name } };
+
+    const ledger = await loadLedger(context.supabase);
+    const entries = buildEntries(ledger.orders, ledger.payments);
+    const period = summarize(entries, ledger.transfers, data.start, data.end).find((s) => s.technicianId === tech.id) ?? null;
+    const overall = summarize(entries, ledger.transfers, null, null).find((s) => s.technicianId === tech.id) ?? null;
+
+    const { data: closings } = await context.supabase
+      .from("settlement_closings")
+      .select("id, period_start, period_end, status, received_cents, technician_share_cents, reimbursement_cents, company_share_cents, to_pay_technician_cents, to_receive_technician_cents, settled_cents, pending_cents, closed_at")
+      .eq("technician_id", tech.id)
+      .order("closed_at", { ascending: false })
+      .limit(50);
+
+    const { data: myTransfers } = await context.supabase
+      .from("technician_transfers")
+      .select("id, transfer_date, amount_cents, direction, method, status, notes")
+      .eq("technician_id", tech.id)
+      .order("transfer_date", { ascending: false })
+      .limit(100);
+
+    const orderInfo = new Map(ledger.orders.map((o) => [o.orderId, o]));
+    const decorate = (s: NonNullable<typeof period> | null) =>
+      s
+        ? {
+            ...s,
+            orders: s.orders.map((ob) => {
+              const info = orderInfo.get(ob.orderId);
+              return { ...ob, code: info?.code ?? "", customerName: info?.customerName ?? "", totalCents: info?.totalCents ?? 0, openedAt: info?.openedAt ?? "", completedAt: info?.completedAt ?? null };
+            }),
+          }
+        : null;
+
+    return {
+      linked: true as const,
+      inactive: false as const,
+      technician: { id: tech.id, name: tech.full_name },
+      period: decorate(period),
+      overall: decorate(overall),
+      overallPendingCents: overall?.pendingCents ?? 0,
+      clientPendingCents: clientPendingFor(ledger.orders, ledger.payments, tech.id),
+      closings: closings ?? [],
+      transfers: myTransfers ?? [],
+    };
   });
 
 export const registerPayment = createServerFn({ method: "POST" })

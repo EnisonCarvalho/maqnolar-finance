@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Navigation, SearchCheck, Wrench, CheckCircle2 } from "lucide-react";
+import { Navigation, SearchCheck, Wrench, CheckCircle2, Wallet, HandCoins, ArrowDownCircle, ArrowUpCircle, Scale, ReceiptText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,6 +12,8 @@ import { ordersQuery } from "@/lib/orders-queries";
 import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS, type OrderStatus } from "@/lib/order-status";
 import { OrderDetailSheet, formatDateTimeBR } from "@/components/order-detail";
 import { changeOrderStatus } from "@/lib/orders.functions";
+import { getMySettlement } from "@/lib/settlement.functions";
+import { formatBRL, formatDateBR } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/minha-area")({
   head: () => ({
@@ -156,7 +158,129 @@ function MinhaAreaPage() {
         </>
       )}
 
+      <MyFinanceSection enabled={Boolean(session?.isTecnico)} />
+
       <OrderDetailSheet orderId={detailId} onClose={() => setDetailId(null)} isAdmin={Boolean(session?.isAdmin)} />
     </div>
+  );
+}
+
+/** Financeiro do próprio técnico (Passo 11A): somente dados do próprio cadastro, calculados no servidor. */
+function MyFinanceSection({ enabled }: { enabled: boolean }) {
+  const { data, isLoading } = useQuery({
+    queryKey: ["my-settlement"],
+    queryFn: () => getMySettlement({ data: {} }),
+    enabled,
+  });
+
+  if (!enabled) return null;
+  if (isLoading) return <p className="text-sm text-muted-foreground">Carregando seu financeiro…</p>;
+  if (!data || !data.linked) {
+    return (
+      <section className="grid gap-2">
+        <h2 className="font-display font-semibold">Meu financeiro</h2>
+        <p className="text-sm text-muted-foreground">
+          Sua conta ainda não está vinculada a um cadastro de técnico. Peça a um administrador para fazer o vínculo na página de Técnicos.
+        </p>
+      </section>
+    );
+  }
+  if (data.inactive) {
+    return (
+      <section className="grid gap-2">
+        <h2 className="font-display font-semibold">Meu financeiro</h2>
+        <p className="text-sm text-muted-foreground">Seu cadastro de técnico está inativo. Fale com um administrador.</p>
+      </section>
+    );
+  }
+
+  const s = data.overall;
+  const pending = data.overallPendingCents;
+  const cards = [
+    { label: "Minha participação nos serviços", value: s?.technicianShareCents ?? 0, icon: Wallet },
+    { label: "Reembolsos de peças devidos a mim", value: s?.reimbursementCents ?? 0, icon: ReceiptText },
+    { label: "Repasses recebidos da MaqnoLar", value: s?.transfersToTechnicianCents ?? 0, icon: ArrowDownCircle },
+    { label: "Valores que devo à MaqnoLar", value: s?.toReceiveFromTechnicianCents ?? 0, icon: ArrowUpCircle },
+  ];
+
+  return (
+    <section className="grid gap-3">
+      <div>
+        <h2 className="font-display font-semibold">Meu financeiro</h2>
+        <p className="text-sm text-muted-foreground">Somente os valores dos seus próprios atendimentos e acertos.</p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {cards.map((c) => (
+          <Card key={c.label}>
+            <CardContent className="grid gap-1 p-4">
+              <c.icon className="h-4 w-4 text-muted-foreground" />
+              <p className="text-xs text-muted-foreground">{c.label}</p>
+              <p className="font-display text-lg font-semibold">{formatBRL(c.value)}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <Card>
+        <CardContent className="flex flex-wrap items-center gap-3 p-4">
+          <Scale className="h-5 w-5 text-muted-foreground" />
+          <div>
+            <p className="text-xs text-muted-foreground">Saldo pendente dos meus acertos</p>
+            <p className="font-display text-xl font-semibold">{formatBRL(Math.abs(pending))}</p>
+          </div>
+          <Badge variant="secondary" className="ml-auto">
+            {pending === 0 ? "Tudo acertado" : pending > 0 ? "A receber da MaqnoLar" : "A devolver à MaqnoLar"}
+          </Badge>
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-3">
+        <h3 className="font-display text-sm font-semibold">Repasses</h3>
+        {data.transfers.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nenhum repasse registrado ainda.</p>
+        ) : (
+          data.transfers.map((t) => (
+            <Card key={t.id} className={t.status !== "ativo" ? "opacity-60" : ""}>
+              <CardContent className="flex flex-wrap items-center gap-2 p-3 text-sm">
+                {t.direction === "empresa_para_tecnico" ? (
+                  <ArrowDownCircle className="h-4 w-4 text-primary" />
+                ) : (
+                  <ArrowUpCircle className="h-4 w-4 text-muted-foreground" />
+                )}
+                <span className="font-medium">{formatBRL(t.amount_cents)}</span>
+                <span className="text-muted-foreground">
+                  {t.direction === "empresa_para_tecnico" ? "MaqnoLar → você" : "Você → MaqnoLar"}
+                </span>
+                <span className="ml-auto text-xs text-muted-foreground">{formatDateBR(t.transfer_date)}</span>
+                {t.status !== "ativo" && <Badge variant="secondary">estornado</Badge>}
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
+
+      <div className="grid gap-3">
+        <h3 className="font-display text-sm font-semibold">Fechamentos de acerto</h3>
+        {data.closings.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nenhum fechamento registrado ainda.</p>
+        ) : (
+          data.closings.map((c) => (
+            <Card key={c.id} className={c.status === "reaberto" ? "opacity-60" : ""}>
+              <CardContent className="flex flex-wrap items-center gap-2 p-3 text-sm">
+                <HandCoins className="h-4 w-4 text-muted-foreground" />
+                <span>
+                  {formatDateBR(c.period_start)} a {formatDateBR(c.period_end)}
+                </span>
+                <span className="text-muted-foreground">Pendente: {formatBRL(Math.abs(c.pending_cents))}</span>
+                <Badge variant="secondary" className="ml-auto">
+                  {c.status === "fechado" ? "Acertado" : c.status === "fechado_com_pendencia" ? "Com pendência" : "Reaberto"}
+                </Badge>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
+    </section>
   );
 }
