@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as AuthenticatedAcertoDiarioRouteImport } from './routes/_authenticated/acerto-diario'
 import { Route as AuthenticatedAgendaRouteImport } from './routes/_authenticated/agenda'
 import { Route as AuthenticatedAtendimentosRouteImport } from './routes/_authenticated/atendimentos'
 import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
@@ -43,6 +44,12 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAcertoDiarioRoute =
+  AuthenticatedAcertoDiarioRouteImport.update({
+    id: '/acerto-diario',
+    path: '/acerto-diario',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAgendaRoute = AuthenticatedAgendaRouteImport.update({
   id: '/agenda',
   path: '/agenda',
@@ -102,6 +109,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/acerto-diario': typeof AuthenticatedAcertoDiarioRoute
   '/agenda': typeof AuthenticatedAgendaRoute
   '/atendimentos': typeof AuthenticatedAtendimentosRoute
   '/clientes': typeof AuthenticatedClientesRoute
@@ -117,6 +125,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/acerto-diario': typeof AuthenticatedAcertoDiarioRoute
   '/agenda': typeof AuthenticatedAgendaRoute
   '/atendimentos': typeof AuthenticatedAtendimentosRoute
   '/clientes': typeof AuthenticatedClientesRoute
@@ -134,6 +143,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/_authenticated/acerto-diario': typeof AuthenticatedAcertoDiarioRoute
   '/_authenticated/agenda': typeof AuthenticatedAgendaRoute
   '/_authenticated/atendimentos': typeof AuthenticatedAtendimentosRoute
   '/_authenticated/clientes': typeof AuthenticatedClientesRoute
@@ -151,6 +161,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/reset-password'
+    | '/acerto-diario'
     | '/agenda'
     | '/atendimentos'
     | '/clientes'
@@ -166,6 +177,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/reset-password'
+    | '/acerto-diario'
     | '/agenda'
     | '/atendimentos'
     | '/clientes'
@@ -182,6 +194,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/reset-password'
+    | '/_authenticated/acerto-diario'
     | '/_authenticated/agenda'
     | '/_authenticated/atendimentos'
     | '/_authenticated/clientes'
@@ -230,6 +243,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/acerto-diario': {
+      id: '/_authenticated/acerto-diario'
+      path: '/acerto-diario'
+      fullPath: '/acerto-diario'
+      preLoaderRoute: typeof AuthenticatedAcertoDiarioRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/agenda': {
       id: '/_authenticated/agenda'
@@ -305,6 +325,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAcertoDiarioRoute: typeof AuthenticatedAcertoDiarioRoute
   AuthenticatedAgendaRoute: typeof AuthenticatedAgendaRoute
   AuthenticatedAtendimentosRoute: typeof AuthenticatedAtendimentosRoute
   AuthenticatedClientesRoute: typeof AuthenticatedClientesRoute
@@ -318,6 +339,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAcertoDiarioRoute: AuthenticatedAcertoDiarioRoute,
   AuthenticatedAgendaRoute: AuthenticatedAgendaRoute,
   AuthenticatedAtendimentosRoute: AuthenticatedAtendimentosRoute,
   AuthenticatedClientesRoute: AuthenticatedClientesRoute,

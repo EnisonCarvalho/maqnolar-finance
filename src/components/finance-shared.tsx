@@ -69,7 +69,10 @@ export function ReceiptLink({ path }: { path: string | null }) {
         setLoading(true);
         const { data, error } = await supabase.storage.from("comprovantes").createSignedUrl(path, 300);
         setLoading(false);
-        if (error || !data) return toast.error("Não foi possível abrir o comprovante.");
+        if (error || !data) {
+          toast.error("Não foi possível abrir o comprovante.");
+          return;
+        }
         window.open(data.signedUrl, "_blank", "noopener");
       }}
     >

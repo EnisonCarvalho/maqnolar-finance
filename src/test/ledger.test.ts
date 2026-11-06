@@ -129,6 +129,6 @@ describe("Datas financeiras", () => {
   it("atendimento aberto em 31/10 e pago em 02/11 entra no período de novembro, não no de outubro", () => {
     const entries = buildEntries([order()], [pay({ paidAt: "2026-11-02" })]);
     expect(summarize(entries, [], "2026-10-01", "2026-10-31")).toHaveLength(0);
-    expect(summarize(entries, [], "2026-11-01", "2026-11-30")[0].receivedFromClientsCents).toBe(100000);
+    expect(summarize(entries, [], "2026-11-01", "2026-11-30")[0]?.receivedFromClientsCents).toBe(100000);
   });
 });
