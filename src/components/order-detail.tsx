@@ -196,6 +196,8 @@ export function OrderDetailSheet({ orderId, onClose, isAdmin }: Props) {
                 <>
                   <Separator />
                   <OrderFinancials orderId={order.id} technicianId={order.technician_id} technicianName={order.technicians?.full_name ?? null} />
+                  <Separator />
+                  <OrderOrigin orderId={order.id} />
                 </>
               )}
 
