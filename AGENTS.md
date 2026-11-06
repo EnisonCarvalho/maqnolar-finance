@@ -28,3 +28,9 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+## Project rules
+- Roles live only in `public.user_roles` and are checked with `has_role()`; never derive access from profile fields or the client (prevents privilege escalation).
+- Signed-in pages live under `src/routes/_authenticated/` (client-only gate); sign-in is `/auth`.
+- Financial writes must go through server functions/SQL functions that compute amounts server-side, with values stored in integer cents (auditable, no client-trusted totals).
+- Theme preference is stored per user in `profiles.theme` and mirrored to localStorage for instant apply.
