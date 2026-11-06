@@ -71,6 +71,13 @@
       "when": 1794000020673,
       "tag": "0009_partner_movements",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794000973874,
+      "tag": "0010_profit_distributions",
+      "breakpoints": true
     }
   ]
 }
