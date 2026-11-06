@@ -15,7 +15,7 @@ import type { SessionInfo } from "@/hooks/use-session";
 type Item = {
   label: string;
   icon: LucideIcon;
-  to?: "/dashboard" | "/configuracoes" | "/usuarios" | "/clientes" | "/tecnicos" | "/equipamentos" | "/divisao-financeira" | "/atendimentos" | "/agenda" | "/minha-area" | "/acerto-diario" | "/receitas" | "/despesas" | "/contas" | "/fluxo-de-caixa";
+  to?: "/dashboard" | "/configuracoes" | "/usuarios" | "/clientes" | "/tecnicos" | "/equipamentos" | "/divisao-financeira" | "/atendimentos" | "/agenda" | "/minha-area" | "/acerto-diario" | "/receitas" | "/despesas" | "/contas" | "/fluxo-de-caixa" | "/campanhas";
 };
 
 const adminGroups: { label: string; items: Item[] }[] = [
@@ -45,7 +45,7 @@ const adminGroups: { label: string; items: Item[] }[] = [
   {
     label: "Gestão",
     items: [
-      { label: "Campanhas e ROI", icon: Megaphone },
+      { label: "Campanhas", icon: Megaphone, to: "/campanhas" },
       { label: "Sócios e pró-labore", icon: Briefcase },
       { label: "Investimentos", icon: PiggyBank },
       { label: "Relatórios", icon: FileBarChart },
