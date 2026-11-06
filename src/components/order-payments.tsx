@@ -101,7 +101,7 @@ export function OrderPayments({
     <div className="grid gap-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="font-display font-semibold">Recebimentos do cliente</p>
-        <Button size="sm" onClick={() => setOpen(true)} disabled={clientBalance <= 0 && active.length > 0}>
+        <Button size="sm" onClick={() => setOpen(true)}>
           <Plus className="mr-1 h-4 w-4" /> Registrar recebimento
         </Button>
       </div>
