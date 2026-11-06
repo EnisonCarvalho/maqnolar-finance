@@ -53,7 +53,6 @@ export type Perf = {
 };
 
 const inRange = (d: string | null | undefined, s: string, e: string) => Boolean(d) && d! >= s && d! <= e;
-export const safeDiv = (a: number, b: number): number | null => (b > 0 ? a / b : null);
 
 export function campaignPerformance(input: { allocs: PerfAlloc[]; leads: PerfLead[]; orders: PerfOrder[] }, start: string, end: string): Perf {
   const activeAllocs = input.allocs.filter((a) => a.status === "ativo" && a.expense && a.expense.status !== "cancelada");
@@ -82,7 +81,7 @@ export function campaignPerformance(input: { allocs: PerfAlloc[]; leads: PerfLea
     activeAllocs.length !== allocs.length ||
     uniqueOrders.some((o) => o.totalCents !== null && !inRange(o.competenceDate, start, end));
 
-  const pct = (v: number | null) => (v === null ? null : Math.round(v * 1000) / 10);
+  const pct = (v: number | null) => (v === null ? null : Math.round(v * 10) / 10);
   return {
     investmentCents, investmentPaidCents, leads: leads.length, converted, lost, orders,
     grossCents, companyRevenueCents, companyRevenueReceivedCents, resultCents,
