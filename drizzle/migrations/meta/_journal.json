@@ -8,6 +8,13 @@
       "when": 1793988184646,
       "tag": "0000_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793988590915,
+      "tag": "0001_rbac_explicit_roles",
+      "breakpoints": true
     }
   ]
 }

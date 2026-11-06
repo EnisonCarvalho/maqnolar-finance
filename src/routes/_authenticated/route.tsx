@@ -5,6 +5,7 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/s
 import { AppSidebar } from "@/components/app-sidebar";
 import { useSession } from "@/hooks/use-session";
 import { useTheme } from "@/lib/theme";
+import { NoAccess } from "@/components/no-access";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -22,6 +23,9 @@ function AuthedLayout() {
   useEffect(() => {
     if (session?.theme) setTheme(session.theme, false);
   }, [session?.theme, setTheme]);
+
+  if (session === undefined) return null;
+  if (!session || (!session.isAdmin && !session.isTecnico)) return <NoAccess />;
 
   return (
     <SidebarProvider>
