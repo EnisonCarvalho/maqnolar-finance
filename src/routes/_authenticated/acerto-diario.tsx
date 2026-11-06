@@ -17,6 +17,7 @@ import { formatBRL, parseBRLToCents } from "@/lib/format";
 import { getSettlement, registerTransfer, voidTransfer, closeSettlement, reopenClosing } from "@/lib/settlement.functions";
 import { METHOD_LABELS, ReceiptInput, ReceiptLink, formatISODate, todayISO, uploadReceipt } from "@/components/finance-shared";
 import { useSession } from "@/hooks/use-session";
+import { AccountSelect } from "@/components/finance-ui";
 import { NoAccess } from "@/components/no-access";
 
 export const Route = createFileRoute("/_authenticated/acerto-diario")({
@@ -359,6 +360,7 @@ function TransferDialog({ target, onClose, onDone }: { target: { id: string; nam
   const [method, setMethod] = useState("pix");
   const [source, setSource] = useState("");
   const [dest, setDest] = useState("");
+  const [accountId, setAccountId] = useState("");
   const [notes, setNotes] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [confirming, setConfirming] = useState(false);
@@ -376,7 +378,7 @@ function TransferDialog({ target, onClose, onDone }: { target: { id: string; nam
     mutationFn: async () => {
       const receiptPath = file ? await uploadReceipt(file) : null;
       return registerTransfer({
-        data: { technicianId: target!.id, transferDate: date, amountCents, direction, method, sourceAccount: source, destinationAccount: dest, orderIds: target!.orderIds, notes, receiptPath },
+        data: { technicianId: target!.id, transferDate: date, amountCents, direction, method, sourceAccount: source, destinationAccount: dest, accountId: accountId || null, orderIds: target!.orderIds, notes, receiptPath },
       });
     },
     onSuccess: async () => { toast.success("Repasse registrado."); setLastTarget(null); onClose(); await onDone(); },
@@ -427,6 +429,7 @@ function TransferDialog({ target, onClose, onDone }: { target: { id: string; nam
               <div className="grid gap-1.5"><Label>Conta de origem</Label><Input value={source} onChange={(e) => setSource(e.target.value)} placeholder="Opcional" /></div>
               <div className="grid gap-1.5"><Label>Conta de destino</Label><Input value={dest} onChange={(e) => setDest(e.target.value)} placeholder="Opcional" /></div>
             </div>
+            <AccountSelect label="Conta da MaqnoLar usada" value={accountId} onChange={setAccountId} allowNone />
             {target && target.orderIds.length > 0 && <p className="text-xs text-muted-foreground">Vinculado a {target.orderIds.length} atendimento(s) com saldo no período.</p>}
             <div className="grid gap-1.5"><Label>Observações</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} /></div>
             <ReceiptInput file={file} onChange={setFile} />

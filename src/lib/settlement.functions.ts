@@ -154,7 +154,7 @@ export const registerPayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: {
     orderId: string; amountCents: number; paidAt: string; receiverType: string; receiverTechnicianId?: string | null;
-    receiverLabel?: string; method: string; destinationAccount?: string; notes?: string; receiptPath?: string | null; authorizedReason?: string;
+    receiverLabel?: string; method: string; destinationAccount?: string; accountId?: string | null; notes?: string; receiptPath?: string | null; authorizedReason?: string;
   }) => {
     if (!isUuid(input.orderId)) throw new Error("Atendimento inválido.");
     if (!isDate(input.paidAt)) throw new Error("Data do pagamento inválida.");
@@ -171,6 +171,7 @@ export const registerPayment = createServerFn({ method: "POST" })
       receiverLabel: clean(input.receiverLabel, 120) || null,
       method: input.method,
       destinationAccount: clean(input.destinationAccount, 120) || null,
+      accountId: input.receiverType === "maqnolar" && isUuid(input.accountId) ? input.accountId : null,
       notes: clean(input.notes) || null,
       receiptPath: clean(input.receiptPath, 300) || null,
       authorizedReason: clean(input.authorizedReason, 300) || null,
@@ -178,7 +179,7 @@ export const registerPayment = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
-    const { error } = await context.supabase.from("customer_payments").insert({
+    const { error } = await context.supabase.from("customer_payments".insert({
       order_id: data.orderId,
       amount_cents: data.amountCents,
       paid_at: data.paidAt,
@@ -187,6 +188,7 @@ export const registerPayment = createServerFn({ method: "POST" })
       receiver_label: data.receiverLabel,
       method: data.method,
       destination_account: data.destinationAccount,
+      account_id: data.accountId,
       notes: data.notes,
       receipt_path: data.receiptPath,
       authorized_reason: data.authorizedReason,
@@ -223,7 +225,7 @@ export const registerTransfer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: {
     technicianId: string; transferDate: string; amountCents: number; direction: string; method: string;
-    sourceAccount?: string; destinationAccount?: string; orderIds?: string[]; notes?: string; receiptPath?: string | null; authorizedReason?: string;
+    sourceAccount?: string; destinationAccount?: string; accountId?: string | null; orderIds?: string[]; notes?: string; receiptPath?: string | null; authorizedReason?: string;
   }) => {
     if (!isUuid(input.technicianId)) throw new Error("Selecione o técnico.");
     if (!isDate(input.transferDate)) throw new Error("Data do repasse inválida.");
@@ -237,6 +239,7 @@ export const registerTransfer = createServerFn({ method: "POST" })
       method: input.method,
       sourceAccount: clean(input.sourceAccount, 120) || null,
       destinationAccount: clean(input.destinationAccount, 120) || null,
+      accountId: isUuid(input.accountId) ? input.accountId : null,
       orderIds: (input.orderIds ?? []).filter(isUuid).slice(0, 100),
       notes: clean(input.notes) || null,
       receiptPath: clean(input.receiptPath, 300) || null,
@@ -258,6 +261,7 @@ export const registerTransfer = createServerFn({ method: "POST" })
       method: data.method,
       source_account: data.sourceAccount,
       destination_account: data.destinationAccount,
+      account_id: data.accountId,
       order_ids: data.orderIds,
       notes: data.notes,
       receipt_path: data.receiptPath,

@@ -14,6 +14,7 @@ import { formatBRL, parseBRLToCents } from "@/lib/format";
 import { techniciansQuery, type FinancialRow, type PurchaseRow } from "@/lib/orders-queries";
 import { registerPayment, voidPayment } from "@/lib/settlement.functions";
 import { buildEntries, summarize } from "@/lib/ledger-math";
+import { AccountSelect } from "@/components/finance-ui";
 import { METHOD_LABELS, ReceiptInput, ReceiptLink, formatISODate, todayISO, uploadReceipt } from "@/components/finance-shared";
 
 export type PaymentRow = {
@@ -192,6 +193,7 @@ function PaymentDialog({
   const [receiverLabel, setReceiverLabel] = useState("");
   const [method, setMethod] = useState("pix");
   const [account, setAccount] = useState("");
+  const [accountId, setAccountId] = useState("");
   const [notes, setNotes] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [authorized, setAuthorized] = useState("");
@@ -204,7 +206,7 @@ function PaymentDialog({
   const receiverText = receiver === "maqnolar" ? "MaqnoLar" : receiver === "outro" ? receiverLabel || "outro recebedor" : technicians?.find((t) => t.id === receiverTechnicianId)?.full_name ?? "técnico";
 
   const reset = () => {
-    setAmount(""); setPaidAt(todayISO()); setReceiver("maqnolar"); setReceiverLabel(""); setMethod("pix"); setAccount(""); setNotes(""); setFile(null); setAuthorized(""); setConfirming(false);
+    setAmount(""); setPaidAt(todayISO()); setReceiver("maqnolar"); setReceiverLabel(""); setMethod("pix"); setAccount(""); setNotes(""); setFile(null); setAuthorized(""); setConfirming(false); setAccountId("");
   };
 
   const mutation = useMutation({
@@ -216,7 +218,7 @@ function PaymentDialog({
           receiverType: receiverIsTech ? "tecnico" : receiver,
           receiverTechnicianId,
           receiverLabel,
-          method, destinationAccount: account, notes, receiptPath, authorizedReason: authorized,
+          method, destinationAccount: account, accountId: receiver === "maqnolar" ? accountId || null : null, notes, receiptPath, authorizedReason: authorized,
         },
       });
     },
@@ -278,10 +280,13 @@ function PaymentDialog({
                 </Select>
               </div>
               <div className="grid gap-1.5">
-                <Label>Conta de destino</Label>
+                <Label>Observação da conta</Label>
                 <Input value={account} onChange={(e) => setAccount(e.target.value)} placeholder="Opcional" />
               </div>
             </div>
+            {receiver === "maqnolar" && (
+              <AccountSelect label="Conta da MaqnoLar que recebeu" value={accountId} onChange={setAccountId} allowNone />
+            )}
             {overpay && amountCents > 0 && (
               <div className="grid gap-1.5 rounded-md border border-destructive/40 p-2">
                 <Label className="text-destructive">Valor acima do saldo do cliente. Justifique o ajuste autorizado *</Label>
