@@ -18,9 +18,11 @@ import { Route as AuthenticatedAgendaRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedAtendimentosRouteImport } from './routes/_authenticated/atendimentos'
 import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
+import { Route as AuthenticatedContasRouteImport } from './routes/_authenticated/contas'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedDivisaoFinanceiraRouteImport } from './routes/_authenticated/divisao-financeira'
 import { Route as AuthenticatedEquipamentosRouteImport } from './routes/_authenticated/equipamentos'
+import { Route as AuthenticatedFluxoDeCaixaRouteImport } from './routes/_authenticated/fluxo-de-caixa'
 import { Route as AuthenticatedMinhaAreaRouteImport } from './routes/_authenticated/minha-area'
 import { Route as AuthenticatedTecnicosRouteImport } from './routes/_authenticated/tecnicos'
 import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticated/usuarios'
@@ -72,6 +74,11 @@ const AuthenticatedConfiguracoesRoute =
     path: '/configuracoes',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedContasRoute = AuthenticatedContasRouteImport.update({
+  id: '/contas',
+  path: '/contas',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -87,6 +94,12 @@ const AuthenticatedEquipamentosRoute =
   AuthenticatedEquipamentosRouteImport.update({
     id: '/equipamentos',
     path: '/equipamentos',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFluxoDeCaixaRoute =
+  AuthenticatedFluxoDeCaixaRouteImport.update({
+    id: '/fluxo-de-caixa',
+    path: '/fluxo-de-caixa',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedMinhaAreaRoute = AuthenticatedMinhaAreaRouteImport.update({
@@ -114,9 +127,11 @@ export interface FileRoutesByFullPath {
   '/atendimentos': typeof AuthenticatedAtendimentosRoute
   '/clientes': typeof AuthenticatedClientesRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
+  '/contas': typeof AuthenticatedContasRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/divisao-financeira': typeof AuthenticatedDivisaoFinanceiraRoute
   '/equipamentos': typeof AuthenticatedEquipamentosRoute
+  '/fluxo-de-caixa': typeof AuthenticatedFluxoDeCaixaRoute
   '/minha-area': typeof AuthenticatedMinhaAreaRoute
   '/tecnicos': typeof AuthenticatedTecnicosRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
@@ -130,9 +145,11 @@ export interface FileRoutesByTo {
   '/atendimentos': typeof AuthenticatedAtendimentosRoute
   '/clientes': typeof AuthenticatedClientesRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
+  '/contas': typeof AuthenticatedContasRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/divisao-financeira': typeof AuthenticatedDivisaoFinanceiraRoute
   '/equipamentos': typeof AuthenticatedEquipamentosRoute
+  '/fluxo-de-caixa': typeof AuthenticatedFluxoDeCaixaRoute
   '/minha-area': typeof AuthenticatedMinhaAreaRoute
   '/tecnicos': typeof AuthenticatedTecnicosRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
@@ -148,9 +165,11 @@ export interface FileRoutesById {
   '/_authenticated/atendimentos': typeof AuthenticatedAtendimentosRoute
   '/_authenticated/clientes': typeof AuthenticatedClientesRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
+  '/_authenticated/contas': typeof AuthenticatedContasRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/divisao-financeira': typeof AuthenticatedDivisaoFinanceiraRoute
   '/_authenticated/equipamentos': typeof AuthenticatedEquipamentosRoute
+  '/_authenticated/fluxo-de-caixa': typeof AuthenticatedFluxoDeCaixaRoute
   '/_authenticated/minha-area': typeof AuthenticatedMinhaAreaRoute
   '/_authenticated/tecnicos': typeof AuthenticatedTecnicosRoute
   '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
@@ -166,9 +185,11 @@ export interface FileRouteTypes {
     | '/atendimentos'
     | '/clientes'
     | '/configuracoes'
+    | '/contas'
     | '/dashboard'
     | '/divisao-financeira'
     | '/equipamentos'
+    | '/fluxo-de-caixa'
     | '/minha-area'
     | '/tecnicos'
     | '/usuarios'
@@ -182,9 +203,11 @@ export interface FileRouteTypes {
     | '/atendimentos'
     | '/clientes'
     | '/configuracoes'
+    | '/contas'
     | '/dashboard'
     | '/divisao-financeira'
     | '/equipamentos'
+    | '/fluxo-de-caixa'
     | '/minha-area'
     | '/tecnicos'
     | '/usuarios'
@@ -199,9 +222,11 @@ export interface FileRouteTypes {
     | '/_authenticated/atendimentos'
     | '/_authenticated/clientes'
     | '/_authenticated/configuracoes'
+    | '/_authenticated/contas'
     | '/_authenticated/dashboard'
     | '/_authenticated/divisao-financeira'
     | '/_authenticated/equipamentos'
+    | '/_authenticated/fluxo-de-caixa'
     | '/_authenticated/minha-area'
     | '/_authenticated/tecnicos'
     | '/_authenticated/usuarios'
@@ -279,6 +304,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedConfiguracoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/contas': {
+      id: '/_authenticated/contas'
+      path: '/contas'
+      fullPath: '/contas'
+      preLoaderRoute: typeof AuthenticatedContasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -298,6 +330,13 @@ declare module '@tanstack/react-router' {
       path: '/equipamentos'
       fullPath: '/equipamentos'
       preLoaderRoute: typeof AuthenticatedEquipamentosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/fluxo-de-caixa': {
+      id: '/_authenticated/fluxo-de-caixa'
+      path: '/fluxo-de-caixa'
+      fullPath: '/fluxo-de-caixa'
+      preLoaderRoute: typeof AuthenticatedFluxoDeCaixaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/minha-area': {
@@ -330,9 +369,11 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAtendimentosRoute: typeof AuthenticatedAtendimentosRoute
   AuthenticatedClientesRoute: typeof AuthenticatedClientesRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
+  AuthenticatedContasRoute: typeof AuthenticatedContasRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDivisaoFinanceiraRoute: typeof AuthenticatedDivisaoFinanceiraRoute
   AuthenticatedEquipamentosRoute: typeof AuthenticatedEquipamentosRoute
+  AuthenticatedFluxoDeCaixaRoute: typeof AuthenticatedFluxoDeCaixaRoute
   AuthenticatedMinhaAreaRoute: typeof AuthenticatedMinhaAreaRoute
   AuthenticatedTecnicosRoute: typeof AuthenticatedTecnicosRoute
   AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRoute
@@ -344,9 +385,11 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAtendimentosRoute: AuthenticatedAtendimentosRoute,
   AuthenticatedClientesRoute: AuthenticatedClientesRoute,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
+  AuthenticatedContasRoute: AuthenticatedContasRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDivisaoFinanceiraRoute: AuthenticatedDivisaoFinanceiraRoute,
   AuthenticatedEquipamentosRoute: AuthenticatedEquipamentosRoute,
+  AuthenticatedFluxoDeCaixaRoute: AuthenticatedFluxoDeCaixaRoute,
   AuthenticatedMinhaAreaRoute: AuthenticatedMinhaAreaRoute,
   AuthenticatedTecnicosRoute: AuthenticatedTecnicosRoute,
   AuthenticatedUsuariosRoute: AuthenticatedUsuariosRoute,
