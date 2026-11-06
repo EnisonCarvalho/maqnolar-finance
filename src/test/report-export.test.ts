@@ -41,7 +41,7 @@ describe("exportação de relatórios", () => {
     expect(blob.size).toBeGreaterThan(3000);
     writeFileSync("/tmp/multi.xlsx", await toBuffer(blob));
     const XLSX = await import("xlsx");
-    const wb = XLSX.read(await toBuffer(blob), { type: "buffer", cellDates: true });
+    const wb = XLSX.read(await toBuffer(blob), { type: "buffer", cellDates: true, cellNF: true });
     expect(wb.SheetNames).toEqual(["Resumo", "Detalhamento"]);
     const det = wb.Sheets["Detalhamento"]!;
     // 80 linhas + cabeçalho
