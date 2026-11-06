@@ -14,8 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_transfers: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          created_by: string | null
+          from_account_id: string
+          id: string
+          notes: string | null
+          status: string
+          to_account_id: string
+          transfer_date: string
+          void_reason: string | null
+          voided_at: string | null
+          voided_by: string | null
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          created_by?: string | null
+          from_account_id: string
+          id?: string
+          notes?: string | null
+          status?: string
+          to_account_id: string
+          transfer_date: string
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          created_by?: string | null
+          from_account_id?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          to_account_id?: string
+          transfer_date?: string
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_transfers_from_account_id_fkey"
+            columns: ["from_account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_transfers_to_account_id_fkey"
+            columns: ["to_account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_payments: {
         Row: {
+          account_id: string | null
           amount_cents: number
           authorized_reason: string | null
           created_at: string
@@ -36,6 +97,7 @@ export type Database = {
           voided_by: string | null
         }
         Insert: {
+          account_id?: string | null
           amount_cents: number
           authorized_reason?: string | null
           created_at?: string
@@ -56,6 +118,7 @@ export type Database = {
           voided_by?: string | null
         }
         Update: {
+          account_id?: string | null
           amount_cents?: number
           authorized_reason?: string | null
           created_at?: string
@@ -76,6 +139,13 @@ export type Database = {
           voided_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "customer_payments_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "customer_payments_order_id_fkey"
             columns: ["order_id"]
@@ -167,6 +237,151 @@ export type Database = {
         }
         Relationships: []
       }
+      expense_payments: {
+        Row: {
+          account_id: string
+          amount_cents: number
+          created_at: string
+          created_by: string | null
+          expense_id: string
+          id: string
+          method: string
+          notes: string | null
+          paid_at: string
+          receipt_path: string | null
+          status: string
+          void_reason: string | null
+          voided_at: string | null
+          voided_by: string | null
+        }
+        Insert: {
+          account_id: string
+          amount_cents: number
+          created_at?: string
+          created_by?: string | null
+          expense_id: string
+          id?: string
+          method: string
+          notes?: string | null
+          paid_at: string
+          receipt_path?: string | null
+          status?: string
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
+        }
+        Update: {
+          account_id?: string
+          amount_cents?: number
+          created_at?: string
+          created_by?: string | null
+          expense_id?: string
+          id?: string
+          method?: string
+          notes?: string | null
+          paid_at?: string
+          receipt_path?: string | null
+          status?: string
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_payments_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expense_payments_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expenses: {
+        Row: {
+          amount_cents: number
+          cancel_reason: string | null
+          category_id: string | null
+          competence_date: string
+          created_at: string
+          created_by: string | null
+          description: string
+          due_date: string
+          id: string
+          notes: string | null
+          planned_account_id: string | null
+          receipt_path: string | null
+          recurring_id: string | null
+          responsible: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          cancel_reason?: string | null
+          category_id?: string | null
+          competence_date: string
+          created_at?: string
+          created_by?: string | null
+          description: string
+          due_date: string
+          id?: string
+          notes?: string | null
+          planned_account_id?: string | null
+          receipt_path?: string | null
+          recurring_id?: string | null
+          responsible?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          cancel_reason?: string | null
+          category_id?: string | null
+          competence_date?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          due_date?: string
+          id?: string
+          notes?: string | null
+          planned_account_id?: string | null
+          receipt_path?: string | null
+          recurring_id?: string | null
+          responsible?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "finance_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_planned_account_id_fkey"
+            columns: ["planned_account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_recurring_id_fkey"
+            columns: ["recurring_id"]
+            isOneToOne: false
+            referencedRelation: "recurring_expenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finance_audit: {
         Row: {
           action: string
@@ -197,6 +412,114 @@ export type Database = {
           old_data?: Json | null
           record_id?: string
           table_name?: string
+        }
+        Relationships: []
+      }
+      finance_categories: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          kind: string
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          kind: string
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          kind?: string
+          name?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      financial_accounts: {
+        Row: {
+          account_type: string
+          active: boolean
+          created_at: string
+          holder: string | null
+          id: string
+          institution: string | null
+          name: string
+          opening_balance_cents: number
+          opening_date: string
+          ownership: string
+          updated_at: string
+        }
+        Insert: {
+          account_type?: string
+          active?: boolean
+          created_at?: string
+          holder?: string | null
+          id?: string
+          institution?: string | null
+          name: string
+          opening_balance_cents?: number
+          opening_date?: string
+          ownership?: string
+          updated_at?: string
+        }
+        Update: {
+          account_type?: string
+          active?: boolean
+          created_at?: string
+          holder?: string | null
+          id?: string
+          institution?: string | null
+          name?: string
+          opening_balance_cents?: number
+          opening_date?: string
+          ownership?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      monthly_closings: {
+        Row: {
+          closed_at: string
+          closed_by: string | null
+          id: string
+          month: string
+          notes: string | null
+          reopen_reason: string | null
+          reopened_at: string | null
+          reopened_by: string | null
+          snapshot: Json
+          status: string
+        }
+        Insert: {
+          closed_at?: string
+          closed_by?: string | null
+          id?: string
+          month: string
+          notes?: string | null
+          reopen_reason?: string | null
+          reopened_at?: string | null
+          reopened_by?: string | null
+          snapshot?: Json
+          status?: string
+        }
+        Update: {
+          closed_at?: string
+          closed_by?: string | null
+          id?: string
+          month?: string
+          notes?: string | null
+          reopen_reason?: string | null
+          reopened_at?: string | null
+          reopened_by?: string | null
+          snapshot?: Json
+          status?: string
         }
         Relationships: []
       }
@@ -281,8 +604,84 @@ export type Database = {
           },
         ]
       }
+      other_revenues: {
+        Row: {
+          account_id: string | null
+          amount_cents: number
+          category_id: string | null
+          competence_date: string
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          method: string | null
+          notes: string | null
+          origin: string | null
+          receipt_path: string | null
+          received_at: string | null
+          status: string
+          void_reason: string | null
+          voided_at: string | null
+          voided_by: string | null
+        }
+        Insert: {
+          account_id?: string | null
+          amount_cents: number
+          category_id?: string | null
+          competence_date: string
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id?: string
+          method?: string | null
+          notes?: string | null
+          origin?: string | null
+          receipt_path?: string | null
+          received_at?: string | null
+          status?: string
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
+        }
+        Update: {
+          account_id?: string | null
+          amount_cents?: number
+          category_id?: string | null
+          competence_date?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          method?: string | null
+          notes?: string | null
+          origin?: string | null
+          receipt_path?: string | null
+          received_at?: string | null
+          status?: string
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "other_revenues_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "other_revenues_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "finance_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       part_purchases: {
         Row: {
+          account_id: string | null
           buyer_label: string | null
           buyer_technician_id: string | null
           buyer_type: string
@@ -300,6 +699,7 @@ export type Database = {
           unit_price_cents: number
         }
         Insert: {
+          account_id?: string | null
           buyer_label?: string | null
           buyer_technician_id?: string | null
           buyer_type: string
@@ -317,6 +717,7 @@ export type Database = {
           unit_price_cents?: number
         }
         Update: {
+          account_id?: string | null
           buyer_label?: string | null
           buyer_technician_id?: string | null
           buyer_type?: string
@@ -334,6 +735,13 @@ export type Database = {
           unit_price_cents?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "part_purchases_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "part_purchases_buyer_technician_id_fkey"
             columns: ["buyer_technician_id"]
@@ -501,6 +909,69 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "service_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recurring_expenses: {
+        Row: {
+          account_id: string | null
+          amount_cents: number
+          category_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string
+          frequency: string
+          id: string
+          next_due_date: string
+          notes: string | null
+          responsible: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          account_id?: string | null
+          amount_cents: number
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description: string
+          frequency: string
+          id?: string
+          next_due_date: string
+          notes?: string | null
+          responsible?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string | null
+          amount_cents?: number
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          frequency?: string
+          id?: string
+          next_due_date?: string
+          notes?: string | null
+          responsible?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_expenses_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_expenses_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "finance_categories"
             referencedColumns: ["id"]
           },
         ]
@@ -799,6 +1270,7 @@ export type Database = {
       }
       technician_transfers: {
         Row: {
+          account_id: string | null
           amount_cents: number
           authorized_reason: string | null
           created_at: string
@@ -821,6 +1293,7 @@ export type Database = {
           voided_by: string | null
         }
         Insert: {
+          account_id?: string | null
           amount_cents: number
           authorized_reason?: string | null
           created_at?: string
@@ -843,6 +1316,7 @@ export type Database = {
           voided_by?: string | null
         }
         Update: {
+          account_id?: string | null
           amount_cents?: number
           authorized_reason?: string | null
           created_at?: string
@@ -865,6 +1339,13 @@ export type Database = {
           voided_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "technician_transfers_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "technician_transfers_technician_id_fkey"
             columns: ["technician_id"]
@@ -941,6 +1422,8 @@ export type Database = {
     Functions: {
       active_admin_count: { Args: never; Returns: number }
       admin_exists: { Args: never; Returns: boolean }
+      assert_company_account: { Args: { _id: string }; Returns: undefined }
+      assert_month_open: { Args: { _d: string }; Returns: undefined }
       bootstrap_first_admin: { Args: never; Returns: undefined }
       has_role: {
         Args: {

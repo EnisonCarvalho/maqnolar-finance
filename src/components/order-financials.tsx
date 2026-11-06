@@ -14,6 +14,7 @@ import { orderFinancialsQuery, techniciansQuery, type PurchaseRow } from "@/lib/
 import { registerPartPurchase, deletePartPurchase, setOrderReceiver, adjustShares } from "@/lib/finance.functions";
 import { computeSettlement } from "@/lib/settlement-math";
 import { OrderPayments } from "@/components/order-payments";
+import { AccountSelect } from "@/components/finance-ui";
 
 const BUYER_LABELS: Record<string, string> = { maqnolar: "MaqnoLar", tecnico: "Técnico", outro: "Outro" };
 const STATUS_LABELS: Record<string, string> = { previsto: "Previsto", parcial: "Parcialmente realizado", realizado: "Realizado" };
@@ -205,6 +206,7 @@ function PurchaseDialog({ orderId, open, onOpenChange, onDone }: { orderId: stri
   const [buyerLabel, setBuyerLabel] = useState("");
   const [purchasedAt, setPurchasedAt] = useState(() => new Date().toISOString().slice(0, 10));
   const [notes, setNotes] = useState("");
+  const [accountId, setAccountId] = useState("");
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -219,6 +221,7 @@ function PurchaseDialog({ orderId, open, onOpenChange, onDone }: { orderId: stri
           buyerLabel,
           purchasedAt: new Date(`${purchasedAt}T12:00:00`).toISOString(),
           notes,
+          accountId: buyerType === "maqnolar" ? accountId || null : null,
         },
       }),
     onSuccess: async () => {
@@ -266,6 +269,7 @@ function PurchaseDialog({ orderId, open, onOpenChange, onDone }: { orderId: stri
               </SelectContent>
             </Select>
           </div>
+          {buyerType === "maqnolar" && <AccountSelect label="Conta da MaqnoLar usada" value={accountId} onChange={setAccountId} allowNone />}
           {buyerType === "tecnico" && (
             <div className="grid gap-1.5">
               <Label>Técnico *</Label>

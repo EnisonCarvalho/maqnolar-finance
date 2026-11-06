@@ -37,6 +37,7 @@ export const registerPartPurchase = createServerFn({ method: "POST" })
     buyerLabel?: string;
     purchasedAt?: string;
     notes?: string;
+    accountId?: string | null;
   }) => {
     if (!isUuid(input.orderId)) throw new Error("Atendimento inválido.");
     const description = clean(input.description, 200);
@@ -61,6 +62,7 @@ export const registerPartPurchase = createServerFn({ method: "POST" })
       buyerLabel: clean(input.buyerLabel, 120) || null,
       purchasedAt,
       notes: clean(input.notes, 500) || null,
+      accountId: input.buyerType === "maqnolar" && isUuid(input.accountId) ? input.accountId : null,
     };
   })
   .handler(async ({ data, context }) => {
@@ -77,6 +79,7 @@ export const registerPartPurchase = createServerFn({ method: "POST" })
       buyer_label: data.buyerLabel,
       purchased_at: data.purchasedAt,
       notes: data.notes,
+      account_id: data.accountId,
       created_by: context.userId,
     });
     if (error) throw new Error(error.message);
