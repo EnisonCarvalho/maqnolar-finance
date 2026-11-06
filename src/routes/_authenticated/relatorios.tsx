@@ -16,6 +16,7 @@ import { MOVEMENT_LABELS, type MovementKind } from "@/lib/cashflow-math";
 import { ORDER_STATUS_LABELS, type OrderStatus } from "@/lib/order-status";
 import { PARTNER_TYPE_LABELS, type PartnerMovementType } from "@/lib/partner-math";
 import { PeriodFilter, StatCard, accountsQuery, usePeriod } from "@/components/finance-ui";
+import { ExportButtons } from "@/components/report-export-buttons";
 import { formatISODate } from "@/components/finance-shared";
 import { techniciansQuery } from "@/lib/orders-queries";
 import { formatBRL } from "@/lib/format";
@@ -107,6 +108,24 @@ function Financeiro({ start, end }: { start: string; end: string }) {
   return (
     <>
       <Criteria>indicadores por competência; movimentações pela data efetiva; contas a pagar/receber são totais em aberto (sem filtro de data).</Criteria>
+      <ExportButtons data={{
+        title: "Relatório Financeiro",
+        period: { start, end },
+        criteria: "Indicadores por competência; movimentações pela data efetiva; contas a pagar/receber são totais em aberto (sem filtro de data). Saldo das contas é a posição acumulada até a data final.",
+        indicators: [
+          { label: "Faturamento bruto", text: formatBRL(i.grossBillingCents), cents: i.grossBillingCents },
+          { label: "Receita econômica MaqnoLar", text: formatBRL(i.companyEconomicRevenueCents), cents: i.companyEconomicRevenueCents },
+          { label: "Despesas operacionais", text: formatBRL(i.operationalExpensesCents), cents: i.operationalExpensesCents },
+          { label: "Resultado econômico", text: formatBRL(i.economicResultCents), cents: i.economicResultCents },
+          { label: "Recebimentos efetivos (empresa)", text: formatBRL(i.receivedByCompanyCents), cents: i.receivedByCompanyCents },
+          { label: "Contas a pagar (em aberto)", text: formatBRL(i.payablesCents), cents: i.payablesCents },
+          { label: "Contas a receber (em aberto)", text: formatBRL(i.receivablesCents), cents: i.receivablesCents },
+          { label: `Saldo das contas (até ${formatISODate(end)})`, text: formatBRL(data.cash.totals.closingCents), cents: data.cash.totals.closingCents },
+        ],
+        columns: ["Data", "Descrição", "Tipo", "Conta", "Valor"],
+        colTypes: ["date", "text", "text", "text", "money"],
+        rows: movements.map((m) => [m.date, m.description, MOVEMENT_LABELS[m.kind as MovementKind], accName(m.accountId), m.amountCents]),
+      }} />
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         <StatCard label="Faturamento bruto" cents={i.grossBillingCents} />
         <StatCard label="Receita econômica MaqnoLar" cents={i.companyEconomicRevenueCents} tone="pos" />
@@ -202,6 +221,20 @@ function Atendimentos({ start, end }: { start: string; end: string }) {
   return (
     <>
       <Criteria>data de abertura do atendimento. Valores vêm da composição financeira de cada atendimento.</Criteria>
+      <ExportButtons data={{
+        title: "Relatório de Atendimentos",
+        period: { start, end },
+        criteria: "Data de abertura do atendimento. Valores vêm da composição financeira de cada atendimento.",
+        indicators: [
+          { label: "Atendimentos", text: String(list.length) },
+          { label: "Valor total dos serviços", text: formatBRL(totalCents), cents: totalCents },
+          { label: "Participação MaqnoLar", text: formatBRL(companyCents), cents: companyCents },
+          { label: "Participação técnicos", text: formatBRL(techCents), cents: techCents },
+        ],
+        columns: ["Abertura", "Código", "Cliente", "Equipamento", "Técnico", "Status", "Valor"],
+        colTypes: ["date", "text", "text", "text", "text", "text", "money"],
+        rows: list.map((o) => [fzDate(o.opened_at), o.code, o.customers?.full_name ?? "—", o.equipment_types?.name ?? "—", o.technicians?.full_name ?? "Sem técnico", ORDER_STATUS_LABELS[o.status], finOf(o)?.total_cents ?? null]),
+      }} />
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Atendimentos</p><p className="font-display text-lg font-semibold sm:text-xl">{list.length}</p></CardContent></Card>
         <StatCard label="Valor total dos serviços" cents={totalCents} />
