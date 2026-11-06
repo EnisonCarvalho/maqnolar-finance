@@ -61,8 +61,7 @@ const techGroups: { label: string; items: Item[] }[] = [
     label: "Minha área",
     items: [
       { label: "Início", icon: LayoutDashboard, to: "/dashboard" },
-      { label: "Meus atendimentos", icon: CalendarClock, to: "/minha-area" },
-      { label: "Meus acertos", icon: Handshake },
+      { label: "Atendimentos e financeiro", icon: CalendarClock, to: "/minha-area" },
     ],
   },
 ];
