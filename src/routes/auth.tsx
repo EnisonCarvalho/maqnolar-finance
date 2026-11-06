@@ -36,13 +36,14 @@ function AuthPage() {
         redirectTo: `${window.location.origin}/reset-password`,
       });
       setLoading(false);
-      if (error) return toast.error("Não foi possível enviar o e-mail.");
+      if (error) { toast.error("Não foi possível enviar o e-mail."); return; }
       toast.success("Enviamos um link para redefinir sua senha.");
-      return setMode("login");
+      setMode("login");
+      return;
     }
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
-    if (error) return toast.error("E-mail ou senha inválidos.");
+    if (error) { toast.error("E-mail ou senha inválidos."); return; }
     navigate({ to: "/dashboard", replace: true });
   }
 

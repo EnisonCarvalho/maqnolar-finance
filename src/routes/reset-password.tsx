@@ -30,7 +30,7 @@ function ResetPage() {
     setLoading(true);
     const { error } = await supabase.auth.updateUser({ password });
     setLoading(false);
-    if (error) return toast.error("Link inválido ou expirado.");
+    if (error) { toast.error("Link inválido ou expirado."); return; }
     toast.success("Senha atualizada.");
     navigate({ to: "/dashboard", replace: true });
   }
