@@ -30,7 +30,7 @@ use the editor.
 <!-- LOVABLE:END -->
 
 ## Project rules
-- Roles live only in `public.user_roles` and are checked with `has_role()`; never derive access from profile fields or the client (prevents privilege escalation).
+- Roles live only in `public.user_roles`, are assigned explicitly by admins via `set_user_role` (never by signup order), and are checked with `has_role()` which also requires `profiles.active`; first admin only via `bootstrap_first_admin()` while no active admin exists. Triggers audit every change and block removing the last active admin.
 - Signed-in pages live under `src/routes/_authenticated/` (client-only gate); sign-in is `/auth`.
 - Financial writes must go through server functions/SQL functions that compute amounts server-side, with values stored in integer cents (auditable, no client-trusted totals).
 - Theme preference is stored per user in `profiles.theme` and mirrored to localStorage for instant apply.
