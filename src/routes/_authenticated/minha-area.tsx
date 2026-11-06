@@ -125,7 +125,7 @@ function MinhaAreaPage() {
   }
 
   return (
-    <div className="grid gap-6">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-6">
       <div>
         <h1 className="font-display text-2xl font-semibold">Minha área</h1>
         <p className="text-sm text-muted-foreground">Seus atendimentos e sua agenda. Somente os serviços atribuídos a você aparecem aqui.</p>
