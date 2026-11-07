@@ -1975,6 +1975,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      confirm_visit_composition: {
+        Args: { _order: string; _reason: string }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2017,6 +2021,7 @@ export type Database = {
         | "aguardando_pagamento"
         | "finalizado"
         | "cancelado"
+        | "visita_concluida"
       quote_status:
         | "rascunho"
         | "enviado"
@@ -2168,6 +2173,7 @@ export const Constants = {
         "aguardando_pagamento",
         "finalizado",
         "cancelado",
+        "visita_concluida",
       ],
       quote_status: [
         "rascunho",
