@@ -231,7 +231,7 @@ function CompositionForm({ orderId, totalCents, partsCents, correction = false, 
     catch (error) { validationError = error instanceof Error ? error.message : "Valores inválidos."; }
   }
   const mutation = useMutation({
-    mutationFn: () => confirm({ data: { orderId, totalReais: total, partsReais: parts, reason: correction ? reason : undefined } }),
+    mutationFn: () => confirm({ data: { orderId, totalReais: total, partsReais: parts, ...(correction ? { reason } : {}) } }),
     onSuccess: async () => { toast.success("Composição financeira confirmada."); await onDone(); await queryClient.invalidateQueries(); },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Não foi possível confirmar."),
   });
