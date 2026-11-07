@@ -16,6 +16,15 @@ export const reportTechnicianValue = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const confirmVisitComposition = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { orderId: string; reason?: string }) => ({ orderId: orderId(input.orderId), reason: (input.reason ?? "").trim().slice(0, 1000) }))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase.rpc("confirm_visit_composition", { _order: data.orderId, _reason: data.reason });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 export const confirmServiceComposition = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { orderId: string; totalReais: string; partsReais: string; reason?: string }) => ({

@@ -33,6 +33,7 @@ const TECHNICIAN_TRANSITIONS: OrderStatus[] = [
   "em_diagnostico",
   "servico_em_andamento",
   "servico_concluido",
+  "visita_concluida",
 ];
 
 function clean(s: unknown, max = 500): string {
@@ -249,7 +250,7 @@ export const changeOrderStatus = createServerFn({ method: "POST" })
       const techId = await myTechnicianId(context.supabase, context.userId);
       if (!techId) throw new Error("Acesso negado.");
       if (!TECHNICIAN_TRANSITIONS.includes(data.status)) {
-        throw new Error("Técnicos só podem informar: a caminho, diagnóstico, serviço em andamento ou conclusão.");
+        throw new Error("Técnicos só podem informar: a caminho, diagnóstico, serviço em andamento, conclusão ou somente visita.");
       }
       const { data: order } = await context.supabase
         .from("service_orders")
@@ -268,7 +269,7 @@ export const changeOrderStatus = createServerFn({ method: "POST" })
     if (data.note) {
       await context.supabase.from("service_order_events").insert({
         order_id: data.orderId,
-        event_type: data.status === "em_diagnostico" ? "diagnostico" : data.status === "servico_concluido" ? "conclusao" : "observacao",
+        event_type: data.status === "em_diagnostico" ? "diagnostico" : data.status === "servico_concluido" || data.status === "visita_concluida" ? "conclusao" : "observacao",
         description: data.note,
         actor_user_id: context.userId,
       });
