@@ -1,5 +1,11 @@
 # Roadmap
 
+## Confirmação simplificada de serviços
+- [ ] Reutilizar apuração existente com botão destacado e formulário de total/peças/divisão automática
+- [ ] Impedir repetição da confirmação inicial, preservar correções auditadas e controles opcionais de caixa
+- [ ] Atualizar indicadores existentes sem confundir faturamento confirmado com dinheiro recebido
+- [ ] Validar cálculos e interface em 360/390/430/768/1440px, sem alterar registros existentes ou ATD-00015
+
 ## Correção final — cartão concluído ATD-00015
 - [x] Sessão real TESTE: botão já renderizava no ATD-00015; ausência relatada não reproduzida
 - [x] Botão destacado como ação principal imediatamente abaixo do código/status; campo abre e permite digitar, cancelado sem salvar
