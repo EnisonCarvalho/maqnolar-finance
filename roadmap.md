@@ -1,9 +1,9 @@
 # Roadmap
 
 ## Correção final — cartão concluído ATD-00015
-- [ ] Reproduzir com perfil Técnico real e verificar botão diretamente no cartão de Concluídos
-- [ ] Corrigir somente a interface necessária e validar abertura/edição sem salvar registros
-- [ ] Validar em 360/390/430/768/1440px e informar instruções exatas, sem avançar etapas
+- [x] Sessão real TESTE: botão já renderizava no ATD-00015; ausência relatada não reproduzida
+- [x] Botão destacado como ação principal imediatamente abaixo do código/status; campo abre e permite digitar, cancelado sem salvar
+- [x] Cartão de Concluídos e detalhe validados em 360/390/430/768/1440px sem overflow/erros; 6 testes relevantes aprovados e build OK
 
 ## Ajuste da área do técnico — execução e valor informado
 - [x] Correção solicitada: botão explícito "Informar valor cobrado" no cartão e no detalhe; conta TESTE validada em 360/390/430/768/1440px, abrindo campo, digitando e cancelando sem gravar

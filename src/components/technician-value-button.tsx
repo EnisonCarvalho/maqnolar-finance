@@ -33,7 +33,7 @@ export function TechnicianValueButton({ order }: { order: OrderRow }) {
   if (!session?.isTecnico) return null;
   const editable = canEditTechnicianValue(order.status, order.financial_confirmed_at);
   return <>
-    <Button variant="outline" className="w-full sm:w-fit" disabled={!editable} onClick={() => {
+    <Button className="w-full min-h-11 sm:w-fit" disabled={!editable} onClick={() => {
       setValue(order.technician_reported_cents == null ? "" : (order.technician_reported_cents / 100).toFixed(2).replace(".", ","));
       setOpen(true);
     }}><HandCoins className="mr-2 h-4 w-4" />Informar valor cobrado</Button>

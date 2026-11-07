@@ -91,6 +91,13 @@ function MinhaAreaPage() {
             <Badge className={ORDER_STATUS_COLORS[o.status]} variant="secondary">{ORDER_STATUS_LABELS[o.status]}</Badge>
             <span className="ml-auto text-sm text-muted-foreground">{formatDateTimeBR(o.scheduled_start)}</span>
           </div>
+          <div className="grid min-w-0 gap-2 border-b pb-3">
+            <TechnicianValueButton order={o} />
+            <p className="text-sm font-medium">Valor informado pelo técnico</p>
+            <p className="font-display font-semibold">{o.technician_reported_cents == null ? "Não informado" : formatBRL(o.technician_reported_cents)}</p>
+            {o.technician_reported_at && <p className="text-xs text-muted-foreground">{formatDateTimeBR(o.technician_reported_at)} · {o.technician_reported_name}</p>}
+            <Badge variant="outline" className="w-fit whitespace-normal">{o.financial_confirmed_at ? "Apuração financeira confirmada" : "Apuração financeira pendente"}</Badge>
+          </div>
           <div className="text-sm">
             <p className="font-medium">{o.customers?.full_name} {o.customers?.phone ? `· ${o.customers.phone}` : ""}</p>
             <p className="text-muted-foreground">
@@ -128,13 +135,6 @@ function MinhaAreaPage() {
               onChange={(e) => setConclusionNote({ ...conclusionNote, [o.id]: e.target.value })}
             />
           )}
-          <div className="grid min-w-0 gap-2 border-t pt-3">
-            <p className="text-sm font-medium">Valor informado pelo técnico</p>
-            <p className="font-display font-semibold">{o.technician_reported_cents == null ? "Não informado" : formatBRL(o.technician_reported_cents)}</p>
-            {o.technician_reported_at && <p className="text-xs text-muted-foreground">{formatDateTimeBR(o.technician_reported_at)} · {o.technician_reported_name}</p>}
-            <Badge variant="outline" className="w-fit whitespace-normal">{o.financial_confirmed_at ? "Apuração financeira confirmada" : "Apuração financeira pendente"}</Badge>
-            <TechnicianValueButton order={o} />
-          </div>
         </CardContent>
       </Card>
     );
