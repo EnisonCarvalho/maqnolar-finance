@@ -1,10 +1,11 @@
 # Roadmap
 
 ## Confirmação simplificada de serviços
-- [ ] Reutilizar apuração existente com botão destacado e formulário de total/peças/divisão automática
-- [ ] Impedir repetição da confirmação inicial, preservar correções auditadas e controles opcionais de caixa
-- [ ] Atualizar indicadores existentes sem confundir faturamento confirmado com dinheiro recebido
-- [ ] Validar cálculos e interface em 360/390/430/768/1440px, sem alterar registros existentes ou ATD-00015
+- [x] Reutilizar apuração existente com botão destacado antes dos orçamentos e formulário de total/peças/divisão automática
+- [x] Impedir repetição da confirmação inicial sob bloqueio de atendimento, preservar correções auditadas e controles opcionais de caixa
+- [x] Atualizar contagem de confirmados e participações no dashboard/relatórios; faturamento já usa a composição sem exigir pagamentos
+- [x] 97 testes aprovados; formulário em 360/390/430/768/1440px com respostas simuladas somente no navegador, páginas reais de dashboard/relatórios validadas com sessão admin; build OK
+- [ ] Gravação ponta a ponta em banco: não executada, pois não há serviço concluído pendente além dos dados existentes e alterações nesses registros foram proibidas; nenhum dado alterado
 
 ## Correção final — cartão concluído ATD-00015
 - [x] Sessão real TESTE: botão já renderizava no ATD-00015; ausência relatada não reproduzida
