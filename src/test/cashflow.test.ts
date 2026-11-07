@@ -11,6 +11,15 @@ const pay = (p: Partial<RawFinance["customerPayments"][number]>) => ({ id: "p", 
 const order = { orderId: "o1", competenceDate: "2026-10-31", totalCents: 100000, companyShareCents: 30000, technicianShareCents: 30000, partsCents: 40000, cancelled: false };
 
 describe("Integração com atendimentos (R$ 1.000 = peça 400 + mão de obra 600, 300/300)", () => {
+  it("confirmação sem pagamento reconhece faturamento/participações sem movimentar caixa", () => {
+    const i = computeIndicators({ orders: [{ ...order, competenceDate: "2026-11-06" }], customerPayments: [], otherRevenues: [], expenses: [] }, ...NOV);
+    expect(i.grossBillingCents).toBe(100000);
+    expect(i.technicianShareCents).toBe(30000);
+    expect(i.companyEconomicRevenueCents).toBe(30000);
+    expect(i.receivedByCompanyCents).toBe(0);
+    expect(buildMovements(empty)).toEqual([]);
+    expect(computeAccountFlows([BANK], buildMovements(empty), ...NOV).totals.closingCents).toBe(100000);
+  });
   it("faturamento bruto R$ 1.000, receita econômica da MaqnoLar R$ 300 — os R$ 1.000 não são lucro", () => {
     const i = computeIndicators({ orders: [order], customerPayments: [], otherRevenues: [], expenses: [] }, "2026-10-01", "2026-10-31");
     expect(i.grossBillingCents).toBe(100000);

@@ -92,6 +92,13 @@
       "when": 1794005265623,
       "tag": "0012_technician_reported_value",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1794012261919,
+      "tag": "0013_simplify_initial_service_confirmation",
+      "breakpoints": true
     }
   ]
 }

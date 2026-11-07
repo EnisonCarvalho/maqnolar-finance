@@ -152,6 +152,8 @@ export function OrderDetailSheet({ orderId, onClose, isAdmin }: Props) {
 
               <Separator />
 
+              {isAdmin && <OrderFinancials key={order.id} orderId={order.id} technicianId={order.technician_id} technicianName={order.technicians?.full_name ?? null} reportedCents={order.technician_reported_cents} orderStatus={order.status} confirmedAt={order.financial_confirmed_at} />}
+
               <div>
                 <div className="mb-2 flex items-center justify-between">
                   <h3 className="font-display font-semibold">Orçamentos</h3>
@@ -203,8 +205,6 @@ export function OrderDetailSheet({ orderId, onClose, isAdmin }: Props) {
 
               {isAdmin && (
                 <>
-                  <Separator />
-                  <OrderFinancials orderId={order.id} technicianId={order.technician_id} technicianName={order.technicians?.full_name ?? null} reportedCents={order.technician_reported_cents} />
                   <Separator />
                   <OrderOrigin orderId={order.id} />
                 </>

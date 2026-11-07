@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +17,8 @@ import { OrderPayments } from "@/components/order-payments";
 import { AccountSelect } from "@/components/finance-ui";
 import { useServerFn } from "@tanstack/react-start";
 import { confirmServiceComposition } from "@/lib/technician-service.functions";
+import { canConfirmServiceValues, serviceCompositionPreview } from "@/lib/technician-service";
+import { supabase } from "@/integrations/supabase/client";
 
 const BUYER_LABELS: Record<string, string> = { maqnolar: "MaqnoLar", tecnico: "Técnico", outro: "Outro" };
 const STATUS_LABELS: Record<string, string> = { previsto: "Previsto", parcial: "Parcialmente realizado", realizado: "Realizado" };
@@ -32,13 +34,14 @@ function buyerName(p: PurchaseRow): string {
   return p.buyer_label ?? "Outro responsável";
 }
 
-export function OrderFinancials({ orderId, technicianId = null, technicianName = null, reportedCents = null }: { orderId: string; technicianId?: string | null; technicianName?: string | null; reportedCents?: number | null }) {
+export function OrderFinancials({ orderId, technicianId = null, technicianName = null, reportedCents = null, orderStatus, confirmedAt }: { orderId: string; technicianId?: string | null; technicianName?: string | null; reportedCents?: number | null; orderStatus: string; confirmedAt: string | null }) {
   const queryClient = useQueryClient();
   const { data } = useQuery(orderFinancialsQuery(orderId));
   const [purchaseOpen, setPurchaseOpen] = useState(false);
   const [adjustOpen, setAdjustOpen] = useState(false);
   const [removing, setRemoving] = useState<PurchaseRow | null>(null);
   const [removeReason, setRemoveReason] = useState("");
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const refresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ["order-financials", orderId] });
@@ -68,7 +71,15 @@ export function OrderFinancials({ orderId, technicianId = null, technicianName =
 
   if (!fin) {
     return (
-      <CompositionForm orderId={orderId} totalCents={reportedCents} partsCents={0} onDone={refresh} />
+      canConfirmServiceValues(orderStatus, confirmedAt) ? <>
+        <Button className="w-full" onClick={() => setConfirmOpen(true)}><CheckCircle2 className="mr-2 h-4 w-4" />Confirmar valores</Button>
+        <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-md">
+            <DialogHeader><DialogTitle>Confirmar valores</DialogTitle></DialogHeader>
+            <CompositionForm orderId={orderId} totalCents={reportedCents} partsCents={0} onDone={async () => { setConfirmOpen(false); await refresh(); }} />
+          </DialogContent>
+        </Dialog>
+      </> : <p className="text-sm text-muted-foreground">Apuração financeira pendente.</p>
     );
   }
 
@@ -170,7 +181,7 @@ export function OrderFinancials({ orderId, technicianId = null, technicianName =
       <Button variant="outline" size="sm" className="w-fit" onClick={() => setAdjustOpen(true)}>
         Ajustar participações (com registro)
       </Button>
-      {fin.kind === "servico" && <details className="border-t pt-3"><summary className="cursor-pointer text-sm font-medium">Corrigir apuração financeira</summary><div className="pt-3"><CompositionForm orderId={orderId} totalCents={fin.total_cents} partsCents={fin.parts_estimated_cents} onDone={refresh} /></div></details>}
+      {fin.kind === "servico" && <details className="border-t pt-3"><summary className="cursor-pointer text-sm font-medium">Corrigir apuração financeira</summary><div className="pt-3"><CompositionForm orderId={orderId} totalCents={fin.total_cents} partsCents={fin.parts_estimated_cents} correction onDone={refresh} /></div></details>}
 
       <PurchaseDialog orderId={orderId} open={purchaseOpen} onOpenChange={setPurchaseOpen} onDone={refresh} />
       <AdjustDialog orderId={orderId} open={adjustOpen} onOpenChange={setAdjustOpen} onDone={refresh} laborCents={fin.labor_cents} techCents={fin.technician_share_cents} companyCents={fin.company_share_cents} />
@@ -197,25 +208,48 @@ export function OrderFinancials({ orderId, technicianId = null, technicianName =
   );
 }
 
-function CompositionForm({ orderId, totalCents, partsCents, onDone }: { orderId: string; totalCents: number | null; partsCents: number; onDone: () => Promise<void> }) {
+function CompositionForm({ orderId, totalCents, partsCents, correction = false, onDone }: { orderId: string; totalCents: number | null; partsCents: number; correction?: boolean; onDone: () => Promise<void> }) {
   const [total, setTotal] = useState(totalCents == null ? "" : (totalCents / 100).toFixed(2).replace(".", ","));
   const [parts, setParts] = useState((partsCents / 100).toFixed(2).replace(".", ","));
   const [reason, setReason] = useState("");
   const confirm = useServerFn(confirmServiceComposition);
   const queryClient = useQueryClient();
+  const { data: rule, isPending: rulePending, isError: ruleError } = useQuery({
+    queryKey: ["composition-split-rule"],
+    staleTime: 0,
+    queryFn: async () => {
+      const now = new Date().toISOString();
+      const { data, error } = await supabase.from("split_rules").select("technician_percent, company_percent").eq("kind", "mao_obra").lte("valid_from", now).or(`valid_until.is.null,valid_until.gt.${now}`).order("valid_from", { ascending: false }).limit(1).maybeSingle();
+      if (error) throw error;
+      return { technicianPercent: data?.technician_percent ?? 50, companyPercent: data?.company_percent ?? 50, technicianFixedCents: null, companyFixedCents: null };
+    },
+  });
+  let preview: ReturnType<typeof serviceCompositionPreview> | null = null;
+  let validationError = "";
+  if (rule && total.trim()) {
+    try { preview = serviceCompositionPreview(total, parts, rule); }
+    catch (error) { validationError = error instanceof Error ? error.message : "Valores inválidos."; }
+  }
   const mutation = useMutation({
-    mutationFn: () => confirm({ data: { orderId, totalReais: total, partsReais: parts, reason } }),
+    mutationFn: () => confirm({ data: { orderId, totalReais: total, partsReais: parts, ...(correction ? { reason } : {}) } }),
     onSuccess: async () => { toast.success("Composição financeira confirmada."); await onDone(); await queryClient.invalidateQueries(); },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Não foi possível confirmar."),
   });
-  return <form className="grid gap-3" onSubmit={(e) => { e.preventDefault(); mutation.mutate(); }}>
-    <h3 className="font-display font-semibold">Apuração financeira do administrador</h3>
+  const canSubmit = Boolean(preview) && !rulePending && !ruleError && (!correction || reason.trim().length >= 3);
+  return <form className="grid gap-3" onSubmit={(e) => { e.preventDefault(); if (canSubmit && !mutation.isPending) mutation.mutate(); }}>
     <div className="grid gap-3 sm:grid-cols-2">
-      <div className="grid gap-1.5"><Label htmlFor={`total-${orderId}`}>Total confirmado (R$)</Label><Input id={`total-${orderId}`} inputMode="decimal" value={total} onChange={(e) => setTotal(e.target.value)} /></div>
-      <div className="grid gap-1.5"><Label htmlFor={`parts-${orderId}`}>Custo das peças (R$)</Label><Input id={`parts-${orderId}`} inputMode="decimal" value={parts} onChange={(e) => setParts(e.target.value)} /></div>
+      <div className="grid gap-1.5"><Label htmlFor={`total-${orderId}`}>Valor total cobrado (R$)</Label><Input id={`total-${orderId}`} inputMode="decimal" value={total} onChange={(e) => setTotal(e.target.value)} /></div>
+      <div className="grid gap-1.5"><Label htmlFor={`parts-${orderId}`}>Valor total das peças (R$)</Label><Input id={`parts-${orderId}`} inputMode="decimal" value={parts} onChange={(e) => setParts(e.target.value)} /></div>
     </div>
-    <div className="grid gap-1.5"><Label htmlFor={`reason-${orderId}`}>Justificativa da apuração</Label><Textarea id={`reason-${orderId}`} value={reason} onChange={(e) => setReason(e.target.value)} rows={2} /></div>
-    <Button type="submit" disabled={mutation.isPending || !total.trim() || reason.trim().length < 3}>{mutation.isPending ? "Confirmando…" : "Confirmar composição financeira"}</Button>
+    <dl className="grid gap-2 border-y py-3 text-sm">
+      <div className="flex justify-between gap-2"><dt>Mão de obra</dt><dd className="font-semibold">{preview ? formatBRL(preview.laborCents) : "—"}</dd></div>
+      <div className="flex justify-between gap-2"><dt>Técnico ({rule?.technicianPercent ?? 50}%)</dt><dd className="font-semibold">{preview ? formatBRL(preview.technicianShareCents) : "—"}</dd></div>
+      <div className="flex justify-between gap-2"><dt>MaqnoLar ({rule?.companyPercent ?? 50}%)</dt><dd className="font-semibold">{preview ? formatBRL(preview.companyShareCents) : "—"}</dd></div>
+    </dl>
+    {validationError && <p role="alert" className="text-sm text-destructive">{validationError}</p>}
+    {ruleError && <p role="alert" className="text-sm text-destructive">Não foi possível consultar a regra de divisão.</p>}
+    {correction && <div className="grid gap-1.5"><Label htmlFor={`reason-${orderId}`}>Justificativa da correção</Label><Textarea id={`reason-${orderId}`} value={reason} onChange={(e) => setReason(e.target.value)} rows={2} /></div>}
+    <Button type="submit" disabled={mutation.isPending || !canSubmit}>{mutation.isPending ? "Confirmando…" : correction ? "Confirmar correção" : "Confirmar"}</Button>
   </form>;
 }
 

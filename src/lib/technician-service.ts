@@ -1,4 +1,17 @@
 import type { OrderStatus } from "@/lib/order-status";
+import { splitLabor, type SplitRuleSnapshot } from "@/lib/settlement-math";
+
+export function canConfirmServiceValues(status: string, confirmedAt: string | null): boolean {
+  return !confirmedAt && ["servico_concluido", "aguardando_pagamento", "finalizado"].includes(status);
+}
+
+export function serviceCompositionPreview(totalReais: string, partsReais: string, rule: SplitRuleSnapshot) {
+  const totalCents = reportedReaisToCents(totalReais);
+  const partsCents = reportedReaisToCents(partsReais);
+  if (partsCents > totalCents) throw new Error("Peças não podem superar o valor total cobrado.");
+  const laborCents = totalCents - partsCents;
+  return { totalCents, partsCents, laborCents, ...splitLabor(laborCents, rule) };
+}
 
 export function canEditTechnicianValue(status: OrderStatus, confirmedAt: string | null): boolean {
   return !confirmedAt && status !== "cancelado" && status !== "finalizado";

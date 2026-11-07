@@ -155,6 +155,7 @@ function AdminDashboard({ first }: { first: string }) {
     { label: "Orçamentos aguardando aprovação", icon: FileClock, value: ops.orcamentosAguardando, to: "/atendimentos" },
     { label: "Serviços em andamento", icon: Wrench, value: ops.emAndamento, to: "/atendimentos" },
     { label: "Serviços concluídos no período", icon: CheckCircle2, value: ops.concluidosPeriodo, to: "/atendimentos" },
+    { label: "Serviços confirmados no período", icon: CheckCircle2, value: ops.confirmadosPeriodo, to: "/atendimentos" },
     { label: "Cancelados no período", icon: XCircle, value: ops.canceladosPeriodo, to: "/atendimentos" },
   ] as const;
 
@@ -200,6 +201,7 @@ function AdminDashboard({ first }: { first: string }) {
             <div className="grid grid-cols-2 gap-2 lg:grid-cols-3 xl:grid-cols-5">
               <StatCard label="Faturamento bruto" cents={i.grossBillingCents} hint="Atendimentos por competência" />
               <StatCard label="Receita econômica MaqnoLar" cents={i.companyEconomicRevenueCents} hint="Participação + receitas avulsas" tone="pos" />
+              <StatCard label="Participação dos técnicos" cents={i.technicianShareCents} hint="Composição financeira · competência" />
               <StatCard label="Recebimentos efetivos (empresa)" cents={i.receivedByCompanyCents} hint="Dinheiro que entrou" />
               <StatCard label="Despesas operacionais" cents={i.operationalExpensesCents} tone="neg" />
               <StatCard label="Resultado econômico" cents={i.economicResultCents} hint="Receita − despesas (competência)" tone="auto" />

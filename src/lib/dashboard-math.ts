@@ -10,6 +10,7 @@ export type DashOrder = {
   opened_at: string;
   scheduled_start: string | null;
   completed_at: string | null;
+  financial_confirmed_at?: string | null;
 };
 
 export type OperationalCounts = {
@@ -18,6 +19,7 @@ export type OperationalCounts = {
   orcamentosAguardando: number;
   emAndamento: number;
   concluidosPeriodo: number;
+  confirmadosPeriodo: number;
   canceladosPeriodo: number;
 };
 
@@ -35,6 +37,7 @@ export function operationalCounts(orders: DashOrder[], start: string, end: strin
     orcamentosAguardando: active.filter((o) => AGUARDANDO_APROVACAO.includes(o.status)).length,
     emAndamento: active.filter((o) => EM_ANDAMENTO.includes(o.status)).length,
     concluidosPeriodo: active.filter((o) => o.completed_at && inRange(fzDate(o.completed_at), start, end)).length,
+    confirmadosPeriodo: active.filter((o) => o.financial_confirmed_at && o.completed_at && inRange(fzDate(o.completed_at), start, end)).length,
     canceladosPeriodo: orders.filter((o) => o.status === "cancelado" && inRange(fzDate(o.opened_at), start, end)).length,
   };
 }
