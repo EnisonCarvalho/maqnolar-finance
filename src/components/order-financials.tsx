@@ -16,8 +16,8 @@ import { computeSettlement } from "@/lib/settlement-math";
 import { OrderPayments } from "@/components/order-payments";
 import { AccountSelect } from "@/components/finance-ui";
 import { useServerFn } from "@tanstack/react-start";
-import { confirmServiceComposition } from "@/lib/technician-service.functions";
-import { canConfirmServiceValues, serviceCompositionPreview } from "@/lib/technician-service";
+import { confirmServiceComposition, confirmVisitComposition } from "@/lib/technician-service.functions";
+import { canConfirmServiceValues, canConfirmVisit, serviceCompositionPreview, visitCompositionPreview } from "@/lib/technician-service";
 import { supabase } from "@/integrations/supabase/client";
 
 const BUYER_LABELS: Record<string, string> = { maqnolar: "MaqnoLar", tecnico: "Técnico", outro: "Outro" };
@@ -70,6 +70,19 @@ export function OrderFinancials({ orderId, technicianId = null, technicianName =
   const fin = data.financial;
 
   if (!fin) {
+    if (canConfirmVisit(orderStatus, confirmedAt)) {
+      return (
+        <>
+          <Button className="w-full" onClick={() => setConfirmOpen(true)}><CheckCircle2 className="mr-2 h-4 w-4" />Confirmar visita</Button>
+          <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+            <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-md">
+              <DialogHeader><DialogTitle>Confirmar visita</DialogTitle></DialogHeader>
+              <VisitConfirmForm orderId={orderId} onDone={async () => { setConfirmOpen(false); await refresh(); }} />
+            </DialogContent>
+          </Dialog>
+        </>
+      );
+    }
     return (
       canConfirmServiceValues(orderStatus, confirmedAt) ? <>
         <Button className="w-full" onClick={() => setConfirmOpen(true)}><CheckCircle2 className="mr-2 h-4 w-4" />Confirmar valores</Button>
@@ -251,6 +264,40 @@ function CompositionForm({ orderId, totalCents, partsCents, correction = false, 
     {correction && <div className="grid gap-1.5"><Label htmlFor={`reason-${orderId}`}>Justificativa da correção</Label><Textarea id={`reason-${orderId}`} value={reason} onChange={(e) => setReason(e.target.value)} rows={2} /></div>}
     <Button type="submit" disabled={mutation.isPending || !canSubmit}>{mutation.isPending ? "Confirmando…" : correction ? "Confirmar correção" : "Confirmar"}</Button>
   </form>;
+}
+
+/** Confirmação de "somente visita": usa a regra fixa vigente (padrão R$ 30 = R$ 20 técnico / R$ 10 MaqnoLar). */
+function VisitConfirmForm({ orderId, onDone }: { orderId: string; onDone: () => Promise<void> }) {
+  const confirm = useServerFn(confirmVisitComposition);
+  const queryClient = useQueryClient();
+  const { data: rule, isPending: rulePending, isError: ruleError } = useQuery({
+    queryKey: ["visit-split-rule"],
+    staleTime: 0,
+    queryFn: async () => {
+      const now = new Date().toISOString();
+      const { data, error } = await supabase.from("split_rules").select("technician_fixed_cents, company_fixed_cents").eq("kind", "visita").lte("valid_from", now).or(`valid_until.is.null,valid_until.gt.${now}`).order("valid_from", { ascending: false }).limit(1).maybeSingle();
+      if (error) throw error;
+      return { technicianFixedCents: data?.technician_fixed_cents ?? null, companyFixedCents: data?.company_fixed_cents ?? null };
+    },
+  });
+  const preview = visitCompositionPreview(rule);
+  const mutation = useMutation({
+    mutationFn: () => confirm({ data: { orderId } }),
+    onSuccess: async () => { toast.success("Visita confirmada."); await onDone(); await queryClient.invalidateQueries(); },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Não foi possível confirmar."),
+  });
+  return (
+    <div className="grid gap-3">
+      <p className="text-sm text-muted-foreground">O técnico marcou somente visita realizada. A confirmação aplica a regra de visita vigente e finaliza o atendimento, sem gerar recebimentos ou repasses automáticos.</p>
+      <dl className="grid gap-2 border-y py-3 text-sm">
+        <div className="flex justify-between gap-2"><dt>Valor da visita</dt><dd className="font-semibold">{formatBRL(preview.totalCents)}</dd></div>
+        <div className="flex justify-between gap-2"><dt>Técnico</dt><dd className="font-semibold">{formatBRL(preview.technicianShareCents)}</dd></div>
+        <div className="flex justify-between gap-2"><dt>MaqnoLar</dt><dd className="font-semibold">{formatBRL(preview.companyShareCents)}</dd></div>
+      </dl>
+      {ruleError && <p role="alert" className="text-sm text-destructive">Não foi possível consultar a regra de visita.</p>}
+      <Button disabled={mutation.isPending || rulePending || ruleError} onClick={() => mutation.mutate()}>{mutation.isPending ? "Confirmando…" : "Confirmar"}</Button>
+    </div>
+  );
 }
 
 function PurchaseDialog({ orderId, open, onOpenChange, onDone }: { orderId: string; open: boolean; onOpenChange: (o: boolean) => void; onDone: () => Promise<void> }) {

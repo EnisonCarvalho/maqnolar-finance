@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { canEditTechnicianValue, canStartPartnerService, reportedReaisToCents, canConfirmServiceValues, serviceCompositionPreview } from "@/lib/technician-service";
+import { canEditTechnicianValue, canStartPartnerService, reportedReaisToCents, canConfirmServiceValues, serviceCompositionPreview, canConfirmVisit, visitCompositionPreview } from "@/lib/technician-service";
 
 describe("Serviço do técnico parceiro", () => {
   it("confirma serviço concluído uma única vez", () => {
@@ -21,4 +21,19 @@ describe("Serviço do técnico parceiro", () => {
   it("não reabre serviço concluído", () => expect(canStartPartnerService("servico_concluido")).toBe(false));
   it("converte reais em centavos sem confiar em totais do navegador", () => expect(reportedReaisToCents("1.000,50")).toBe(100050));
   it("rejeita negativos e casas decimais extras", () => { expect(() => reportedReaisToCents("-10,00")).toThrow(); expect(() => reportedReaisToCents("1,001")).toThrow(); });
+});
+
+describe("Somente visita realizada", () => {
+  it("confirma visita uma única vez e somente no status de visita concluída", () => {
+    expect(canConfirmVisit("visita_concluida", null)).toBe(true);
+    expect(canConfirmVisit("servico_concluido", null)).toBe(false);
+    expect(canConfirmVisit("visita_concluida", "2026-11-07T00:41:00Z")).toBe(false);
+  });
+  it("aplica a regra fixa padrão de R$ 30 (20 técnico / 10 MaqnoLar)", () => {
+    expect(visitCompositionPreview(null)).toEqual({ totalCents: 3000, technicianShareCents: 2000, companyShareCents: 1000 });
+  });
+  it("usa a cópia da regra vigente quando configurada", () => {
+    expect(visitCompositionPreview({ technicianFixedCents: 2500, companyFixedCents: 1500 })).toEqual({ totalCents: 4000, technicianShareCents: 2500, companyShareCents: 1500 });
+  });
+  it("não reabre atendimento marcado como somente visita", () => expect(canStartPartnerService("visita_concluida")).toBe(false));
 });

@@ -5,6 +5,17 @@ export function canConfirmServiceValues(status: string, confirmedAt: string | nu
   return !confirmedAt && ["servico_concluido", "aguardando_pagamento", "finalizado"].includes(status);
 }
 
+export function canConfirmVisit(status: string, confirmedAt: string | null): boolean {
+  return !confirmedAt && status === "visita_concluida";
+}
+
+/** Regra fixa da visita (padrão R$ 30: R$ 20 técnico / R$ 10 MaqnoLar), com cópia da regra vigente. */
+export function visitCompositionPreview(rule: { technicianFixedCents: number | null; companyFixedCents: number | null } | null | undefined) {
+  const technicianShareCents = rule?.technicianFixedCents ?? 2000;
+  const companyShareCents = rule?.companyFixedCents ?? 1000;
+  return { totalCents: technicianShareCents + companyShareCents, technicianShareCents, companyShareCents };
+}
+
 export function serviceCompositionPreview(totalReais: string, partsReais: string, rule: SplitRuleSnapshot) {
   const totalCents = reportedReaisToCents(totalReais);
   const partsCents = reportedReaisToCents(partsReais);
@@ -18,7 +29,7 @@ export function canEditTechnicianValue(status: OrderStatus, confirmedAt: string 
 }
 
 export function canStartPartnerService(status: OrderStatus): boolean {
-  return !["cancelado", "finalizado", "servico_concluido", "aguardando_pagamento", "servico_em_andamento"].includes(status);
+  return !["cancelado", "finalizado", "servico_concluido", "visita_concluida", "aguardando_pagamento", "servico_em_andamento"].includes(status);
 }
 
 /** Reais digitados pelo técnico; conversão e validação também no servidor. */

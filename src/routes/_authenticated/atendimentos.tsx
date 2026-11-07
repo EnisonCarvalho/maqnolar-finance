@@ -157,10 +157,13 @@ function AtendimentosPage() {
         ) : (
           filtered.map((o) => (
             <button key={o.id} onClick={() => setDetailId(o.id)} className="rounded-lg border bg-card p-3 text-left">
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-display font-semibold">{o.code}</span>
                 <Badge className={ORDER_STATUS_COLORS[o.status]} variant="secondary">{ORDER_STATUS_LABELS[o.status]}</Badge>
               </div>
+              {!o.financial_confirmed_at && (o.status === "servico_concluido" || o.status === "visita_concluida") && (
+                <Badge variant="outline" className="mt-1 w-fit border-amber-500 text-amber-700 dark:text-amber-400">Pendente de confirmação</Badge>
+              )}
               <p className="mt-1 font-medium">{o.customers?.full_name ?? "—"}</p>
               <p className="text-sm text-muted-foreground">
                 {o.equipment_types?.name ?? "—"} · {o.technicians?.full_name ?? "Sem técnico"}
@@ -201,6 +204,9 @@ function AtendimentosPage() {
                     <TableCell className="hidden lg:table-cell">{formatDateTimeBR(o.scheduled_start)}</TableCell>
                     <TableCell>
                       <Badge className={ORDER_STATUS_COLORS[o.status]} variant="secondary">{ORDER_STATUS_LABELS[o.status]}</Badge>
+                      {!o.financial_confirmed_at && (o.status === "servico_concluido" || o.status === "visita_concluida") && (
+                        <Badge variant="outline" className="ml-1 border-amber-500 text-amber-700 dark:text-amber-400">Pendente de confirmação</Badge>
+                      )}
                     </TableCell>
                     <TableCell className="text-right">
                       <Button
