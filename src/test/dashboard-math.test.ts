@@ -45,6 +45,13 @@ describe("operationalCounts", () => {
 
   it("sem atendimentos, todos os indicadores são zero", () => {
     const c = operationalCounts([], S, E);
-    expect(c).toEqual({ atendimentosPeriodo: 0, visitasAgendadas: 0, orcamentosAguardando: 0, emAndamento: 0, concluidosPeriodo: 0, canceladosPeriodo: 0 });
+    expect(c).toEqual({ atendimentosPeriodo: 0, visitasAgendadas: 0, orcamentosAguardando: 0, emAndamento: 0, concluidosPeriodo: 0, confirmadosPeriodo: 0, canceladosPeriodo: 0 });
+  });
+  it("conta serviço confirmado somente concluído, não cancelado e no período de conclusão", () => {
+    expect(operationalCounts([
+      order({ status: "servico_concluido", completed_at: "2026-11-06T12:00:00Z", financial_confirmed_at: "2026-11-07T12:00:00Z" }),
+      order({ status: "servico_concluido", completed_at: "2026-11-06T12:00:00Z" }),
+      order({ status: "cancelado", completed_at: "2026-11-06T12:00:00Z", financial_confirmed_at: "2026-11-07T12:00:00Z" }),
+    ], S, E).confirmadosPeriodo).toBe(1);
   });
 });

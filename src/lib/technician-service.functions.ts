@@ -18,9 +18,9 @@ export const reportTechnicianValue = createServerFn({ method: "POST" })
 
 export const confirmServiceComposition = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { orderId: string; totalReais: string; partsReais: string; reason: string }) => ({
+  .inputValidator((input: { orderId: string; totalReais: string; partsReais: string; reason?: string }) => ({
     orderId: orderId(input.orderId), total: reportedReaisToCents(input.totalReais),
-    parts: reportedReaisToCents(input.partsReais), reason: input.reason.trim().slice(0, 1000),
+    parts: reportedReaisToCents(input.partsReais), reason: (input.reason ?? "").trim().slice(0, 1000),
   }))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.rpc("confirm_service_composition", { _order: data.orderId, _total: data.total, _parts: data.parts, _reason: data.reason });

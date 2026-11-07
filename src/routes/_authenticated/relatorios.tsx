@@ -115,6 +115,7 @@ function Financeiro({ start, end }: { start: string; end: string }) {
         indicators: [
           { label: "Faturamento bruto", text: formatBRL(i.grossBillingCents), cents: i.grossBillingCents },
           { label: "Receita econômica MaqnoLar", text: formatBRL(i.companyEconomicRevenueCents), cents: i.companyEconomicRevenueCents },
+          { label: "Participação dos técnicos", text: formatBRL(i.technicianShareCents), cents: i.technicianShareCents },
           { label: "Despesas operacionais", text: formatBRL(i.operationalExpensesCents), cents: i.operationalExpensesCents },
           { label: "Resultado econômico", text: formatBRL(i.economicResultCents), cents: i.economicResultCents },
           { label: "Recebimentos efetivos (empresa)", text: formatBRL(i.receivedByCompanyCents), cents: i.receivedByCompanyCents },
@@ -129,6 +130,7 @@ function Financeiro({ start, end }: { start: string; end: string }) {
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         <StatCard label="Faturamento bruto" cents={i.grossBillingCents} />
         <StatCard label="Receita econômica MaqnoLar" cents={i.companyEconomicRevenueCents} tone="pos" />
+        <StatCard label="Participação dos técnicos" cents={i.technicianShareCents} />
         <StatCard label="Despesas operacionais" cents={i.operationalExpensesCents} tone="neg" />
         <StatCard label="Resultado econômico" cents={i.economicResultCents} tone="auto" />
         <StatCard label="Recebimentos efetivos (empresa)" cents={i.receivedByCompanyCents} />
@@ -182,6 +184,7 @@ function Financeiro({ start, end }: { start: string; end: string }) {
 type RepOrder = {
   id: string; code: string; status: OrderStatus; opened_at: string; completed_at: string | null;
   technician_id: string | null;
+  financial_confirmed_at: string | null;
   customers: { full_name: string } | null;
   technicians: { full_name: string } | null;
   equipment_types: { name: string } | null;
@@ -194,7 +197,7 @@ function useReportOrders() {
     queryFn: async (): Promise<RepOrder[]> => {
       const { data, error } = await supabase
         .from("service_orders")
-        .select("id, code, status, opened_at, completed_at, technician_id, customers(full_name), technicians(full_name), equipment_types(name), order_financials(total_cents, company_share_cents, technician_share_cents)")
+        .select("id, code, status, opened_at, completed_at, financial_confirmed_at, technician_id, customers(full_name), technicians(full_name), equipment_types(name), order_financials(total_cents, company_share_cents, technician_share_cents)")
         .order("opened_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as RepOrder[];
@@ -216,6 +219,7 @@ function Atendimentos({ start, end }: { start: string; end: string }) {
   const totalCents = list.reduce((s, o) => s + (finOf(o)?.total_cents ?? 0), 0);
   const companyCents = list.reduce((s, o) => s + (finOf(o)?.company_share_cents ?? 0), 0);
   const techCents = list.reduce((s, o) => s + (finOf(o)?.technician_share_cents ?? 0), 0);
+  const confirmedCount = list.filter((o) => o.status !== "cancelado" && o.completed_at && o.financial_confirmed_at).length;
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Carregando…</p>;
   return (
@@ -227,6 +231,7 @@ function Atendimentos({ start, end }: { start: string; end: string }) {
         criteria: "Data de abertura do atendimento. Valores vêm da composição financeira de cada atendimento.",
         indicators: [
           { label: "Atendimentos", text: String(list.length) },
+          { label: "Serviços confirmados", text: String(confirmedCount) },
           { label: "Valor total dos serviços", text: formatBRL(totalCents), cents: totalCents },
           { label: "Participação MaqnoLar", text: formatBRL(companyCents), cents: companyCents },
           { label: "Participação técnicos", text: formatBRL(techCents), cents: techCents },
@@ -237,6 +242,7 @@ function Atendimentos({ start, end }: { start: string; end: string }) {
       }} />
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Atendimentos</p><p className="font-display text-lg font-semibold sm:text-xl">{list.length}</p></CardContent></Card>
+        <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Serviços confirmados</p><p className="font-display text-lg font-semibold sm:text-xl">{confirmedCount}</p></CardContent></Card>
         <StatCard label="Valor total dos serviços" cents={totalCents} />
         <StatCard label="Participação MaqnoLar" cents={companyCents} tone="pos" />
         <StatCard label="Participação técnicos" cents={techCents} />
