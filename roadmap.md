@@ -1,5 +1,12 @@
 # Roadmap
 
+## Revisão final para uso real
+- [x] 97 testes aprovados; build sem erros
+- [x] Dashboard/relatórios/atendimentos validados como admin em 390/1440px, sem duplicidade nos valores
+- [x] Acesso do técnico TESTE validado: vê só seus atendimentos, botão "Informar valor cobrado" presente, páginas admin bloqueadas
+- [x] Registros fictícios identificados (ATD-00015, ATD-00016, pagamentos, peças, repasse ao técnico TESTE) — nada alterado; relatório entregue ao usuário
+- [x] Tela branca vista em uma execução foi instabilidade transitória do servidor de desenvolvimento; repetição carregou completo sem erros
+
 ## Confirmação simplificada de serviços
 - [x] Reutilizar apuração existente com botão destacado antes dos orçamentos e formulário de total/peças/divisão automática
 - [x] Impedir repetição da confirmação inicial sob bloqueio de atendimento, preservar correções auditadas e controles opcionais de caixa
