@@ -34,11 +34,20 @@ export const Route = createFileRoute("/_authenticated/minha-area")({
 
 const NEXT_ACTIONS: Partial<Record<OrderStatus, { label: string; status: OrderStatus; icon: typeof Navigation }[]>> = {
   visita_agendada: [{ label: "Estou a caminho", status: "tecnico_a_caminho", icon: Navigation }],
-  tecnico_a_caminho: [{ label: "Iniciar diagnóstico", status: "em_diagnostico", icon: SearchCheck }],
-  em_diagnostico: [{ label: "Iniciar serviço", status: "servico_em_andamento", icon: Wrench }],
+  tecnico_a_caminho: [
+    { label: "Iniciar diagnóstico", status: "em_diagnostico", icon: SearchCheck },
+    { label: "Somente visita realizada", status: "visita_concluida", icon: CheckCircle2 },
+  ],
+  em_diagnostico: [
+    { label: "Iniciar serviço", status: "servico_em_andamento", icon: Wrench },
+    { label: "Somente visita realizada", status: "visita_concluida", icon: CheckCircle2 },
+  ],
   orcamento_aprovado: [{ label: "Iniciar serviço", status: "servico_em_andamento", icon: Wrench }],
   aguardando_peca: [{ label: "Iniciar serviço", status: "servico_em_andamento", icon: Wrench }],
-  servico_em_andamento: [{ label: "Concluir serviço", status: "servico_concluido", icon: CheckCircle2 }],
+  servico_em_andamento: [
+    { label: "Concluir serviço", status: "servico_concluido", icon: CheckCircle2 },
+    { label: "Somente visita realizada", status: "visita_concluida", icon: SearchCheck },
+  ],
 };
 
 function MinhaAreaPage() {
@@ -68,9 +77,9 @@ function MinhaAreaPage() {
       return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
     };
     return {
-      today: all.filter((o) => isToday(o.scheduled_start) && !["finalizado", "servico_concluido", "aguardando_pagamento"].includes(o.status)),
-      upcoming: all.filter((o) => !isToday(o.scheduled_start) && !["finalizado", "servico_concluido", "aguardando_pagamento"].includes(o.status)),
-      done: all.filter((o) => ["servico_concluido", "aguardando_pagamento", "finalizado"].includes(o.status)),
+      today: all.filter((o) => isToday(o.scheduled_start) && !["finalizado", "servico_concluido", "visita_concluida", "aguardando_pagamento"].includes(o.status)),
+      upcoming: all.filter((o) => !isToday(o.scheduled_start) && !["finalizado", "servico_concluido", "visita_concluida", "aguardando_pagamento"].includes(o.status)),
+      done: all.filter((o) => ["servico_concluido", "visita_concluida", "aguardando_pagamento", "finalizado"].includes(o.status)),
     };
   }, [orders]);
 
