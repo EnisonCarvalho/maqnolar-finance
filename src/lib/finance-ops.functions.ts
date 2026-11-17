@@ -250,7 +250,7 @@ async function loadAll(supabase: any) {
     supabase.from("part_purchases").select("id, order_id, total_cents, purchased_at, buyer_type, account_id, description"),
     supabase.from("technician_transfers").select("id, technician_id, amount_cents, transfer_date, direction, account_id, status"),
     supabase.from("account_transfers").select("id, from_account_id, to_account_id, amount_cents, transfer_date, status"),
-    supabase.from("order_financials").select("order_id, total_cents, company_share_cents, technician_share_cents, parts_estimated_cents, labor_cents, kind, created_at, service_orders(status, completed_at, opened_at)"),
+    supabase.from("order_financials").select("order_id, total_cents, company_share_cents, technician_share_cents, parts_estimated_cents, labor_cents, kind, created_at, service_orders(code, status, completed_at, opened_at, customers(full_name))"),
     supabase.from("expenses").select("id, amount_cents, competence_date, due_date, status"),
     supabase.from("partner_movements").select("id, partner_id, type, amount_cents, movement_date, account_id, status, description"),
     supabase.from("profit_distribution_payments").select("id, distribution_id, partner_id, amount_cents, paid_at, account_id, status"),
@@ -280,6 +280,9 @@ async function loadAll(supabase: any) {
       technicianShareCents: f.technician_share_cents,
       partsCents: f.kind === "servico" ? Math.max(f.total_cents - f.labor_cents, 0) : 0,
       cancelled: f.service_orders?.status === "cancelado",
+      code: f.service_orders?.code ?? "",
+      customerName: f.service_orders?.customers?.full_name ?? "",
+      kind: f.kind as string,
     })),
     expenses: ex.map((e: any) => ({ ...e, paid_cents: paidByExpense.get(e.id) ?? 0 })),
   };
@@ -306,6 +309,10 @@ export const getFinanceOverview = createServerFn({ method: "POST" })
       movements: movements.filter((m) => m.date >= data.start && m.date <= data.end).reverse(),
       unassignedCount: movements.filter((m) => !m.accountId).length,
       closings: closings ?? [],
+      // Uma linha por OS confirmada (order_financials é único por OS); só a parte da MaqnoLar conta como receita.
+      confirmedOrders: (all.orders as { orderId: string; code: string; customerName: string; kind: string; competenceDate: string; totalCents: number; partsCents: number; companyShareCents: number; cancelled: boolean }[]).filter((o) => !o.cancelled && o.competenceDate >= data.start && o.competenceDate <= data.end)
+        .map((o) => ({ orderId: o.orderId, code: o.code, customerName: o.customerName, kind: o.kind === "visita" ? "Visita" : "Serviço", date: o.competenceDate, totalCents: o.totalCents, partsCents: o.partsCents, companyShareCents: o.companyShareCents }))
+        .sort((a, b) => b.date.localeCompare(a.date)),
     };
   });
 

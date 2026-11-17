@@ -1,3 +1,8 @@
+import { useMutation } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { Trash2 } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { removeCustomer } from "@/lib/customers.functions";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
@@ -52,6 +57,18 @@ function CustomersPage() {
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<Customer | null>(null);
   const [adding, setAdding] = useState(false);
+  const [removing, setRemoving] = useState<Customer | null>(null);
+  const [showInactive, setShowInactive] = useState(false);
+  const removeFn = useServerFn(removeCustomer);
+  const removeMutation = useMutation({
+    mutationFn: (id: string) => removeFn({ data: { id } }),
+    onSuccess: async (r) => {
+      toast.success(r.result === "removido" ? "Cliente removido." : "Cliente com atendimentos vinculados: cadastro desativado, histórico preservado.");
+      setRemoving(null);
+      await qc.invalidateQueries({ queryKey: ["customers"] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Não foi possível remover."),
+  });
 
   if (!session?.isAdmin) {
     return <p className="text-muted-foreground">Esta área é exclusiva para administradores.</p>;
@@ -59,12 +76,12 @@ function CustomersPage() {
 
   const term = search.trim().toLowerCase();
   const filtered = (data ?? []).filter(
-    (c) =>
+    (c) => (showInactive || c.active) && (
       !term ||
       c.full_name.toLowerCase().includes(term) ||
       (c.phone ?? "").toLowerCase().includes(term) ||
       (c.bairro ?? "").toLowerCase().includes(term) ||
-      (c.cidade ?? "").toLowerCase().includes(term),
+      (c.cidade ?? "").toLowerCase().includes(term)),
   );
 
   return (
@@ -81,8 +98,9 @@ function CustomersPage() {
         </Button>
       </div>
 
-      <div className="max-w-sm">
-        <Input
+      <div className="flex max-w-xl flex-wrap items-center gap-3">
+        <label className="order-2 flex items-center gap-2 text-sm"><input type="checkbox" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} />Mostrar inativos</label>
+        <Input className="max-w-sm"
           placeholder="Pesquisar por nome, telefone, bairro ou cidade..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -95,15 +113,19 @@ function CustomersPage() {
           <p className="py-8 text-center text-sm text-muted-foreground">Nenhum cliente encontrado.</p>
         ) : (
           filtered.map((c) => (
-            <button key={c.id} onClick={() => setEditing(c)} className="rounded-lg border bg-card p-3 text-left">
-              <p className="font-medium">{c.full_name}</p>
+            <div key={c.id} className="rounded-lg border bg-card p-3 text-left">
+              <p className="font-medium">{c.full_name}{!c.active && <span className="ml-2 text-xs text-muted-foreground">(inativo)</span>}</p>
               <p className="text-sm text-muted-foreground">{c.phone ?? "Sem telefone"}</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 {[c.endereco, c.numero].filter(Boolean).join(", ") || "—"}
                 {c.bairro ? ` · ${c.bairro}` : ""}
                 {c.cidade ? ` · ${c.cidade}/${c.estado ?? ""}` : ""}
               </p>
-            </button>
+              <div className="mt-2 flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => setEditing(c)}><Pencil className="mr-1 h-4 w-4" />Editar</Button>
+                {c.active && <Button size="sm" variant="outline" onClick={() => setRemoving(c)}><Trash2 className="mr-1 h-4 w-4" />Remover</Button>}
+              </div>
+            </div>
           ))
         )}
       </div>
@@ -119,7 +141,7 @@ function CustomersPage() {
                 <TableHead>Bairro</TableHead>
                 <TableHead>Cidade/UF</TableHead>
                 <TableHead>Cadastrado em</TableHead>
-                <TableHead className="w-12" />
+                <TableHead className="w-24" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -146,6 +168,11 @@ function CustomersPage() {
                     <Button variant="ghost" size="icon" onClick={() => setEditing(c)} aria-label={`Editar ${c.full_name}`}>
                       <Pencil className="h-4 w-4" />
                     </Button>
+                    {c.active && (
+                      <Button variant="ghost" size="icon" onClick={() => setRemoving(c)} aria-label={`Remover ${c.full_name}`}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
@@ -153,6 +180,19 @@ function CustomersPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <AlertDialog open={Boolean(removing)} onOpenChange={(o) => !o && setRemoving(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover {removing?.full_name}?</AlertDialogTitle>
+            <AlertDialogDescription>Se o cliente tiver atendimentos ou histórico vinculado, o cadastro será apenas desativado: sai da lista e da seleção de novas OS, mas continua nos atendimentos antigos.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction disabled={removeMutation.isPending} onClick={(e) => { e.preventDefault(); if (removing) removeMutation.mutate(removing.id); }}>Remover</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <CustomerDialog
         open={adding}

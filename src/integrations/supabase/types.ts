@@ -1994,6 +1994,7 @@ export type Database = {
         Returns: boolean
       }
       my_technician_id: { Args: never; Returns: string }
+      remove_customer: { Args: { _id: string }; Returns: string }
       report_technician_value: {
         Args: { _cents: number; _order: string }
         Returns: undefined

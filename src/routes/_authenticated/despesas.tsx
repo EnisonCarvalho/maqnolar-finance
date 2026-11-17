@@ -14,10 +14,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatBRL, parseBRLToCents } from "@/lib/format";
-import { saveExpense, payExpense, voidExpensePayment, cancelExpense, saveRecurring, generateRecurring, saveCategory } from "@/lib/finance-ops.functions";
+import { getFinanceOverview, saveExpense, payExpense, voidExpensePayment, cancelExpense, saveRecurring, generateRecurring, saveCategory } from "@/lib/finance-ops.functions";
 import { accountsQuery, categoriesQuery, AccountSelect, CategorySelect, PeriodFilter, ReasonDialog, StatCard, usePeriod, type FinCategory } from "@/components/finance-ui";
 import { METHOD_LABELS, ReceiptInput, ReceiptLink, formatISODate, todayISO, uploadReceipt } from "@/components/finance-shared";
 import { useSession } from "@/hooks/use-session";
+import { useServerFn } from "@tanstack/react-start";
 import { NoAccess } from "@/components/no-access";
 
 export const Route = createFileRoute("/_authenticated/despesas")({
@@ -60,6 +61,8 @@ function Content() {
   const { start, end } = period.range;
   const { data: accounts } = useQuery(accountsQuery);
   const { data: categories } = useQuery(categoriesQuery);
+  const overviewFn = useServerFn(getFinanceOverview);
+  const { data: overview } = useQuery({ queryKey: ["fin-overview", start, end], queryFn: () => overviewFn({ data: { start, end } }) });
   const [dateBy, setDateBy] = useState<"competence_date" | "due_date">("due_date");
   const { data: expenses } = useQuery({
     queryKey: ["fin-expenses", start, end, dateBy],
@@ -123,6 +126,13 @@ function Content() {
 
         <TabsContent value="despesas" className="grid gap-4">
           <PeriodFilter period={period} />
+          {overview && (
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              <StatCard label="Receita da MaqnoLar" cents={overview.indicators.companyEconomicRevenueCents} tone="pos" hint="Parte confirmada (peças já abatidas) + avulsas" />
+              <StatCard label="Despesas (competência)" cents={overview.indicators.operationalExpensesCents} tone="neg" />
+              <StatCard label="Resultado após despesas" cents={overview.indicators.economicResultCents} />
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
             <StatCard label={dateBy === "due_date" ? "Despesas com vencimento no período" : "Despesas por competência"} cents={stats.total} />
             <StatCard label="Pago dessas despesas" cents={stats.paidInPeriod} />

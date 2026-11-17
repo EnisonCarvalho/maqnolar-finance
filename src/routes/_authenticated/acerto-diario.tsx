@@ -174,6 +174,8 @@ function AcertoContent() {
         <p className="text-xs text-muted-foreground">Período: {formatISODate(range.start)} a {formatISODate(range.end)}</p>
       </div>
 
+      <CompletedDaily groups={(data?.completedDaily ?? []).filter((g) => techFilter === "todos" || g.technicianId === techFilter)} />
+
       {isLoading && <p className="text-sm text-muted-foreground">Carregando…</p>}
       {error && <p className="text-sm text-destructive">{error instanceof Error ? error.message : "Erro ao carregar."}</p>}
       {!isLoading && techs.length === 0 && <p className="text-sm text-muted-foreground">Nenhum técnico com movimentação para os filtros escolhidos.</p>}
@@ -503,5 +505,51 @@ function ReasonDialog({ open, title, description, action, onClose, onConfirm }: 
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+type DailyGroup = NonNullable<Awaited<ReturnType<typeof getSettlement>>["completedDaily"]>[number];
+function CompletedDaily({ groups }: { groups: DailyGroup[] }) {
+  return (
+    <section className="grid gap-3">
+      <div>
+        <h2 className="font-display text-lg font-semibold">Atendimentos concluídos no período</h2>
+        <p className="text-xs text-muted-foreground">Por data de conclusão, mesmo sem pagamento do cliente. Realizado ≠ recebido ≠ repassado.</p>
+      </div>
+      {groups.length === 0 && <p className="text-sm text-muted-foreground">Nenhum atendimento concluído no período.</p>}
+      {groups.map((g) => (
+        <Card key={g.technicianId ?? "none"}>
+          <CardHeader className="pb-2"><CardTitle className="text-base">{g.technicianName}</CardTitle></CardHeader>
+          <CardContent className="grid gap-3">
+            <div className="grid gap-2">
+              {g.orders.map((o) => (
+                <div key={o.orderId} className="grid gap-1 rounded-md border p-2 text-sm">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-medium">{o.code}</span>
+                    <Badge variant="outline">{o.kind === "visita" ? "Visita" : "Serviço"}</Badge>
+                    {!o.confirmed && <Badge variant="secondary">Pendente de confirmação</Badge>}
+                    <span className="min-w-0 truncate text-muted-foreground">{o.customerName}</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-x-3 text-xs sm:grid-cols-4">
+                    <span>Total: <b>{formatBRL(o.totalCents)}</b></span>
+                    <span>Peças: {formatBRL(o.partsCents)}</span>
+                    <span>Técnico: {o.technicianShareCents == null ? "a confirmar" : formatBRL(o.technicianShareCents)}</span>
+                    <span>MaqnoLar: {o.companyShareCents == null ? "a confirmar" : formatBRL(o.companyShareCents)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-2 gap-2 border-t pt-2 text-sm sm:grid-cols-3 lg:grid-cols-6">
+              <div><p className="text-xs text-muted-foreground">Realizado</p><p className="font-semibold">{formatBRL(g.realizadoCents)}</p></div>
+              <div><p className="text-xs text-muted-foreground">Peças</p><p className="font-semibold">{formatBRL(g.partsCents)}</p></div>
+              <div><p className="text-xs text-muted-foreground">Parte do técnico</p><p className="font-semibold">{formatBRL(g.technicianShareCents)}</p></div>
+              <div><p className="text-xs text-muted-foreground">Parte MaqnoLar</p><p className="font-semibold">{formatBRL(g.companyShareCents)}</p></div>
+              <div><p className="text-xs text-muted-foreground">Recebido do cliente</p><p className="font-semibold">{formatBRL(g.recebidoCents)}</p></div>
+              <div><p className="text-xs text-muted-foreground">Repassado (líquido)</p><p className="font-semibold">{formatBRL(g.repassadoCents)}</p></div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </section>
   );
 }

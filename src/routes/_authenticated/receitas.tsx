@@ -102,7 +102,7 @@ function Content() {
       {i && (
         <div className="grid grid-cols-2 gap-2 lg:grid-cols-3 xl:grid-cols-6">
           <StatCard label="Faturamento bruto" cents={i.grossBillingCents} hint="Atendimentos concluídos" />
-          <StatCard label="Receita econômica MaqnoLar" cents={i.companyEconomicRevenueCents} tone="pos" />
+          <StatCard label="Receita econômica MaqnoLar" cents={i.companyEconomicRevenueCents} tone="pos" hint="Parte confirmada + avulsas" />
           <StatCard label="Recebido pela empresa" cents={i.receivedByCompanyCents} />
           <StatCard label="Recebido pelos técnicos" cents={i.receivedByTechniciansCents} />
           <StatCard label="Receitas avulsas" cents={i.otherRevenueCents} />
@@ -110,6 +110,28 @@ function Content() {
         </div>
       )}
 
+      {overview && (
+        <section className="grid gap-2">
+          <div>
+            <h2 className="font-display font-semibold">Faturamento confirmado por atendimento</h2>
+            <p className="text-xs text-muted-foreground">Cada OS conta uma vez. O total cobrado é só referência: entra no faturamento apenas a parte confirmada da MaqnoLar. Confirmação não significa dinheiro recebido.</p>
+          </div>
+          {overview.confirmedOrders.length === 0 && <p className="text-sm text-muted-foreground">Nenhum atendimento confirmado no período.</p>}
+          {overview.confirmedOrders.map((o) => (
+            <div key={o.orderId} className="flex items-start justify-between gap-2 rounded-md border p-3 text-sm">
+              <div className="min-w-0">
+                <p className="font-medium">{o.code} · {o.customerName}</p>
+                <p className="text-xs text-muted-foreground">{formatISODate(o.date)} · Total cobrado {formatBRL(o.totalCents)}{o.partsCents ? ` · peças ${formatBRL(o.partsCents)}` : ""}</p>
+                <Badge variant="outline" className="mt-1">{o.kind}</Badge>
+              </div>
+              <div className="shrink-0 text-right"><p className="text-xs text-muted-foreground">Receita MaqnoLar</p><p className="font-semibold">{formatBRL(o.companyShareCents)}</p></div>
+            </div>
+          ))}
+          <p className="text-right text-sm">Total receita MaqnoLar (atendimentos): <b>{formatBRL(overview.confirmedOrders.reduce((s, o) => s + o.companyShareCents, 0))}</b></p>
+        </section>
+      )}
+
+      <h2 className="font-display font-semibold">Recebimentos e receitas avulsas (caixa)</h2>
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4 lg:max-w-4xl">
         <Select value={source} onValueChange={setSource}><SelectTrigger aria-label="Origem"><SelectValue /></SelectTrigger>
           <SelectContent><SelectItem value="todas">Todas as origens</SelectItem><SelectItem value="atendimento">Atendimentos</SelectItem><SelectItem value="avulsa">Avulsas</SelectItem></SelectContent></Select>

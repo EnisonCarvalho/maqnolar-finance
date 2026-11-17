@@ -120,6 +120,13 @@
       "when": 1794950122127,
       "tag": "0016_block_physical_delete_registries",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1794951354131,
+      "tag": "0017_customer_remove_or_deactivate",
+      "breakpoints": true
     }
   ]
 }

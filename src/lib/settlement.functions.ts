@@ -1,3 +1,4 @@
+import { groupDailyByTechnician, type DailyOrder } from "@/lib/daily-math";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
@@ -147,8 +148,40 @@ export const getSettlement = createServerFn({ method: "POST" })
         clientPendingCents: clientPendingFor(ledger.orders, ledger.payments, t.id),
       };
     });
-    return { technicians, closings: closings ?? [] };
+    const completedDaily = data.start && data.end ? await loadCompletedDaily(context.supabase, data.start, data.end, ledger) : [];
+    return { technicians, closings: closings ?? [], completedDaily };
   });
+
+/** OS concluídas no período (horário de Fortaleza), com ou sem pagamento do cliente. */
+async function loadCompletedDaily(supabase: any, start: string, end: string, ledger: Awaited<ReturnType<typeof loadLedger>>) {
+  const endNext = new Date(`${end}T00:00:00-03:00`);
+  endNext.setDate(endNext.getDate() + 1);
+  const { data: rows, error } = await supabase
+    .from("service_orders")
+    .select("id, code, technician_id, status, technician_reported_cents, technician_reported_parts, customers(full_name), order_financials(kind, total_cents, labor_cents, technician_share_cents, company_share_cents)")
+    .neq("status", "cancelado")
+    .gte("completed_at", `${start}T00:00:00-03:00`)
+    .lt("completed_at", endNext.toISOString());
+  if (error) throw dbError(error.message);
+  const received = new Map<string, number>();
+  for (const p of ledger.payments) received.set(p.orderId, (received.get(p.orderId) ?? 0) + p.amountCents);
+  const orders: DailyOrder[] = (rows ?? []).map((r: any) => {
+    const f = Array.isArray(r.order_financials) ? r.order_financials[0] : r.order_financials;
+    const reportedParts = Array.isArray(r.technician_reported_parts) ? r.technician_reported_parts.reduce((a: number, p: any) => a + (Number(p?.cents) || 0), 0) : 0;
+    const kind: "visita" | "servico" = f ? (f.kind === "visita" ? "visita" : "servico") : r.status === "visita_concluida" ? "visita" : "servico";
+    return {
+      orderId: r.id, code: r.code, customerName: r.customers?.full_name ?? "", technicianId: r.technician_id, kind, confirmed: Boolean(f),
+      totalCents: f ? f.total_cents : r.technician_reported_cents ?? 0,
+      partsCents: f ? (f.kind === "visita" ? 0 : Math.max(f.total_cents - f.labor_cents, 0)) : reportedParts,
+      technicianShareCents: f ? f.technician_share_cents : null,
+      companyShareCents: f ? f.company_share_cents : null,
+      receivedCents: received.get(r.id) ?? 0,
+    };
+  });
+  const transfers = ledger.transfers.filter((t) => t.date >= start && t.date <= end);
+  const names = new Map(ledger.technicians.map((t) => [t.id, t.full_name]));
+  return groupDailyByTechnician(orders, transfers).map((g) => ({ ...g, technicianName: g.technicianId ? names.get(g.technicianId) ?? "Técnico" : "Sem técnico" }));
+}
 
 /**
  * Acerto do próprio técnico logado (Passo 11A): mesmos cálculos do acerto diário,
