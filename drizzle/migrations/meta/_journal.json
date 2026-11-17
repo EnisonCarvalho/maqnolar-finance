@@ -127,6 +127,13 @@
       "when": 1794951354131,
       "tag": "0017_customer_remove_or_deactivate",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1794952261049,
+      "tag": "0018_simplify_technician_flow",
+      "breakpoints": true
     }
   ]
 }

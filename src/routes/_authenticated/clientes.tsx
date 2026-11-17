@@ -3,6 +3,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { Trash2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { removeCustomer } from "@/lib/customers.functions";
+import { ordersQuery } from "@/lib/orders-queries";
+import { changeOrderStatus } from "@/lib/orders.functions";
+import { ORDER_STATUS_LABELS } from "@/lib/order-status";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
@@ -60,6 +63,13 @@ function CustomersPage() {
   const [removing, setRemoving] = useState<Customer | null>(null);
   const [showInactive, setShowInactive] = useState(false);
   const removeFn = useServerFn(removeCustomer);
+  const { data: allOrders } = useQuery({ ...ordersQuery, enabled: Boolean(removing) });
+  const openOrders = (allOrders ?? []).filter((o) => removing && o.customer_id === removing.id && !["finalizado", "cancelado", "servico_concluido", "visita_concluida", "aguardando_pagamento"].includes(o.status));
+  const cancelOrderMutation = useMutation({
+    mutationFn: (orderId: string) => changeOrderStatus({ data: { orderId, status: "cancelado", note: "Cancelado pelo administrador ao remover o cliente." } }),
+    onSuccess: async () => { toast.success("Atendimento cancelado."); await qc.invalidateQueries({ queryKey: ["service-orders"] }); },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Não foi possível cancelar."),
+  });
   const removeMutation = useMutation({
     mutationFn: (id: string) => removeFn({ data: { id } }),
     onSuccess: async (r) => {
@@ -187,6 +197,18 @@ function CustomersPage() {
             <AlertDialogTitle>Remover {removing?.full_name}?</AlertDialogTitle>
             <AlertDialogDescription>Se o cliente tiver atendimentos ou histórico vinculado, o cadastro será apenas desativado: sai da lista e da seleção de novas OS, mas continua nos atendimentos antigos.</AlertDialogDescription>
           </AlertDialogHeader>
+          {openOrders.length > 0 && (
+            <div className="grid gap-2 rounded-md border border-amber-500 p-3 text-sm">
+              <p className="font-medium">Atenção: este cliente tem {openOrders.length} atendimento(s) em aberto.</p>
+              <p className="text-xs text-muted-foreground">Eles continuam ativos se você remover o cliente. Cancele aqui os que não serão mais feitos.</p>
+              {openOrders.map((o) => (
+                <div key={o.id} className="flex flex-wrap items-center justify-between gap-2">
+                  <span>{o.code} · {ORDER_STATUS_LABELS[o.status]}</span>
+                  <Button size="sm" variant="outline" disabled={cancelOrderMutation.isPending} onClick={() => cancelOrderMutation.mutate(o.id)}>Cancelar OS</Button>
+                </div>
+              ))}
+            </div>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction disabled={removeMutation.isPending} onClick={(e) => { e.preventDefault(); if (removing) removeMutation.mutate(removing.id); }}>Remover</AlertDialogAction>

@@ -32,7 +32,6 @@ type OrderInput = AddressInput & {
 };
 
 const TECHNICIAN_TRANSITIONS: OrderStatus[] = [
-  "tecnico_a_caminho",
   "servico_em_andamento",
   "visita_concluida",
 ];
@@ -279,7 +278,7 @@ export const changeOrderStatus = createServerFn({ method: "POST" })
         throw new Error("Atendimento já encerrado.");
       }
       const step = technicianStep(order.status as OrderStatus);
-      const allowed = step === "a_caminho" ? ["tecnico_a_caminho"] : step === "iniciar" ? ["servico_em_andamento"] : step === "concluir" ? ["visita_concluida"] : [];
+      const allowed = step === "iniciar" ? ["servico_em_andamento"] : step === "concluir" ? ["visita_concluida"] : [];
       if (!allowed.includes(data.status)) throw new Error("Ação não disponível nesta etapa do atendimento.");
     }
     const patch: OrderUpdate = { status: data.status };

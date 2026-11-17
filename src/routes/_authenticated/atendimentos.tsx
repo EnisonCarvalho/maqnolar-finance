@@ -1,6 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { changeOrderStatus } from "@/lib/orders.functions";
 import { Plus, Search, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,6 +60,14 @@ function AtendimentosPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<OrderRow | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [removing, setRemoving] = useState<OrderRow | null>(null);
+  const qc = useQueryClient();
+  const cancelMutation = useMutation({
+    mutationFn: (id: string) => changeOrderStatus({ data: { orderId: id, status: "cancelado", note: "Atendimento excluído pelo administrador (cancelado, histórico preservado)." } }),
+    onSuccess: async () => { toast.success("Atendimento excluído da lista ativa (cancelado, histórico preservado)."); setRemoving(null); await qc.invalidateQueries({ queryKey: ["service-orders"] }); },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Não foi possível excluir."),
+  });
+  const canChange = (o: OrderRow) => Boolean(session?.isAdmin) && o.status !== "finalizado" && o.status !== "cancelado";
 
   const filtered = useMemo(() => {
     const start = periodStart(period);
@@ -158,7 +169,8 @@ function AtendimentosPage() {
           <p className="py-8 text-center text-sm text-muted-foreground">Nenhum atendimento encontrado.</p>
         ) : (
           filtered.map((o) => (
-            <button key={o.id} onClick={() => setDetailId(o.id)} className="rounded-lg border bg-card p-3 text-left">
+            <div key={o.id} className="rounded-lg border bg-card p-3 text-left">
+              <button type="button" onClick={() => setDetailId(o.id)} className="w-full text-left">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-display font-semibold">{o.code}</span>
                 <Badge className={ORDER_STATUS_COLORS[o.status]} variant="secondary">{ORDER_STATUS_LABELS[o.status]}</Badge>
@@ -171,7 +183,14 @@ function AtendimentosPage() {
                 {o.equipment_types?.name ?? "—"} · {o.technicians?.full_name ?? "Sem técnico"}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">Agendado: {formatDateTimeBR(o.scheduled_start)}</p>
-            </button>
+              </button>
+              {canChange(o) && (
+                <div className="mt-2 flex gap-2 border-t pt-2">
+                  <Button size="sm" variant="outline" className="min-h-10 flex-1" onClick={() => { setEditing(o); setFormOpen(true); }}>Editar</Button>
+                  <Button size="sm" variant="outline" className="min-h-10 flex-1 text-destructive" onClick={() => setRemoving(o)}>Excluir</Button>
+                </div>
+              )}
+            </div>
           ))
         )}
       </div>
@@ -211,14 +230,12 @@ function AtendimentosPage() {
                       )}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={(e) => { e.stopPropagation(); setEditing(o); setFormOpen(true); }}
-                        disabled={!session?.isAdmin || o.status === "finalizado" || o.status === "cancelado"}
-                      >
-                        Editar
-                      </Button>
+                      {canChange(o) && (
+                        <div className="flex justify-end gap-1">
+                          <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); setEditing(o); setFormOpen(true); }}>Editar</Button>
+                          <Button size="sm" variant="ghost" className="text-destructive" onClick={(e) => { e.stopPropagation(); setRemoving(o); }}>Excluir</Button>
+                        </div>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))
@@ -227,6 +244,19 @@ function AtendimentosPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <AlertDialog open={Boolean(removing)} onOpenChange={(o) => !o && setRemoving(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir {removing?.code}?</AlertDialogTitle>
+            <AlertDialogDescription>O atendimento será cancelado: sai da lista ativa e da área do técnico. O histórico e os registros financeiros são preservados.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <AlertDialogAction disabled={cancelMutation.isPending} onClick={(e) => { e.preventDefault(); if (removing) cancelMutation.mutate(removing.id); }}>Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <OrderFormDialog open={formOpen} onOpenChange={setFormOpen} order={editing} />
       <OrderDetailSheet orderId={detailId} onClose={() => setDetailId(null)} isAdmin={Boolean(session?.isAdmin)} />

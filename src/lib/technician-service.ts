@@ -46,10 +46,9 @@ export function reportedReaisToCents(value: string): number {
 }
 
 /** Próximas ações do técnico: somente a etapa atual (validado também no banco). */
-export type TechnicianStep = "a_caminho" | "iniciar" | "concluir";
+export type TechnicianStep = "iniciar" | "concluir";
 export function technicianStep(status: OrderStatus): TechnicianStep | null {
-  if (["novo", "aguardando_agendamento", "visita_agendada"].includes(status)) return "a_caminho";
-  if (["tecnico_a_caminho", "em_diagnostico", "orcamento_aprovado", "aguardando_peca"].includes(status)) return "iniciar";
+  if (["novo", "aguardando_agendamento", "visita_agendada", "tecnico_a_caminho", "em_diagnostico", "orcamento_aprovado", "aguardando_peca"].includes(status)) return "iniciar";
   if (status === "servico_em_andamento") return "concluir";
   return null;
 }

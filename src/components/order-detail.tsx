@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { formatBRL, parseBRLToCents, formatDateBR } from "@/lib/format";
-import { ORDER_STATUSES, ORDER_STATUS_LABELS, ORDER_STATUS_COLORS, QUOTE_STATUS_LABELS, EVENT_TYPE_LABELS, type OrderStatus } from "@/lib/order-status";
+import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS, QUOTE_STATUS_LABELS, EVENT_TYPE_LABELS, type OrderStatus } from "@/lib/order-status";
 import { orderDetailQuery, type QuoteRow } from "@/lib/orders-queries";
 import { OrderFinancials } from "@/components/order-financials";
 import { changeOrderStatus, addOrderNote, createQuote, decideQuote, scheduleOrder } from "@/lib/orders.functions";
@@ -141,11 +141,12 @@ export function OrderDetailSheet({ orderId, onClose, isAdmin }: Props) {
               {isAdmin && !closed && (
                 <div className="flex flex-wrap items-end gap-2 rounded-md border p-3">
                   <div className="grid min-w-48 flex-1 gap-1.5">
-                    <Label>Alterar status</Label>
+                    <Label>Andamento</Label>
+                    <p className="text-xs text-muted-foreground">"Serviço concluído" é registrado pelo técnico com valor e peças.</p>
                     <Select onValueChange={(v) => statusMutation.mutate(v as OrderStatus)}>
                       <SelectTrigger><SelectValue placeholder="Escolher novo status" /></SelectTrigger>
                       <SelectContent>
-                        {ORDER_STATUSES.filter((s) => s !== order.status).map((s) => (
+                        {(["servico_em_andamento", "visita_concluida", "cancelado"] as OrderStatus[]).filter((s) => s !== order.status).map((s) => (
                           <SelectItem key={s} value={s}>{ORDER_STATUS_LABELS[s]}</SelectItem>
                         ))}
                       </SelectContent>
