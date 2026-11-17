@@ -157,7 +157,7 @@ export function OrderDetailSheet({ orderId, onClose, isAdmin }: Props) {
 
               <Separator />
 
-              {isAdmin && <OrderFinancials key={order.id} orderId={order.id} technicianId={order.technician_id} technicianName={order.technicians?.full_name ?? null} reportedCents={order.technician_reported_cents} orderStatus={order.status} confirmedAt={order.financial_confirmed_at} />}
+              {isAdmin && <OrderFinancials key={order.id} orderId={order.id} technicianId={order.technician_id} technicianName={order.technicians?.full_name ?? null} reportedCents={order.technician_reported_cents} reportedPartsCents={Array.isArray(order.technician_reported_parts) ? (order.technician_reported_parts as { cents: number }[]).reduce((a, p) => a + (Number(p.cents) || 0), 0) : 0} orderStatus={order.status} confirmedAt={order.financial_confirmed_at} />}
 
               <div>
                 <div className="mb-2 flex items-center justify-between">

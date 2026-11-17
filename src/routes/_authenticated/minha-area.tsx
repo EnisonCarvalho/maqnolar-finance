@@ -29,7 +29,6 @@ export const Route = createFileRoute("/_authenticated/minha-area")({
 
 function MinhaAreaPage() {
   const { data: session } = useSession();
-  const queryClient = useQueryClient();
   const { data: orders, isLoading } = useQuery(ordersQuery);
   const [detailId, setDetailId] = useState<string | null>(null);
   const { today, upcoming, done } = useMemo(() => {

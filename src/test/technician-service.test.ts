@@ -37,3 +37,12 @@ describe("Somente visita realizada", () => {
   });
   it("não reabre atendimento marcado como somente visita", () => expect(canStartPartnerService("visita_concluida")).toBe(false));
 });
+import { technicianStep, completionPreview } from "@/lib/technician-service";
+describe("conclusão pelo técnico", () => {
+  it("aceita 150,00 e 150.00 como R$ 150,00", () => { expect(reportedReaisToCents("150,00")).toBe(15000); expect(reportedReaisToCents("150.00")).toBe(15000); expect(reportedReaisToCents("1.500")).toBe(150000); });
+  it("mostra só a etapa atual", () => { expect(technicianStep("visita_agendada")).toBe("a_caminho"); expect(technicianStep("tecnico_a_caminho")).toBe("iniciar"); expect(technicianStep("servico_em_andamento")).toBe("concluir"); expect(technicianStep("servico_concluido")).toBeNull(); });
+  it("soma peças e bloqueia soma acima do total", () => {
+    expect(completionPreview("150.00", [{ description: "Rolamento", valueReais: "40" }, { description: "Correia", valueReais: "10,50" }]).partsCents).toBe(5050);
+    expect(() => completionPreview("100", [{ description: "Motor", valueReais: "120" }])).toThrow();
+  });
+});

@@ -34,7 +34,7 @@ function buyerName(p: PurchaseRow): string {
   return p.buyer_label ?? "Outro responsável";
 }
 
-export function OrderFinancials({ orderId, technicianId = null, technicianName = null, reportedCents = null, orderStatus, confirmedAt }: { orderId: string; technicianId?: string | null; technicianName?: string | null; reportedCents?: number | null; orderStatus: string; confirmedAt: string | null }) {
+export function OrderFinancials({ orderId, technicianId = null, technicianName = null, reportedCents = null, reportedPartsCents = 0, orderStatus, confirmedAt }: { orderId: string; technicianId?: string | null; technicianName?: string | null; reportedCents?: number | null; reportedPartsCents?: number; orderStatus: string; confirmedAt: string | null }) {
   const queryClient = useQueryClient();
   const { data } = useQuery(orderFinancialsQuery(orderId));
   const [purchaseOpen, setPurchaseOpen] = useState(false);
@@ -89,7 +89,7 @@ export function OrderFinancials({ orderId, technicianId = null, technicianName =
         <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
           <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-md">
             <DialogHeader><DialogTitle>Confirmar valores</DialogTitle></DialogHeader>
-            <CompositionForm orderId={orderId} totalCents={reportedCents} partsCents={0} onDone={async () => { setConfirmOpen(false); await refresh(); }} />
+            <CompositionForm orderId={orderId} totalCents={reportedCents} partsCents={reportedPartsCents} onDone={async () => { setConfirmOpen(false); await refresh(); }} />
           </DialogContent>
         </Dialog>
       </> : <p className="text-sm text-muted-foreground">Apuração financeira pendente.</p>
