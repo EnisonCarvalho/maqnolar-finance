@@ -96,9 +96,11 @@ function AtendimentosPage() {
           <Button variant="outline" asChild>
             <Link to="/agenda"><CalendarDays className="mr-2 h-4 w-4" /> Agenda</Link>
           </Button>
-          <Button onClick={() => { setEditing(null); setFormOpen(true); }}>
-            <Plus className="mr-2 h-4 w-4" /> Novo atendimento
-          </Button>
+          {session?.isAdmin && (
+            <Button onClick={() => { setEditing(null); setFormOpen(true); }}>
+              <Plus className="mr-2 h-4 w-4" /> Novo atendimento
+            </Button>
+          )}
         </div>
       </div>
 

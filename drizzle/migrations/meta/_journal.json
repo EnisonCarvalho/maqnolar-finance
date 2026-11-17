@@ -113,6 +113,13 @@
       "when": 1794949453779,
       "tag": "0015_technician_completion_flow",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1794950122127,
+      "tag": "0016_block_physical_delete_registries",
+      "breakpoints": true
     }
   ]
 }
