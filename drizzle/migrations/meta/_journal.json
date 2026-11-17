@@ -141,6 +141,20 @@
       "when": 1794953252540,
       "tag": "0019_archive_orders_keep_operational_status",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1794953593562,
+      "tag": "0020_test_reset_batch_marker",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1794953607305,
+      "tag": "0021_test_reset_batch_fn",
+      "breakpoints": true
     }
   ]
 }

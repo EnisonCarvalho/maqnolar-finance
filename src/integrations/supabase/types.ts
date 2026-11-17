@@ -573,6 +573,7 @@ export type Database = {
           opening_balance_cents: number
           opening_date: string
           ownership: string
+          test_reset_batch: string | null
           updated_at: string
         }
         Insert: {
@@ -586,6 +587,7 @@ export type Database = {
           opening_balance_cents?: number
           opening_date?: string
           ownership?: string
+          test_reset_batch?: string | null
           updated_at?: string
         }
         Update: {
@@ -599,6 +601,7 @@ export type Database = {
           opening_balance_cents?: number
           opening_date?: string
           ownership?: string
+          test_reset_batch?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -1545,6 +1548,7 @@ export type Database = {
           technician_reported_cents: number | null
           technician_reported_name: string | null
           technician_reported_parts: Json | null
+          test_reset_batch: string | null
           updated_at: string
           visit_billable: boolean
         }
@@ -1585,6 +1589,7 @@ export type Database = {
           technician_reported_cents?: number | null
           technician_reported_name?: string | null
           technician_reported_parts?: Json | null
+          test_reset_batch?: string | null
           updated_at?: string
           visit_billable?: boolean
         }
@@ -1625,6 +1630,7 @@ export type Database = {
           technician_reported_cents?: number | null
           technician_reported_name?: string | null
           technician_reported_parts?: Json | null
+          test_reset_batch?: string | null
           updated_at?: string
           visit_billable?: boolean
         }
@@ -2003,6 +2009,7 @@ export type Database = {
         Returns: boolean
       }
       my_technician_id: { Args: never; Returns: string }
+      order_in_test_reset: { Args: { _order: string }; Returns: boolean }
       remove_customer: { Args: { _id: string }; Returns: string }
       report_technician_value: {
         Args: { _cents: number; _order: string }
