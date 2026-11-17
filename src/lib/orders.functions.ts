@@ -190,9 +190,6 @@ export const updateOrder = createServerFn({ method: "POST" })
       .eq("id", data.orderId)
       .single();
     if (!current) throw new Error("Atendimento não encontrado.");
-    if (current.status === "finalizado" || current.status === "cancelado") {
-      throw new Error("Atendimentos finalizados ou cancelados não podem ser editados.");
-    }
     const { error } = await context.supabase
       .from("service_orders")
       .update({
@@ -247,6 +244,27 @@ export const scheduleOrder = createServerFn({ method: "POST" })
       })
       .eq("id", data.orderId);
     throwIfError(error);
+    return { ok: true as const };
+  });
+
+/** Exclusão administrativa: arquiva a OS (sai das listas), preservando status, histórico, pagamentos e auditoria. */
+export const archiveOrder = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { orderId: string; reason?: string }) => {
+    if (!isUuid(input.orderId)) throw new Error("Atendimento inválido.");
+    return { orderId: input.orderId, reason: clean(input.reason, 300) || "Excluído pelo administrador" };
+  })
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { error } = await context.supabase
+      .from("service_orders")
+      .update({ archived_at: new Date().toISOString(), archived_by: context.userId, archive_reason: data.reason })
+      .eq("id", data.orderId)
+      .is("archived_at", null);
+    throwIfError(error);
+    await context.supabase.from("service_order_events").insert({
+      order_id: data.orderId, event_type: "observacao", description: `Atendimento arquivado: ${data.reason}`, actor_user_id: context.userId,
+    });
     return { ok: true as const };
   });
 

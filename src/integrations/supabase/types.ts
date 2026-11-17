@@ -1509,6 +1509,9 @@ export type Database = {
       }
       service_orders: {
         Row: {
+          archive_reason: string | null
+          archived_at: string | null
+          archived_by: string | null
           bairro: string | null
           campaign_id: string | null
           cep: string | null
@@ -1546,6 +1549,9 @@ export type Database = {
           visit_billable: boolean
         }
         Insert: {
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           bairro?: string | null
           campaign_id?: string | null
           cep?: string | null
@@ -1583,6 +1589,9 @@ export type Database = {
           visit_billable?: boolean
         }
         Update: {
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           bairro?: string | null
           campaign_id?: string | null
           cep?: string | null

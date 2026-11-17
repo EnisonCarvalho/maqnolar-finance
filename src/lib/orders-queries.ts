@@ -46,6 +46,7 @@ export const ordersQuery = queryOptions({
     const { data, error } = await supabase
       .from("service_orders")
       .select(ORDER_SELECT)
+      .is("archived_at", null)
       .order("opened_at", { ascending: false });
     if (error) throw error;
     return (data ?? []) as unknown as OrderRow[];

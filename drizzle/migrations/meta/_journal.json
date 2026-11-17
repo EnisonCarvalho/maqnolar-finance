@@ -134,6 +134,13 @@
       "when": 1794952261049,
       "tag": "0018_simplify_technician_flow",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1794953252540,
+      "tag": "0019_archive_orders_keep_operational_status",
+      "breakpoints": true
     }
   ]
 }

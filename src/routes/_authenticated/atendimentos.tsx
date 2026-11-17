@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { changeOrderStatus } from "@/lib/orders.functions";
+import { archiveOrder } from "@/lib/orders.functions";
 import { Plus, Search, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useSession } from "@/hooks/use-session";
 import { ordersQuery, techniciansQuery, type OrderRow } from "@/lib/orders-queries";
 import { ORDER_STATUSES, ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from "@/lib/order-status";
+import { formatBRL } from "@/lib/format";
 import { OrderFormDialog } from "@/components/order-form";
 import { OrderDetailSheet, formatDateTimeBR } from "@/components/order-detail";
 
@@ -63,11 +64,11 @@ function AtendimentosPage() {
   const [removing, setRemoving] = useState<OrderRow | null>(null);
   const qc = useQueryClient();
   const cancelMutation = useMutation({
-    mutationFn: (id: string) => changeOrderStatus({ data: { orderId: id, status: "cancelado", note: "Atendimento excluído pelo administrador (cancelado, histórico preservado)." } }),
-    onSuccess: async () => { toast.success("Atendimento excluído da lista ativa (cancelado, histórico preservado)."); setRemoving(null); await qc.invalidateQueries({ queryKey: ["service-orders"] }); },
+    mutationFn: (id: string) => archiveOrder({ data: { orderId: id } }),
+    onSuccess: async () => { toast.success("Atendimento excluído das listas (arquivado, histórico preservado)."); setRemoving(null); await qc.invalidateQueries({ queryKey: ["service-orders"] }); },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Não foi possível excluir."),
   });
-  const canChange = (o: OrderRow) => Boolean(session?.isAdmin) && o.status !== "finalizado" && o.status !== "cancelado";
+  const canChange = (_o: OrderRow) => Boolean(session?.isAdmin);
 
   const filtered = useMemo(() => {
     const start = periodStart(period);
@@ -183,6 +184,7 @@ function AtendimentosPage() {
                 {o.equipment_types?.name ?? "—"} · {o.technicians?.full_name ?? "Sem técnico"}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">Agendado: {formatDateTimeBR(o.scheduled_start)}</p>
+              <ReportedSummary o={o} />
               </button>
               {canChange(o) && (
                 <div className="mt-2 flex gap-2 border-t pt-2">
@@ -228,6 +230,7 @@ function AtendimentosPage() {
                       {!o.financial_confirmed_at && (o.status === "servico_concluido" || o.status === "visita_concluida") && (
                         <Badge variant="outline" className="ml-1 border-amber-500 text-amber-700 dark:text-amber-400">Pendente de confirmação</Badge>
                       )}
+                      <ReportedSummary o={o} />
                     </TableCell>
                     <TableCell className="text-right">
                       {canChange(o) && (
@@ -249,7 +252,7 @@ function AtendimentosPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir {removing?.code}?</AlertDialogTitle>
-            <AlertDialogDescription>O atendimento será cancelado: sai da lista ativa e da área do técnico. O histórico e os registros financeiros são preservados.</AlertDialogDescription>
+            <AlertDialogDescription>O atendimento sai das listas do admin e da área do técnico, sem mudar o status. Pagamentos, repasses, histórico e auditoria são preservados.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Voltar</AlertDialogCancel>
@@ -261,5 +264,17 @@ function AtendimentosPage() {
       <OrderFormDialog open={formOpen} onOpenChange={setFormOpen} order={editing} />
       <OrderDetailSheet orderId={detailId} onClose={() => setDetailId(null)} isAdmin={Boolean(session?.isAdmin)} />
     </div>
+  );
+}
+
+function ReportedSummary({ o }: { o: OrderRow }) {
+  if (o.status === "visita_concluida") return <p className="mt-1 text-xs text-muted-foreground">Somente visita · R$ 30,00 (20/10){o.financial_confirmed_at ? " · confirmada" : ""}</p>;
+  if (o.technician_reported_cents == null) return null;
+  const parts = Array.isArray(o.technician_reported_parts) ? (o.technician_reported_parts as { description: string; cents: number }[]) : [];
+  return (
+    <p className="mt-1 text-xs text-muted-foreground">
+      Informado: {formatBRL(o.technician_reported_cents)} · {parts.length === 0 ? "sem peças" : parts.map((p) => `${p.description} ${formatBRL(p.cents)}`).join(", ")}
+      {o.financial_confirmed_at ? " · confirmado" : ""}
+    </p>
   );
 }
