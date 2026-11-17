@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { reportedReaisToCents } from "@/lib/technician-service";
+import { reportedReaisToCents, completionPreview } from "@/lib/technician-service";
 
 function orderId(value: string) {
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)) throw new Error("Atendimento inválido.");
@@ -33,6 +33,18 @@ export const confirmServiceComposition = createServerFn({ method: "POST" })
   }))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.rpc("confirm_service_composition", { _order: data.orderId, _total: data.total, _parts: data.parts, _reason: data.reason });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+export const completeServiceWithValues = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { orderId: string; totalReais: string; parts: { description: string; valueReais: string }[] }) => {
+    if (!Array.isArray(input.parts) || input.parts.length > 50) throw new Error("Lista de peças inválida.");
+    const preview = completionPreview(String(input.totalReais ?? ""), input.parts.map((p) => ({ description: String(p?.description ?? "").slice(0, 200), valueReais: String(p?.valueReais ?? "") })));
+    return { orderId: orderId(input.orderId), cents: preview.totalCents, parts: preview.parts };
+  })
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase.rpc("complete_service_with_values", { _order: data.orderId, _cents: data.cents, _parts: data.parts });
     if (error) throw new Error(error.message);
     return { ok: true };
   });

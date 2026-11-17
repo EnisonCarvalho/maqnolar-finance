@@ -30,6 +30,9 @@ export function OrderFormDialog({ open, onOpenChange, order }: Props) {
   const { data: equipmentTypes } = useQuery(equipmentTypesQuery);
 
   const [customerId, setCustomerId] = useState("");
+  const [newCustomer, setNewCustomer] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newPhone, setNewPhone] = useState("");
   const [equipmentTypeId, setEquipmentTypeId] = useState("");
   const [problem, setProblem] = useState("");
   const [technicianId, setTechnicianId] = useState("");
@@ -54,7 +57,7 @@ export function OrderFormDialog({ open, onOpenChange, order }: Props) {
         cep: order.cep ?? "", ponto_referencia: order.ponto_referencia ?? "",
       });
     } else {
-      setCustomerId(""); setEquipmentTypeId(""); setProblem(""); setTechnicianId("");
+      setCustomerId(""); setNewCustomer(false); setNewName(""); setNewPhone(""); setEquipmentTypeId(""); setProblem(""); setTechnicianId("");
       setScheduled(""); setMinutes("60"); setNotes("");
       setAddr({ endereco: "", numero: "", complemento: "", bairro: "", cidade: "", estado: "", cep: "", ponto_referencia: "" });
     }
@@ -75,7 +78,7 @@ export function OrderFormDialog({ open, onOpenChange, order }: Props) {
   const mutation = useMutation({
     mutationFn: async () => {
       const payload = {
-        customerId,
+        customerId: !order && newCustomer ? "" : customerId,
         equipmentTypeId: equipmentTypeId || null,
         reportedProblem: problem,
         technicianId: technicianId || null,
@@ -85,7 +88,7 @@ export function OrderFormDialog({ open, onOpenChange, order }: Props) {
         ...addr,
       };
       if (order) return updateOrder({ data: { orderId: order.id, ...payload } });
-      return createOrder({ data: payload });
+      return createOrder({ data: { ...payload, ...(newCustomer ? { newCustomerName: newName, newCustomerPhone: newPhone } : {}) } });
     },
     onSuccess: async (res) => {
       toast.success(order ? "Atendimento atualizado." : `Atendimento ${"code" in res ? res.code : ""} criado.`);
@@ -113,7 +116,20 @@ export function OrderFormDialog({ open, onOpenChange, order }: Props) {
         >
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-1.5">
-              <Label>Cliente *</Label>
+              <div className="flex items-center justify-between gap-2">
+                <Label>Cliente *</Label>
+                {!order && (
+                  <Button type="button" variant="link" className="h-auto p-0 text-xs" onClick={() => { setNewCustomer(!newCustomer); setCustomerId(""); }}>
+                    {newCustomer ? "Escolher cliente cadastrado" : "Cliente novo? Digitar nome"}
+                  </Button>
+                )}
+              </div>
+              {!order && newCustomer ? (
+                <div className="grid gap-2">
+                  <Input aria-label="Nome do cliente" placeholder="Nome do cliente" value={newName} onChange={(e) => setNewName(e.target.value)} />
+                  <Input aria-label="Telefone do cliente" placeholder="Telefone (opcional)" inputMode="tel" value={newPhone} onChange={(e) => setNewPhone(e.target.value)} />
+                </div>
+              ) : (
               <Select value={customerId} onValueChange={fillAddressFromCustomer}>
                 <SelectTrigger><SelectValue placeholder="Selecione o cliente" /></SelectTrigger>
                 <SelectContent>
@@ -122,6 +138,7 @@ export function OrderFormDialog({ open, onOpenChange, order }: Props) {
                   ))}
                 </SelectContent>
               </Select>
+              )}
             </div>
             <div className="grid gap-1.5">
               <Label>Equipamento</Label>
@@ -203,7 +220,7 @@ export function OrderFormDialog({ open, onOpenChange, order }: Props) {
           </div>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-            <Button type="submit" disabled={mutation.isPending || !customerId || !problem.trim()}>
+            <Button type="submit" disabled={mutation.isPending || (newCustomer && !order ? !newName.trim() : !customerId) || !problem.trim()}>
               {mutation.isPending ? "Salvando…" : "Salvar"}
             </Button>
           </div>

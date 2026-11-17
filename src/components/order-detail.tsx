@@ -20,7 +20,7 @@ import { orderDetailQuery, type QuoteRow } from "@/lib/orders-queries";
 import { OrderFinancials } from "@/components/order-financials";
 import { changeOrderStatus, addOrderNote, createQuote, decideQuote, scheduleOrder } from "@/lib/orders.functions";
 import { calcQuoteTotals } from "@/lib/quote-math";
-import { TechnicianValueButton } from "@/components/technician-value-button";
+import { TechnicianStepActions } from "@/components/technician-step-actions";
 
 function formatDateTimeBR(iso: string | null | undefined): string {
   if (!iso) return "—";
@@ -125,7 +125,12 @@ export function OrderDetailSheet({ orderId, onClose, isAdmin }: Props) {
                 <p className="font-semibold">{order.technician_reported_cents == null ? "Não informado" : formatBRL(order.technician_reported_cents)}</p>
                 {order.technician_reported_at && <p className="text-xs text-muted-foreground">{formatDateTimeBR(order.technician_reported_at)} · {order.technician_reported_name}</p>}
                 <Badge variant="outline" className="w-fit whitespace-normal">{order.financial_confirmed_at ? "Apuração financeira confirmada" : "Apuração financeira pendente"}</Badge>
-                {!isAdmin && <TechnicianValueButton order={order} />}
+                {Array.isArray(order.technician_reported_parts) && order.technician_reported_parts.length > 0 && (
+                  <ul className="text-xs text-muted-foreground">
+                    {(order.technician_reported_parts as { description: string; cents: number }[]).map((p, i) => <li key={i}>Peça: {p.description} — {formatBRL(p.cents)}</li>)}
+                  </ul>
+                )}
+                {!isAdmin && <div className="pt-2"><TechnicianStepActions order={order} /></div>}
               </section>
               {order.visit_billable && (
                 <Badge variant="outline" className="w-fit border-amber-500 text-amber-600 dark:text-amber-400">

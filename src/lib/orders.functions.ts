@@ -3,6 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { calcQuoteTotals, type QuotePartInput } from "@/lib/quote-math";
 import { splitLabor, type SplitRuleSnapshot } from "@/lib/settlement-math";
 import { ORDER_STATUSES, type OrderStatus } from "@/lib/order-status";
+import { technicianStep } from "@/lib/technician-service";
 import type { Database } from "@/integrations/supabase/types";
 
 type OrderUpdate = Database["public"]["Tables"]["service_orders"]["Update"];
@@ -20,6 +21,8 @@ type AddressInput = {
 
 type OrderInput = AddressInput & {
   customerId: string;
+  newCustomerName?: string;
+  newCustomerPhone?: string;
   equipmentTypeId?: string | null;
   reportedProblem: string;
   technicianId?: string | null;
@@ -30,9 +33,7 @@ type OrderInput = AddressInput & {
 
 const TECHNICIAN_TRANSITIONS: OrderStatus[] = [
   "tecnico_a_caminho",
-  "em_diagnostico",
   "servico_em_andamento",
-  "servico_concluido",
   "visita_concluida",
 ];
 
@@ -76,7 +77,9 @@ function throwIfError(error: { message?: string } | null) {
 export const createOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: OrderInput) => {
-    if (!isUuid(input.customerId)) throw new Error("Selecione um cliente.");
+    const newCustomerName = clean(input.newCustomerName, 150);
+    const newCustomerPhone = clean(input.newCustomerPhone, 30);
+    if (!isUuid(input.customerId) && !newCustomerName) throw new Error("Selecione ou digite o nome do cliente.");
     const reportedProblem = clean(input.reportedProblem, 1000);
     if (!reportedProblem) throw new Error("Informe o problema relatado.");
     const estimatedMinutes = Math.min(Math.max(Number(input.estimatedMinutes) || 60, 15), 24 * 60);
@@ -87,7 +90,9 @@ export const createOrder = createServerFn({ method: "POST" })
       scheduledStart = d.toISOString();
     }
     return {
-      customerId: input.customerId,
+      customerId: isUuid(input.customerId) ? input.customerId : null,
+      newCustomerName: isUuid(input.customerId) ? "" : newCustomerName,
+      newCustomerPhone,
       equipmentTypeId: isUuid(input.equipmentTypeId) ? input.equipmentTypeId : null,
       reportedProblem,
       technicianId: isUuid(input.technicianId) ? input.technicianId : null,
@@ -109,10 +114,22 @@ export const createOrder = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
     if (data.technicianId) await assertActiveTechnician(context.supabase, data.technicianId);
+    let customerId = data.customerId;
+    if (!customerId) {
+      // Cliente novo: cadastro mínimo criado nos bastidores (nunca reaproveita outro cliente pelo nome).
+      const { data: c, error: ce } = await context.supabase
+        .from("customers")
+        .insert({ full_name: data.newCustomerName, phone: data.newCustomerPhone || null, ...data.address })
+        .select("id")
+        .single();
+      throwIfError(ce);
+      if (!c) throw new Error("Não foi possível registrar o cliente.");
+      customerId = c.id;
+    }
     const { data: inserted, error } = await context.supabase
       .from("service_orders")
       .insert({
-        customer_id: data.customerId,
+        customer_id: customerId,
         equipment_type_id: data.equipmentTypeId,
         reported_problem: data.reportedProblem,
         technician_id: data.technicianId,
@@ -250,7 +267,7 @@ export const changeOrderStatus = createServerFn({ method: "POST" })
       const techId = await myTechnicianId(context.supabase, context.userId);
       if (!techId) throw new Error("Acesso negado.");
       if (!TECHNICIAN_TRANSITIONS.includes(data.status)) {
-        throw new Error("Técnicos só podem informar: a caminho, diagnóstico, serviço em andamento, conclusão ou somente visita.");
+        throw new Error("Use os botões da etapa atual. A conclusão do serviço exige informar o valor cobrado.");
       }
       const { data: order } = await context.supabase
         .from("service_orders")
@@ -261,6 +278,9 @@ export const changeOrderStatus = createServerFn({ method: "POST" })
       if (order.status === "finalizado" || order.status === "cancelado") {
         throw new Error("Atendimento já encerrado.");
       }
+      const step = technicianStep(order.status as OrderStatus);
+      const allowed = step === "a_caminho" ? ["tecnico_a_caminho"] : step === "iniciar" ? ["servico_em_andamento"] : step === "concluir" ? ["visita_concluida"] : [];
+      if (!allowed.includes(data.status)) throw new Error("Ação não disponível nesta etapa do atendimento.");
     }
     const patch: OrderUpdate = { status: data.status };
     if (data.status === "cancelado") patch.scheduled_start = null;

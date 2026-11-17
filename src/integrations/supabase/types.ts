@@ -1541,6 +1541,7 @@ export type Database = {
           technician_reported_by: string | null
           technician_reported_cents: number | null
           technician_reported_name: string | null
+          technician_reported_parts: Json | null
           updated_at: string
           visit_billable: boolean
         }
@@ -1577,6 +1578,7 @@ export type Database = {
           technician_reported_by?: string | null
           technician_reported_cents?: number | null
           technician_reported_name?: string | null
+          technician_reported_parts?: Json | null
           updated_at?: string
           visit_billable?: boolean
         }
@@ -1613,6 +1615,7 @@ export type Database = {
           technician_reported_by?: string | null
           technician_reported_cents?: number | null
           technician_reported_name?: string | null
+          technician_reported_parts?: Json | null
           updated_at?: string
           visit_billable?: boolean
         }
@@ -1966,6 +1969,10 @@ export type Database = {
       assert_company_account: { Args: { _id: string }; Returns: undefined }
       assert_month_open: { Args: { _d: string }; Returns: undefined }
       bootstrap_first_admin: { Args: never; Returns: undefined }
+      complete_service_with_values: {
+        Args: { _cents: number; _order: string; _parts: Json }
+        Returns: undefined
+      }
       confirm_service_composition: {
         Args: {
           _order: string

@@ -1,22 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { Navigation, SearchCheck, Wrench, CheckCircle2, Wallet, HandCoins, ArrowDownCircle, ArrowUpCircle, Scale, ReceiptText } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Wallet, HandCoins, ArrowDownCircle, ArrowUpCircle, Scale, ReceiptText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
 import { useSession } from "@/hooks/use-session";
 import { ordersQuery } from "@/lib/orders-queries";
-import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS, type OrderStatus } from "@/lib/order-status";
+import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from "@/lib/order-status";
 import { OrderDetailSheet, formatDateTimeBR } from "@/components/order-detail";
-import { changeOrderStatus } from "@/lib/orders.functions";
 import { getMySettlement } from "@/lib/settlement.functions";
 import { formatBRL, formatDateBR } from "@/lib/format";
-import { useServerFn } from "@tanstack/react-start";
-import { canStartPartnerService } from "@/lib/technician-service";
-import { TechnicianValueButton } from "@/components/technician-value-button";
+import { TechnicianStepActions } from "@/components/technician-step-actions";
 
 export const Route = createFileRoute("/_authenticated/minha-area")({
   head: () => ({
@@ -32,42 +27,11 @@ export const Route = createFileRoute("/_authenticated/minha-area")({
   component: MinhaAreaPage,
 });
 
-const NEXT_ACTIONS: Partial<Record<OrderStatus, { label: string; status: OrderStatus; icon: typeof Navigation }[]>> = {
-  visita_agendada: [{ label: "Estou a caminho", status: "tecnico_a_caminho", icon: Navigation }],
-  tecnico_a_caminho: [
-    { label: "Iniciar diagnóstico", status: "em_diagnostico", icon: SearchCheck },
-    { label: "Somente visita realizada", status: "visita_concluida", icon: CheckCircle2 },
-  ],
-  em_diagnostico: [
-    { label: "Iniciar serviço", status: "servico_em_andamento", icon: Wrench },
-    { label: "Somente visita realizada", status: "visita_concluida", icon: CheckCircle2 },
-  ],
-  orcamento_aprovado: [{ label: "Iniciar serviço", status: "servico_em_andamento", icon: Wrench }],
-  aguardando_peca: [{ label: "Iniciar serviço", status: "servico_em_andamento", icon: Wrench }],
-  servico_em_andamento: [
-    { label: "Concluir serviço", status: "servico_concluido", icon: CheckCircle2 },
-    { label: "Somente visita realizada", status: "visita_concluida", icon: SearchCheck },
-  ],
-};
-
 function MinhaAreaPage() {
   const { data: session } = useSession();
   const queryClient = useQueryClient();
   const { data: orders, isLoading } = useQuery(ordersQuery);
   const [detailId, setDetailId] = useState<string | null>(null);
-  const [conclusionNote, setConclusionNote] = useState<Record<string, string>>({});
-  const updateStatus = useServerFn(changeOrderStatus);
-
-  const statusMutation = useMutation({
-    mutationFn: ({ orderId, status, note }: { orderId: string; status: OrderStatus; note?: string | undefined }) =>
-      updateStatus({ data: { orderId, status, note } }),
-    onSuccess: async () => {
-      toast.success("Atualização registrada.");
-      await queryClient.invalidateQueries({ queryKey: ["service-orders"] });
-    },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Não foi possível atualizar."),
-  });
-
   const { today, upcoming, done } = useMemo(() => {
     const all = (orders ?? []).filter((o) => o.status !== "cancelado");
     const now = new Date();
@@ -88,10 +52,6 @@ function MinhaAreaPage() {
   }
 
   function renderOrder(o: NonNullable<typeof orders>[number]) {
-    const actions = (NEXT_ACTIONS[o.status] ?? []).filter((a) => a.status !== "em_diagnostico");
-    if (canStartPartnerService(o.status) && !actions.some((a) => a.status === "servico_em_andamento")) {
-      actions.push({ label: "Iniciar serviço", status: "servico_em_andamento", icon: Wrench });
-    }
     return (
       <Card key={o.id}>
         <CardContent className="grid gap-3 p-4">
@@ -101,7 +61,6 @@ function MinhaAreaPage() {
             <span className="ml-auto text-sm text-muted-foreground">{formatDateTimeBR(o.scheduled_start)}</span>
           </div>
           <div className="grid min-w-0 gap-2 border-b pb-3">
-            <TechnicianValueButton order={o} />
             <p className="text-sm font-medium">Valor informado pelo técnico</p>
             <p className="font-display font-semibold">{o.technician_reported_cents == null ? "Não informado" : formatBRL(o.technician_reported_cents)}</p>
             {o.technician_reported_at && <p className="text-xs text-muted-foreground">{formatDateTimeBR(o.technician_reported_at)} · {o.technician_reported_name}</p>}
@@ -116,34 +75,7 @@ function MinhaAreaPage() {
             {o.ponto_referencia && <p className="text-xs text-muted-foreground">Ref.: {o.ponto_referencia}</p>}
             <p className="mt-1">{o.equipment_types?.name ? `${o.equipment_types.name}: ` : ""}{o.reported_problem}</p>
           </div>
-          {actions.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {actions.map((a) => (
-                <Button
-                  key={a.status}
-                  size="sm"
-                  disabled={statusMutation.isPending}
-                  onClick={() =>
-                    statusMutation.mutate({
-                      orderId: o.id,
-                      status: a.status,
-                      note: a.status === "servico_concluido" ? conclusionNote[o.id] || undefined : undefined,
-                    })
-                  }
-                >
-                  <a.icon className="mr-1 h-4 w-4" /> {a.label}
-                </Button>
-              ))}
-            </div>
-          )}
-          {o.status === "servico_em_andamento" && (
-            <Textarea
-              rows={2}
-              placeholder="Observação da conclusão (opcional)"
-              value={conclusionNote[o.id] ?? ""}
-              onChange={(e) => setConclusionNote({ ...conclusionNote, [o.id]: e.target.value })}
-            />
-          )}
+          <TechnicianStepActions order={o} />
         </CardContent>
       </Card>
     );
