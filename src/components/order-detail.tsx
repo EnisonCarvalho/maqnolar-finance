@@ -17,7 +17,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { formatBRL, parseBRLToCents, formatDateBR } from "@/lib/format";
 import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS, QUOTE_STATUS_LABELS, EVENT_TYPE_LABELS, type OrderStatus } from "@/lib/order-status";
 import { orderDetailQuery, type QuoteRow } from "@/lib/orders-queries";
-import { OrderFinancials } from "@/components/order-financials";
+import { OrderFinancials, CompositionForm } from "@/components/order-financials";
 import { changeOrderStatus, addOrderNote, createQuote, decideQuote, scheduleOrder } from "@/lib/orders.functions";
 import { calcQuoteTotals } from "@/lib/quote-math";
 import { TechnicianStepActions } from "@/components/technician-step-actions";
@@ -41,6 +41,7 @@ export function OrderDetailSheet({ orderId, onClose, isAdmin }: Props) {
   const [note, setNote] = useState("");
   const [rejectQuote, setRejectQuote] = useState<QuoteRow | null>(null);
   const [billVisit, setBillVisit] = useState(true);
+  const [serviceConfirmOpen, setServiceConfirmOpen] = useState(false);
 
   const refresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ["service-orders"] });
@@ -72,6 +73,7 @@ export function OrderDetailSheet({ orderId, onClose, isAdmin }: Props) {
 
   const order = data?.order;
   const closed = order?.status === "finalizado" || order?.status === "cancelado";
+  const reportedParts = Array.isArray(order?.technician_reported_parts) ? (order!.technician_reported_parts as { description: string; cents: number }[]) : [];
 
   return (
     <Sheet open={Boolean(orderId)} onOpenChange={(o) => !o && onClose()}>
@@ -142,11 +144,10 @@ export function OrderDetailSheet({ orderId, onClose, isAdmin }: Props) {
                 <div className="flex flex-wrap items-end gap-2 rounded-md border p-3">
                   <div className="grid min-w-48 flex-1 gap-1.5">
                     <Label>Andamento</Label>
-                    <p className="text-xs text-muted-foreground">"Serviço concluído" é registrado pelo técnico com valor e peças.</p>
-                    <Select onValueChange={(v) => statusMutation.mutate(v as OrderStatus)}>
+                    <Select value="" onValueChange={(v) => { if (v === "servico_concluido") setServiceConfirmOpen(true); else statusMutation.mutate(v as OrderStatus); }}>
                       <SelectTrigger><SelectValue placeholder="Escolher novo status" /></SelectTrigger>
                       <SelectContent>
-                        {(["servico_em_andamento", "visita_concluida", "cancelado"] as OrderStatus[]).filter((s) => s !== order.status).map((s) => (
+                        {(["servico_em_andamento", "visita_concluida", "servico_concluido", "cancelado"] as OrderStatus[]).filter((s) => s !== order.status).map((s) => (
                           <SelectItem key={s} value={s}>{ORDER_STATUS_LABELS[s]}</SelectItem>
                         ))}
                       </SelectContent>
@@ -156,9 +157,26 @@ export function OrderDetailSheet({ orderId, onClose, isAdmin }: Props) {
                 </div>
               )}
 
+              {isAdmin && (
+                <Dialog open={serviceConfirmOpen} onOpenChange={setServiceConfirmOpen}>
+                  <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-md">
+                    <DialogHeader><DialogTitle>Confirmar valores do serviço</DialogTitle></DialogHeader>
+                    <CompositionForm
+                      key={`${order.id}-${serviceConfirmOpen}`}
+                      orderId={order.id}
+                      totalCents={order.technician_reported_cents}
+                      partsCents={reportedParts.reduce((a, p) => a + (Number(p.cents) || 0), 0)}
+                      reportedParts={reportedParts}
+                      correction={Boolean(order.financial_confirmed_at)}
+                      onDone={async () => { setServiceConfirmOpen(false); await refresh(); }}
+                    />
+                  </DialogContent>
+                </Dialog>
+              )}
+
               <Separator />
 
-              {isAdmin && <OrderFinancials key={order.id} orderId={order.id} technicianId={order.technician_id} technicianName={order.technicians?.full_name ?? null} reportedCents={order.technician_reported_cents} reportedPartsCents={Array.isArray(order.technician_reported_parts) ? (order.technician_reported_parts as { cents: number }[]).reduce((a, p) => a + (Number(p.cents) || 0), 0) : 0} orderStatus={order.status} confirmedAt={order.financial_confirmed_at} />}
+              {isAdmin && <OrderFinancials key={order.id} orderId={order.id} technicianId={order.technician_id} technicianName={order.technicians?.full_name ?? null} reportedCents={order.technician_reported_cents} reportedPartsCents={reportedParts.reduce((a, p) => a + (Number(p.cents) || 0), 0)} reportedParts={reportedParts} orderStatus={order.status} confirmedAt={order.financial_confirmed_at} />}
 
               <div>
                 <div className="mb-2 flex items-center justify-between">

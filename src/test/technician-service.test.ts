@@ -46,3 +46,13 @@ describe("conclusão pelo técnico", () => {
     expect(() => completionPreview("100", [{ description: "Motor", valueReais: "120" }])).toThrow();
   });
 });
+
+import { serviceCompositionPreview as scp } from "@/lib/technician-service";
+describe("confirmação de valores do serviço (exemplo do Enison)", () => {
+  it("R$500 cobrados − R$200 peças = R$300 mão de obra, 150/150", () => {
+    const p = scp("500,00", "200,00", { technicianPercent: 50, companyPercent: 50, technicianFixedCents: null, companyFixedCents: null });
+    expect(p.laborCents).toBe(30000);
+    expect(p.technicianShareCents).toBe(15000);
+    expect(p.companyShareCents).toBe(15000);
+  });
+});

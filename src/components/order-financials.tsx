@@ -34,7 +34,7 @@ function buyerName(p: PurchaseRow): string {
   return p.buyer_label ?? "Outro responsável";
 }
 
-export function OrderFinancials({ orderId, technicianId = null, technicianName = null, reportedCents = null, reportedPartsCents = 0, orderStatus, confirmedAt }: { orderId: string; technicianId?: string | null; technicianName?: string | null; reportedCents?: number | null; reportedPartsCents?: number; orderStatus: string; confirmedAt: string | null }) {
+export function OrderFinancials({ orderId, technicianId = null, technicianName = null, reportedCents = null, reportedPartsCents = 0, reportedParts = [], orderStatus, confirmedAt }: { orderId: string; technicianId?: string | null; technicianName?: string | null; reportedCents?: number | null; reportedPartsCents?: number; reportedParts?: { description: string; cents: number }[]; orderStatus: string; confirmedAt: string | null }) {
   const queryClient = useQueryClient();
   const { data } = useQuery(orderFinancialsQuery(orderId));
   const [purchaseOpen, setPurchaseOpen] = useState(false);
@@ -85,11 +85,11 @@ export function OrderFinancials({ orderId, technicianId = null, technicianName =
     }
     return (
       canConfirmServiceValues(orderStatus, confirmedAt) ? <>
-        <Button className="w-full" onClick={() => setConfirmOpen(true)}><CheckCircle2 className="mr-2 h-4 w-4" />Confirmar valores</Button>
+        <Button className="w-full" onClick={() => setConfirmOpen(true)}><CheckCircle2 className="mr-2 h-4 w-4" />Confirmar valores do serviço</Button>
         <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
           <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-md">
-            <DialogHeader><DialogTitle>Confirmar valores</DialogTitle></DialogHeader>
-            <CompositionForm orderId={orderId} totalCents={reportedCents} partsCents={reportedPartsCents} onDone={async () => { setConfirmOpen(false); await refresh(); }} />
+            <DialogHeader><DialogTitle>Confirmar valores do serviço</DialogTitle></DialogHeader>
+            <CompositionForm orderId={orderId} totalCents={reportedCents} partsCents={reportedPartsCents} reportedParts={reportedParts} onDone={async () => { setConfirmOpen(false); await refresh(); }} />
           </DialogContent>
         </Dialog>
       </> : <p className="text-sm text-muted-foreground">Apuração financeira pendente.</p>
@@ -221,7 +221,7 @@ export function OrderFinancials({ orderId, technicianId = null, technicianName =
   );
 }
 
-function CompositionForm({ orderId, totalCents, partsCents, correction = false, onDone }: { orderId: string; totalCents: number | null; partsCents: number; correction?: boolean; onDone: () => Promise<void> }) {
+export function CompositionForm({ orderId, totalCents, partsCents, reportedParts = [], correction = false, onDone }: { orderId: string; totalCents: number | null; partsCents: number; reportedParts?: { description: string; cents: number }[]; correction?: boolean; onDone: () => Promise<void> }) {
   const [total, setTotal] = useState(totalCents == null ? "" : (totalCents / 100).toFixed(2).replace(".", ","));
   const [parts, setParts] = useState((partsCents / 100).toFixed(2).replace(".", ","));
   const [reason, setReason] = useState("");
@@ -254,11 +254,20 @@ function CompositionForm({ orderId, totalCents, partsCents, correction = false, 
       <div className="grid gap-1.5"><Label htmlFor={`total-${orderId}`}>Valor total cobrado (R$)</Label><Input id={`total-${orderId}`} inputMode="decimal" value={total} onChange={(e) => setTotal(e.target.value)} /></div>
       <div className="grid gap-1.5"><Label htmlFor={`parts-${orderId}`}>Valor total das peças (R$)</Label><Input id={`parts-${orderId}`} inputMode="decimal" value={parts} onChange={(e) => setParts(e.target.value)} /></div>
     </div>
+    {reportedParts.length > 0 && (
+      <div className="rounded-md border p-2 text-sm">
+        <p className="mb-1 text-xs text-muted-foreground">Peças informadas pelo técnico</p>
+        <ul className="grid gap-0.5">{reportedParts.map((p, i) => <li key={i} className="flex justify-between gap-2"><span className="min-w-0 break-words">{p.description}</span><span>{formatBRL(p.cents)}</span></li>)}</ul>
+      </div>
+    )}
     <dl className="grid gap-2 border-y py-3 text-sm">
-      <div className="flex justify-between gap-2"><dt>Mão de obra</dt><dd className="font-semibold">{preview ? formatBRL(preview.laborCents) : "—"}</dd></div>
+      <div className="flex justify-between gap-2"><dt>Total cobrado (referência)</dt><dd className="font-semibold">{preview ? formatBRL(preview.totalCents) : "—"}</dd></div>
+      <div className="flex justify-between gap-2"><dt>− Peças</dt><dd className="font-semibold">{preview ? formatBRL(preview.partsCents) : "—"}</dd></div>
+      <div className="flex justify-between gap-2"><dt>= Mão de obra</dt><dd className="font-semibold">{preview ? formatBRL(preview.laborCents) : "—"}</dd></div>
       <div className="flex justify-between gap-2"><dt>Técnico ({rule?.technicianPercent ?? 50}%)</dt><dd className="font-semibold">{preview ? formatBRL(preview.technicianShareCents) : "—"}</dd></div>
-      <div className="flex justify-between gap-2"><dt>MaqnoLar ({rule?.companyPercent ?? 50}%)</dt><dd className="font-semibold">{preview ? formatBRL(preview.companyShareCents) : "—"}</dd></div>
+      <div className="flex justify-between gap-2"><dt>MaqnoLar ({rule?.companyPercent ?? 50}%) — entra em Receitas</dt><dd className="font-semibold">{preview ? formatBRL(preview.companyShareCents) : "—"}</dd></div>
     </dl>
+    <p className="text-xs text-muted-foreground">Somente a parte da MaqnoLar vira receita. Nenhum recebimento ou repasse é registrado.</p>
     {validationError && <p role="alert" className="text-sm text-destructive">{validationError}</p>}
     {ruleError && <p role="alert" className="text-sm text-destructive">Não foi possível consultar a regra de divisão.</p>}
     {correction && <div className="grid gap-1.5"><Label htmlFor={`reason-${orderId}`}>Justificativa da correção</Label><Textarea id={`reason-${orderId}`} value={reason} onChange={(e) => setReason(e.target.value)} rows={2} /></div>}
