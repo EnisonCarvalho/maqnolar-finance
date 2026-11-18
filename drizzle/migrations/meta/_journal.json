@@ -183,6 +183,13 @@
       "when": 1795026141860,
       "tag": "0025_permanent_operation_reset",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1795027678776,
+      "tag": "0026_warranty_notes",
+      "breakpoints": true
     }
   ]
 }

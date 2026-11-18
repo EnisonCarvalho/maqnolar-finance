@@ -16,8 +16,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Checkbox } from "@/components/ui/checkbox";
 import { formatBRL, parseBRLToCents, formatDateBR } from "@/lib/format";
 import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS, QUOTE_STATUS_LABELS, EVENT_TYPE_LABELS, type OrderStatus } from "@/lib/order-status";
-import { orderDetailQuery, type QuoteRow } from "@/lib/orders-queries";
+import { orderDetailQuery, orderFinancialsQuery, type QuoteRow } from "@/lib/orders-queries";
 import { OrderFinancials, CompositionForm } from "@/components/order-financials";
+import { WarrantyNoteActions } from "@/components/warranty-note-dialog";
 import { changeOrderStatus, addOrderNote, createQuote, decideQuote, scheduleOrder } from "@/lib/orders.functions";
 import { calcQuoteTotals } from "@/lib/quote-math";
 import { TechnicianStepActions } from "@/components/technician-step-actions";
@@ -42,6 +43,7 @@ export function OrderDetailSheet({ orderId, onClose, isAdmin }: Props) {
   const [rejectQuote, setRejectQuote] = useState<QuoteRow | null>(null);
   const [billVisit, setBillVisit] = useState(true);
   const [serviceConfirmOpen, setServiceConfirmOpen] = useState(false);
+  const { data: finData } = useQuery({ ...orderFinancialsQuery(orderId ?? ""), enabled: Boolean(orderId && isAdmin) });
 
   const refresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ["service-orders"] });
@@ -175,6 +177,10 @@ export function OrderDetailSheet({ orderId, onClose, isAdmin }: Props) {
               )}
 
               <Separator />
+
+              {isAdmin && order.status === "finalizado" && (
+                <WarrantyNoteActions order={{ id: order.id, code: order.code, status: order.status, financial_confirmed_at: order.financial_confirmed_at, reported_problem: order.reported_problem, completed_at: order.completed_at, kind: finData?.financial?.kind ?? null }} />
+              )}
 
               {isAdmin && <OrderFinancials key={order.id} orderId={order.id} technicianId={order.technician_id} technicianName={order.technicians?.full_name ?? null} reportedCents={order.technician_reported_cents} reportedPartsCents={reportedParts.reduce((a, p) => a + (Number(p.cents) || 0), 0)} reportedParts={reportedParts} orderStatus={order.status} confirmedAt={order.financial_confirmed_at} />}
 

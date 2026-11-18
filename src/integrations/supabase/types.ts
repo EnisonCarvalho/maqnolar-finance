@@ -2001,6 +2001,98 @@ export type Database = {
         }
         Relationships: []
       }
+      warranty_notes: {
+        Row: {
+          customer_address: string | null
+          customer_cpf: string | null
+          customer_name: string
+          customer_phone: string | null
+          equipment: string | null
+          id: string
+          installments: number | null
+          issued_at: string
+          issued_by: string | null
+          issued_by_name: string | null
+          note_seq: number
+          note_year: number
+          number: string
+          observations: string | null
+          order_code: string
+          order_id: string
+          part_names: string[]
+          payment_method: string
+          service_date: string
+          service_description: string
+          technician_name: string | null
+          total_cents: number
+          warranty_days: number
+          warranty_end: string
+          warranty_start: string
+        }
+        Insert: {
+          customer_address?: string | null
+          customer_cpf?: string | null
+          customer_name: string
+          customer_phone?: string | null
+          equipment?: string | null
+          id?: string
+          installments?: number | null
+          issued_at?: string
+          issued_by?: string | null
+          issued_by_name?: string | null
+          note_seq: number
+          note_year: number
+          number: string
+          observations?: string | null
+          order_code: string
+          order_id: string
+          part_names?: string[]
+          payment_method: string
+          service_date: string
+          service_description: string
+          technician_name?: string | null
+          total_cents: number
+          warranty_days: number
+          warranty_end: string
+          warranty_start: string
+        }
+        Update: {
+          customer_address?: string | null
+          customer_cpf?: string | null
+          customer_name?: string
+          customer_phone?: string | null
+          equipment?: string | null
+          id?: string
+          installments?: number | null
+          issued_at?: string
+          issued_by?: string | null
+          issued_by_name?: string | null
+          note_seq?: number
+          note_year?: number
+          number?: string
+          observations?: string | null
+          order_code?: string
+          order_id?: string
+          part_names?: string[]
+          payment_method?: string
+          service_date?: string
+          service_description?: string
+          technician_name?: string | null
+          total_cents?: number
+          warranty_days?: number
+          warranty_end?: string
+          warranty_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warranty_notes_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "service_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -2034,6 +2126,18 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      issue_warranty_note: {
+        Args: {
+          _description: string
+          _installments: number
+          _observations: string
+          _order: string
+          _payment_method: string
+          _warranty_days: number
+          _warranty_start: string
+        }
+        Returns: string
       }
       my_technician_id: { Args: never; Returns: string }
       operation_reset_preview: { Args: never; Returns: Json }
