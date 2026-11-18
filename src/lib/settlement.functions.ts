@@ -9,6 +9,7 @@ import {
   type LedgerPayment,
   type LedgerTransfer,
 } from "@/lib/ledger-math";
+import { refundSplit } from "@/lib/refund-math";
 
 const METHODS = ["pix", "dinheiro", "credito", "debito", "transferencia", "outro"] as const;
 
@@ -247,6 +248,12 @@ export const getMySettlement = createServerFn({ method: "POST" })
       clientPendingCents: clientPendingFor(ledger.orders, ledger.payments, tech.id),
       closings: closings ?? [],
       transfers: myTransfers ?? [],
+      // Uma linha por serviço/visita confirmado: nº da OS, total cobrado e participação do técnico.
+      services: ledger.orders
+        .filter((o) => o.technicianId === tech.id && o.status !== "cancelado")
+        .map((o) => ({ orderId: o.orderId, code: o.code, totalCents: o.totalCents, technicianShareCents: o.technicianShareCents, date: String(o.completedAt ?? o.openedAt ?? "").slice(0, 10) }))
+        .filter((o) => (!data.start || o.date >= data.start) && (!data.end || o.date <= data.end))
+        .sort((a, b) => b.date.localeCompare(a.date)),
     };
   });
 
@@ -318,6 +325,54 @@ export const voidPayment = createServerFn({ method: "POST" })
     if (error) throw dbError(error.message);
     if (!row) throw new Error("Recebimento não encontrado ou já estornado.");
     await logEvent(context.supabase, context.userId, row.order_id, `Recebimento estornado: ${brl(row.amount_cents)}. Motivo: ${data.reason}`);
+    return { ok: true as const };
+  });
+
+/** Devolução total/parcial de um recebimento: estorna o original e relança só o saldo. */
+export const refundCustomerPayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { paymentId: string; refundCents: number; reason: string }) => {
+    if (!isUuid(input.paymentId)) throw new Error("Registro inválido.");
+    const reason = clean(input.reason, 300);
+    if (!reason) throw new Error("Informe o motivo da devolução.");
+    return { paymentId: input.paymentId, refundCents: cents(input.refundCents), reason };
+  })
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { data: p, error } = await context.supabase.from("customer_payments").select("*").eq("id", data.paymentId).eq("status", "ativo").maybeSingle();
+    if (error) throw dbError(error.message);
+    if (!p) throw new Error("Recebimento não encontrado ou já estornado.");
+    const { remainderCents } = refundSplit(p.amount_cents, data.refundCents);
+    const { error: ve } = await context.supabase.from("customer_payments").update({ status: "estornado", void_reason: `Devolução de ${brl(data.refundCents)}: ${data.reason}` }).eq("id", p.id).eq("status", "ativo");
+    if (ve) throw dbError(ve.message);
+    if (remainderCents > 0) {
+      const { error: ie } = await context.supabase.from("customer_payments").insert({
+        order_id: p.order_id, amount_cents: remainderCents, paid_at: p.paid_at, receiver_type: p.receiver_type, receiver_technician_id: p.receiver_technician_id,
+        receiver_label: p.receiver_label, method: p.method, destination_account: p.destination_account, account_id: p.account_id,
+        notes: `Saldo após devolução parcial. ${data.reason}`.slice(0, 500), receipt_path: p.receipt_path, authorized_reason: p.authorized_reason,
+      });
+      if (ie) throw dbError(ie.message);
+    }
+    await logEvent(context.supabase, context.userId, p.order_id, `Devolução de ${brl(data.refundCents)} ao cliente. Motivo: ${data.reason}`);
+    return { ok: true as const, remainderCents };
+  });
+
+/** Excluir a receita de uma OS: estorna recebimentos ativos e cancela a OS de origem (sem apagar histórico). */
+export const removeOrderRevenue = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { orderId: string; reason: string }) => {
+    if (!isUuid(input.orderId)) throw new Error("Atendimento inválido.");
+    const reason = clean(input.reason, 300);
+    if (!reason) throw new Error("Informe o motivo.");
+    return { orderId: input.orderId, reason };
+  })
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { error: ve } = await context.supabase.from("customer_payments").update({ status: "estornado", void_reason: `Exclusão da receita: ${data.reason}` }).eq("order_id", data.orderId).eq("status", "ativo");
+    if (ve) throw dbError(ve.message);
+    const { error } = await context.supabase.from("service_orders").update({ status: "cancelado" }).eq("id", data.orderId);
+    if (error) throw dbError(error.message);
+    await logEvent(context.supabase, context.userId, data.orderId, `Receita excluída (OS cancelada). Motivo: ${data.reason}`);
     return { ok: true as const };
   });
 

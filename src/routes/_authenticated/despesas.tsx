@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Ban, CalendarPlus, Pencil, Plus, Undo2, Wallet } from "lucide-react";
+import { Ban, CalendarPlus, Pencil, Plus, Trash2, Undo2, Wallet } from "lucide-react";
+import { RefundDialog } from "@/components/refund-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatBRL, parseBRLToCents } from "@/lib/format";
-import { getFinanceOverview, saveExpense, payExpense, voidExpensePayment, cancelExpense, saveRecurring, generateRecurring, saveCategory } from "@/lib/finance-ops.functions";
+import { getFinanceOverview, saveExpense, payExpense, voidExpensePayment, cancelExpense, refundExpensePayment, deleteExpense, saveRecurring, generateRecurring, saveCategory } from "@/lib/finance-ops.functions";
 import { accountsQuery, categoriesQuery, AccountSelect, CategorySelect, PeriodFilter, ReasonDialog, StatCard, usePeriod, type FinCategory } from "@/components/finance-ui";
 import { METHOD_LABELS, ReceiptInput, ReceiptLink, formatISODate, todayISO, uploadReceipt } from "@/components/finance-shared";
 import { useSession } from "@/hooks/use-session";
@@ -88,6 +89,8 @@ function Content() {
   const [paying, setPaying] = useState<ExpenseRow | null>(null);
   const [cancelling, setCancelling] = useState<ExpenseRow | null>(null);
   const [voiding, setVoiding] = useState<{ id: string; amount: number } | null>(null);
+  const [removing, setRemoving] = useState<ExpenseRow | null>(null);
+  const [refunding, setRefunding] = useState<{ id: string; amountCents: number; label: string } | null>(null);
   const refresh = () => Promise.all(["fin-expenses", "fin-expenses-open", "fin-overview", "fin-recurring"].map((k) => qc.invalidateQueries({ queryKey: [k] })));
 
   const paid = (e: ExpenseRow) => e.expense_payments.filter((p) => p.status === "ativo").reduce((s, p) => s + p.amount_cents, 0);
@@ -180,7 +183,7 @@ function Content() {
                       {e.expense_payments.map((x) => (
                         <li key={x.id} className={`flex items-center justify-between gap-2 text-xs ${x.status === "estornado" ? "opacity-60" : ""}`}>
                           <span className="min-w-0">{formatISODate(x.paid_at)} · {formatBRL(x.amount_cents)} · {METHOD_LABELS[x.method]} · {accName(x.account_id)}{x.status === "estornado" ? ` · estornado: ${x.void_reason}` : ""} <ReceiptLink path={x.receipt_path} /></span>
-                          {x.status === "ativo" && <Button size="icon" variant="ghost" className="h-7 w-7" aria-label="Estornar pagamento" onClick={() => setVoiding({ id: x.id, amount: x.amount_cents })}><Undo2 className="h-3.5 w-3.5" /></Button>}
+                          {x.status === "ativo" && <span className="flex shrink-0 gap-1"><Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setRefunding({ id: x.id, amountCents: x.amount_cents, label: e.description })}>Devolução</Button><Button size="icon" variant="ghost" className="h-7 w-7" aria-label="Estornar pagamento" onClick={() => setVoiding({ id: x.id, amount: x.amount_cents })}><Undo2 className="h-3.5 w-3.5" /></Button></span>}
                         </li>
                       ))}
                     </ul>
@@ -190,6 +193,7 @@ function Content() {
                       {e.status !== "paga" && <Button size="sm" onClick={() => setPaying(e)}><Wallet className="mr-1 h-4 w-4" />Pagar</Button>}
                       <Button size="sm" variant="outline" onClick={() => setEditing(e)}><Pencil className="mr-1 h-4 w-4" />Editar</Button>
                       {p === 0 && <Button size="sm" variant="ghost" onClick={() => setCancelling(e)}><Ban className="mr-1 h-4 w-4" />Cancelar</Button>}
+                      <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setRemoving(e)}><Trash2 className="mr-1 h-4 w-4" />Excluir</Button>
                     </div>
                   )}
                 </div>
@@ -208,6 +212,9 @@ function Content() {
         onConfirm={async (reason) => { await cancelExpense({ data: { id: cancelling!.id, reason } }); toast.success("Despesa cancelada."); await refresh(); }} />
       <ReasonDialog open={Boolean(voiding)} title="Estornar pagamento" description={`Estornar ${formatBRL(voiding?.amount)}? A despesa volta a ficar em aberto.`} action="Estornar" onClose={() => setVoiding(null)}
         onConfirm={async (reason) => { await voidExpensePayment({ data: { id: voiding!.id, reason } }); toast.success("Pagamento estornado."); await refresh(); }} />
+      <ReasonDialog open={Boolean(removing)} title="Excluir despesa" description={`Excluir "${removing?.description}"? ${removing && paid(removing) > 0 ? "Os pagamentos serão estornados (o valor volta ao caixa) e a" : "A"} despesa fica no histórico como cancelada.`} action="Excluir" onClose={() => setRemoving(null)}
+        onConfirm={async (reason) => { await deleteExpense({ data: { id: removing!.id, reason } }); toast.success("Despesa excluída."); await refresh(); }} />
+      <RefundDialog target={refunding} title="Devolução do pagamento" onClose={() => setRefunding(null)} onConfirm={async (refundCents, reason) => { await refundExpensePayment({ data: { id: refunding!.id, refundCents, reason } }); await refresh(); }} />
     </div>
   );
 }

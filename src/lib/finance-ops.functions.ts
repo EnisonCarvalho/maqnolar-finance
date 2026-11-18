@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { refundSplit } from "@/lib/refund-math";
 import { buildSpreadsheetMovements, spreadsheetCash, computeIndicators, nextDueDate } from "@/lib/cashflow-math";
 
 const METHODS = ["pix", "dinheiro", "credito", "debito", "transferencia", "outro"];
@@ -206,6 +207,37 @@ export const cancelExpense = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+export const refundExpensePayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { id: string; refundCents: number; reason: string }) => ({ id: isUuid(i.id) ? i.id : (() => { throw new Error("Registro inválido."); })(), refundCents: cents(i.refundCents), reason: reason(i.reason) }))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { data: p, error } = await context.supabase.from("expense_payments").select("*").eq("id", data.id).eq("status", "ativo").maybeSingle();
+    dbErr(error);
+    if (!p) throw new Error("Pagamento não encontrado ou já estornado.");
+    const { remainderCents } = refundSplit(p.amount_cents, data.refundCents);
+    const { error: ve } = await context.supabase.from("expense_payments").update({ status: "estornado", void_reason: `Devolução de ${(data.refundCents / 100).toFixed(2).replace(".", ",")}: ${data.reason}` }).eq("id", p.id).eq("status", "ativo");
+    dbErr(ve);
+    if (remainderCents > 0) {
+      const { error: ie } = await context.supabase.from("expense_payments").insert({ expense_id: p.expense_id, amount_cents: remainderCents, paid_at: p.paid_at, method: p.method, account_id: p.account_id, notes: `Saldo após devolução parcial. ${data.reason}`.slice(0, 500), receipt_path: p.receipt_path });
+      dbErr(ie);
+    }
+    return { ok: true as const, remainderCents };
+  });
+
+/** Excluir despesa: estorna pagamentos ativos e cancela com motivo (histórico preservado). */
+export const deleteExpense = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { id: string; reason: string }) => ({ id: isUuid(i.id) ? i.id : (() => { throw new Error("Registro inválido."); })(), reason: reason(i.reason) }))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { error: ve } = await context.supabase.from("expense_payments").update({ status: "estornado", void_reason: `Exclusão da despesa: ${data.reason}` }).eq("expense_id", data.id).eq("status", "ativo");
+    dbErr(ve);
+    const { error } = await context.supabase.from("expenses").update({ status: "cancelada", cancel_reason: data.reason }).eq("id", data.id);
+    dbErr(error);
+    return { ok: true as const };
+  });
+
 // ---------- Recorrências ----------
 export const saveRecurring = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -324,8 +356,10 @@ export const getFinanceOverview = createServerFn({ method: "POST" })
       // Uma linha por OS confirmada (order_financials é único por OS); só a parte da MaqnoLar conta como receita.
       confirmedOrders: all.orders.filter((o) => !o.cancelled && o.competenceDate >= data.start && o.competenceDate <= data.end)
         .map((o) => {
-          const received = all.raw.customerPayments.filter((p: any) => p.order_id === o.orderId && p.status === "ativo").reduce((s: number, p: any) => s + p.amount_cents, 0);
-          return { orderId: o.orderId, code: o.code, customerName: o.customerName, technicianId: o.technicianId, technicianName: o.technicianName, technicianShareCents: o.technicianShareCents, kind: o.kind === "visita" ? "Visita" : "Serviço", date: o.competenceDate, totalCents: o.totalCents, partsCents: o.partsCents, companyShareCents: o.companyShareCents, receivedCents: received, receiptStatus: received >= o.totalCents ? "Recebido" : received > 0 ? "Parcial" : "Pendente" };
+          const active = all.raw.customerPayments.filter((p: any) => p.order_id === o.orderId && p.status === "ativo");
+          const received = active.reduce((s: number, p: any) => s + p.amount_cents, 0);
+          const payments = active.map((p: any) => ({ id: p.id as string, amountCents: p.amount_cents as number, paidAt: p.paid_at as string }));
+          return { orderId: o.orderId, code: o.code, customerName: o.customerName, technicianId: o.technicianId, technicianName: o.technicianName, technicianShareCents: o.technicianShareCents, kind: o.kind === "visita" ? "Visita" : "Serviço", date: o.competenceDate, totalCents: o.totalCents, partsCents: o.partsCents, companyShareCents: o.companyShareCents, receivedCents: received, payments, receiptStatus: received >= o.totalCents ? "Recebido" : received > 0 ? "Parcial" : "Pendente" };
         })
         .sort((a, b) => b.date.localeCompare(a.date)),
     };
