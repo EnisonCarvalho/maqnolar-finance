@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
-import { Link2, Pencil, Unlink, UserPlus } from "lucide-react";
+import { Link2, Pencil, Trash2, Unlink, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { formatDateBR } from "@/lib/format";
@@ -116,6 +116,10 @@ function TechniciansPage() {
               <p className="text-xs text-muted-foreground">
                 {[t.bairro, t.cidade].filter(Boolean).join(" · ") || "Endereço não informado"}
               </p>
+              <div className="mt-2 flex gap-2">
+                <Button size="sm" variant="outline" className="flex-1" onClick={() => setEditing(t)}><Pencil className="mr-1 h-4 w-4" />Editar</Button>
+                {t.active && <Button size="sm" variant="outline" className="flex-1 text-destructive" onClick={() => { if (window.confirm(`Remover ${t.full_name}? O técnico será desativado e o histórico fica preservado.`)) void toggleActive(t, false); }}><Trash2 className="mr-1 h-4 w-4" />Remover</Button>}
+              </div>
             </div>
           ))
         )}
@@ -163,6 +167,11 @@ function TechniciansPage() {
                     <Button variant="ghost" size="icon" onClick={() => setEditing(t)} aria-label={`Editar ${t.full_name}`}>
                       <Pencil className="h-4 w-4" />
                     </Button>
+                    {t.active && (
+                      <Button variant="ghost" size="icon" aria-label={`Remover ${t.full_name}`} onClick={() => { if (window.confirm(`Remover ${t.full_name}? O técnico será desativado e o histórico das OS e acertos fica preservado.`)) void toggleActive(t, false); }}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}

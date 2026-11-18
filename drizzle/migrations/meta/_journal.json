@@ -176,6 +176,13 @@
       "when": 1795025826934,
       "tag": "0024_confirm_service_finalizes_order",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1795026141860,
+      "tag": "0025_permanent_operation_reset",
+      "breakpoints": true
     }
   ]
 }

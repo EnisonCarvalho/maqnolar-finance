@@ -27,7 +27,7 @@ const adminGroups: { label: string; items: Item[] }[] = [
       { label: "Atendimentos", icon: CalendarClock, to: "/atendimentos" },
       { label: "Agenda", icon: CalendarClock, to: "/agenda" },
       { label: "Usuários e permissões", icon: UserCog, to: "/usuarios" },
-      { label: "Equipe e técnicos", icon: HardHat, to: "/tecnicos" },
+      { label: "Equipe e permissões", icon: HardHat, to: "/tecnicos" },
       { label: "Equipamentos e serviços", icon: Wrench, to: "/equipamentos" },
     ],
   },

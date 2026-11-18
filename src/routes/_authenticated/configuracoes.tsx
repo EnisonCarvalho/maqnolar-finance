@@ -4,6 +4,8 @@ import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTheme, type ThemePref } from "@/lib/theme";
 import { cn } from "@/lib/utils";
+import { useSession } from "@/hooks/use-session";
+import { OperationResetCard } from "@/components/operation-reset-card";
 
 export const Route = createFileRoute("/_authenticated/configuracoes")({
   head: () => ({
@@ -27,6 +29,7 @@ const options: { value: ThemePref; label: string; icon: typeof Sun }[] = [
 
 function Settings() {
   const { theme, setTheme } = useTheme();
+  const { data: session } = useSession();
   return (
     <div className="max-w-2xl space-y-6">
       <h1 className="text-2xl font-semibold md:text-3xl">Configurações</h1>
@@ -54,6 +57,7 @@ function Settings() {
           ))}
         </CardContent>
       </Card>
+      {session?.isAdmin && <OperationResetCard />}
     </div>
   );
 }

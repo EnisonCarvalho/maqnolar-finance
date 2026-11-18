@@ -18,6 +18,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Pencil, Trash2, Undo2 } from "lucide-react";
 import { ReasonDialog } from "@/components/finance-ui";
 import { RefundDialog } from "@/components/refund-dialog";
+import { ManualRevenues } from "@/components/manual-revenues";
 import { refundCustomerPayment, removeOrderRevenue } from "@/lib/settlement.functions";
 
 export const Route = createFileRoute("/_authenticated/receitas")({
@@ -65,7 +66,7 @@ function Content() {
     <h1 className="font-display text-2xl font-semibold md:text-3xl">Receitas</h1>
     <PeriodFilter period={period} />
     <Select value={tech} onValueChange={setTech}><SelectTrigger aria-label="Técnico" className="w-full sm:max-w-xs"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="todos">Todos os técnicos</SelectItem>{(technicians ?? []).map((t) => <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>)}</SelectContent></Select>
-    <div className="grid grid-cols-2 gap-2"><StatCard label="Receitas da MaqnoLar" cents={totals.company} tone="pos" /><StatCard label="Parte dos técnicos" cents={totals.technician} /></div>
+    <div className="grid grid-cols-2 gap-2"><StatCard label="Receitas da MaqnoLar (OS)" cents={totals.company} tone="pos" /><StatCard label="Parte dos técnicos" cents={totals.technician} /></div>
     {isLoading && <p className="text-sm text-muted-foreground">Carregando…</p>}
     {error && <p role="alert" className="text-sm text-destructive">{error instanceof Error ? error.message : "Não foi possível carregar receitas."}</p>}
     {!isLoading && !error && rows.length === 0 && <p className="text-sm text-muted-foreground">Nenhum atendimento confirmado no período.</p>}
@@ -76,6 +77,7 @@ function Content() {
       {actions(o)}
     </div>)}</div>
     <div className="hidden overflow-x-auto xl:block"><table className="w-full text-sm"><thead><tr className="border-b text-left text-xs text-muted-foreground">{columns.map((c) => <th key={c} className="p-2">{c}</th>)}</tr></thead><tbody>{rows.map((o) => <tr key={o.orderId} className="border-b"><td className="p-2 whitespace-nowrap">{formatISODate(o.date)}</td><td className="p-2"><Button variant="link" className="h-auto p-0" onClick={() => setDetailId(o.orderId)}>{o.code}</Button></td><td className="p-2">{o.kind}</td><td className="p-2">{o.technicianName}</td>{[o.totalCents, o.partsCents, o.technicianShareCents, o.companyShareCents].map((v, index) => <td key={index} className="p-2 whitespace-nowrap">{formatBRL(v)}</td>)}<td className="p-2"><Badge variant="outline">{o.receiptStatus}</Badge></td><td className="p-2">{actions(o)}</td></tr>)}</tbody></table></div>
+    <ManualRevenues start={period.range.start} end={period.range.end} />
     <OrderDetailSheet orderId={detailId} onClose={() => setDetailId(null)} isAdmin />
     <ReasonDialog open={Boolean(removing)} title="Excluir receita" description={<>Excluir a receita da {removing?.code}? A OS de origem é cancelada, recebimentos ativos são estornados e tudo fica no histórico.</>} action="Excluir" onClose={() => setRemoving(null)}
       onConfirm={async (reason) => { await removeOrderRevenue({ data: { orderId: removing!.orderId, reason } }); await refresh(); }} />

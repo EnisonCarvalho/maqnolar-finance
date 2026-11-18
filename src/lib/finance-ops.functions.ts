@@ -101,9 +101,8 @@ export const createRevenue = createServerFn({ method: "POST" })
     const description = clean(i.description, 200);
     if (!description) throw new Error("Informe a descrição.");
     const receivedAt = i.receivedAt ? reqDate(i.receivedAt, "Data do recebimento") : null;
-    if (receivedAt && !isUuid(i.accountId)) throw new Error("Selecione a conta que recebeu.");
     if (receivedAt && !METHODS.includes(String(i.method))) throw new Error("Selecione a forma de pagamento.");
-    return { description, categoryId: optUuid(i.categoryId), amount: cents(i.amountCents), competence: reqDate(i.competenceDate, "Data de competência"), receivedAt, method: receivedAt ? i.method! : null, accountId: receivedAt ? i.accountId! : optUuid(i.accountId), origin: clean(i.origin, 120) || null, notes: clean(i.notes) || null, receiptPath: clean(i.receiptPath, 300) || null };
+    return { description, categoryId: optUuid(i.categoryId), amount: cents(i.amountCents), competence: reqDate(i.competenceDate, "Data de competência"), receivedAt, method: receivedAt ? i.method! : null, accountId: optUuid(i.accountId), origin: clean(i.origin, 120) || null, notes: clean(i.notes) || null, receiptPath: clean(i.receiptPath, 300) || null };
   })
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
@@ -135,6 +134,34 @@ export const voidRevenue = createServerFn({ method: "POST" })
     const { data: row, error } = await context.supabase.from("other_revenues").update({ status: "estornado", void_reason: data.reason }).eq("id", data.id).eq("status", "ativo").select("id").maybeSingle();
     dbErr(error);
     if (!row) throw new Error("Receita não encontrada ou já estornada.");
+    return { ok: true as const };
+  });
+
+/** Editar receita manual: somente enquanto não recebida; recebida exige estorno com motivo. */
+export const updateRevenue = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: { id: string; description: string; amountCents: number; competenceDate: string; notes?: string }) => {
+    if (!isUuid(i.id)) throw new Error("Registro inválido.");
+    const description = clean(i.description, 200);
+    if (!description) throw new Error("Informe a descrição.");
+    return { id: i.id, description, amount: cents(i.amountCents), competence: reqDate(i.competenceDate, "Data de competência"), notes: clean(i.notes) || null };
+  })
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { data: cur, error } = await context.supabase.from("other_revenues").select("*").eq("id", data.id).eq("status", "ativo").maybeSingle();
+    dbErr(error);
+    if (!cur) throw new Error("Receita não encontrada ou já estornada.");
+    if (cur.received_at) throw new Error("Receita já recebida: use o estorno com motivo e lance novamente.");
+    if (cur.amount_cents === data.amount && cur.competence_date === data.competence) {
+      const { error: ue } = await context.supabase.from("other_revenues").update({ description: data.description, notes: data.notes }).eq("id", data.id);
+      dbErr(ue);
+      return { ok: true as const };
+    }
+    // Valor/competência: o original é estornado (auditado) e substituído — nunca soma duas vezes.
+    const { error: ve } = await context.supabase.from("other_revenues").update({ status: "estornado", void_reason: "Correção do lançamento (substituído)" }).eq("id", data.id);
+    dbErr(ve);
+    const { error: ie } = await context.supabase.from("other_revenues").insert({ description: data.description, category_id: cur.category_id, amount_cents: data.amount, competence_date: data.competence, origin: cur.origin, notes: data.notes, receipt_path: cur.receipt_path });
+    dbErr(ie);
     return { ok: true as const };
   });
 
@@ -340,7 +367,7 @@ export const getFinanceOverview = createServerFn({ method: "POST" })
     const movements = buildSpreadsheetMovements(all.raw as any, all.orders);
     const sheet = spreadsheetCash(movements, data.start, data.end);
     const cash = sheet.cash;
-    const indicators = computeIndicators({ orders: all.orders, customerPayments: all.raw.customerPayments, otherRevenues: [], expenses: all.expenses }, data.start, data.end);
+    const indicators = computeIndicators({ orders: all.orders, customerPayments: all.raw.customerPayments, otherRevenues: all.raw.otherRevenues, expenses: all.expenses }, data.start, data.end);
     indicators.receivedByCompanyCents = sheet.cash.totals.inflowCents;
     // Previsto no período: despesas a vencer e receitas avulsas a receber
     const plannedOut = all.expenses.filter((e: any) => e.status !== "cancelada" && e.due_date >= data.start && e.due_date <= data.end).reduce((s: number, e: any) => s + Math.max(e.amount_cents - e.paid_cents, 0), 0);
@@ -377,7 +404,7 @@ export const closeMonth = createServerFn({ method: "POST" })
     const end = new Date(Date.UTC(y, m, 0)).toISOString().slice(0, 10);
     const all = await loadAll(context.supabase);
     const cash = spreadsheetCash(buildSpreadsheetMovements(all.raw as any, all.orders), data.month, end).cash;
-    const indicators = computeIndicators({ orders: all.orders, customerPayments: all.raw.customerPayments, otherRevenues: [], expenses: all.expenses }, data.month, end);
+    const indicators = computeIndicators({ orders: all.orders, customerPayments: all.raw.customerPayments, otherRevenues: all.raw.otherRevenues, expenses: all.expenses }, data.month, end);
     indicators.receivedByCompanyCents = cash.totals.inflowCents;
     const { error } = await context.supabase.from("monthly_closings").insert({ month: data.month, snapshot: { indicators, cash }, notes: data.notes });
     dbErr(error);

@@ -790,6 +790,33 @@ export type Database = {
         }
         Relationships: []
       }
+      operation_resets: {
+        Row: {
+          actor_user_id: string | null
+          batch: string
+          counts: Json
+          created_at: string
+          id: string
+          reason: string
+        }
+        Insert: {
+          actor_user_id?: string | null
+          batch: string
+          counts: Json
+          created_at?: string
+          id?: string
+          reason: string
+        }
+        Update: {
+          actor_user_id?: string | null
+          batch?: string
+          counts?: Json
+          created_at?: string
+          id?: string
+          reason?: string
+        }
+        Relationships: []
+      }
       order_financials: {
         Row: {
           company_share_cents: number
@@ -2009,12 +2036,14 @@ export type Database = {
         Returns: boolean
       }
       my_technician_id: { Args: never; Returns: string }
+      operation_reset_preview: { Args: never; Returns: Json }
       order_in_test_reset: { Args: { _order: string }; Returns: boolean }
       remove_customer: { Args: { _id: string }; Returns: string }
       report_technician_value: {
         Args: { _cents: number; _order: string }
         Returns: undefined
       }
+      reset_operation: { Args: { _reason: string }; Returns: Json }
       set_user_active: {
         Args: { _active: boolean; _target: string }
         Returns: undefined

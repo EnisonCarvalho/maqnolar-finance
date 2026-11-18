@@ -146,6 +146,10 @@ export function buildSpreadsheetMovements(raw: RawFinance, orders: { orderId: st
     if (p.receiver_type !== "maqnolar" || amount <= 0) continue;
     result.push({ id: `cp-${p.id}`, kind: "recebimento_cliente", date: p.paid_at, accountId: null, amountCents: amount, description: `Parte MaqnoLar · ${order.code ?? "OS"}`, orderId: p.order_id });
   }
+  for (const r of raw.otherRevenues ?? []) {
+    if (r.status !== "ativo" || !r.received_at) continue;
+    result.push({ id: `or-${r.id}`, kind: "receita_avulsa", date: r.received_at, accountId: null, amountCents: r.amount_cents, description: r.description, categoryId: r.category_id ?? null });
+  }
   for (const p of raw.expensePayments) {
     if (p.status !== "ativo") continue;
     result.push({ id: `ep-${p.id}`, kind: "despesa", date: p.paid_at, accountId: null, amountCents: -p.amount_cents, description: p.description ?? "Despesa", categoryId: p.category_id ?? null });
