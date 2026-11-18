@@ -75,33 +75,11 @@ function Content() {
 
       {data && i && (
         <>
-          <section className="grid gap-2">
-            <h2 className="font-display text-base font-semibold">Caixa no período</h2>
-            <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-              <StatCard label="Saldo inicial" cents={data.cash.totals.openingCents} />
-              <StatCard label="Entradas efetivas" cents={data.cash.totals.inflowCents} tone="pos" />
-              <StatCard label="Saídas efetivas" cents={data.cash.totals.outflowCents} tone="neg" />
-              <StatCard label="Saldo final" cents={data.cash.totals.closingCents} tone="auto" />
-            </div>
-            <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-              <StatCard label="Entradas previstas" cents={data.planned.inflowCents} hint="Receitas avulsas a receber no período" />
-              <StatCard label="Saídas previstas" cents={data.planned.outflowCents} hint="Despesas a vencer no período" />
-            </div>
-          </section>
-
-          <section className="grid gap-2">
-            <h2 className="font-display text-base font-semibold">Indicadores</h2>
-            <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-              <StatCard label="Faturamento bruto" cents={i.grossBillingCents} hint="Atendimentos concluídos no período" />
-              <StatCard label="Receita econômica MaqnoLar" cents={i.companyEconomicRevenueCents} hint="Participação + receitas avulsas" tone="pos" />
-              <StatCard label="Recebimentos efetivos (empresa)" cents={i.receivedByCompanyCents} />
-              <StatCard label="Recebido pelos técnicos" cents={i.receivedByTechniciansCents} hint="Fora do caixa da empresa" />
-              <StatCard label="Despesas operacionais" cents={i.operationalExpensesCents} tone="neg" />
-              <StatCard label="Resultado econômico" cents={i.economicResultCents} tone="auto" />
-              <StatCard label="Contas a pagar" cents={i.payablesCents} hint="Total em aberto" />
-              <StatCard label="Contas a receber" cents={i.receivablesCents} hint="Clientes + receitas pendentes" />
-            </div>
-            <p className="text-xs text-muted-foreground">Do faturamento: participação dos técnicos {formatBRL(i.technicianShareCents)} · peças {formatBRL(i.partsCents)}. Repasses, reembolsos e transferências não entram como receita ou despesa.</p>
+          <section className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+            <StatCard label="Faturamento bruto" cents={i.grossBillingCents} hint="Total cobrado nas OS confirmadas" />
+            <StatCard label="Receita econômica da MaqnoLar" cents={i.companyEconomicRevenueCents} hint="Parte da empresa, sem peças e técnico" tone="pos" />
+            <StatCard label="Despesas" cents={i.operationalExpensesCents} tone="neg" />
+            <StatCard label="Resultado" cents={i.economicResultCents} tone="auto" />
           </section>
 
           <section className="grid gap-2">

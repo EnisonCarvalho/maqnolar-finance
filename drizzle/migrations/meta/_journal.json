@@ -169,6 +169,13 @@
       "when": 1794974413106,
       "tag": "0023_expense_payment_without_account_selection",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1795025826934,
+      "tag": "0024_confirm_service_finalizes_order",
+      "breakpoints": true
     }
   ]
 }

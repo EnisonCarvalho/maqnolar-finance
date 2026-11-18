@@ -245,7 +245,7 @@ export function CompositionForm({ orderId, totalCents, partsCents, reportedParts
   }
   const mutation = useMutation({
     mutationFn: () => confirm({ data: { orderId, totalReais: total, partsReais: parts, ...(correction ? { reason } : {}) } }),
-    onSuccess: async () => { toast.success("Composição financeira confirmada."); await onDone(); await queryClient.invalidateQueries(); },
+    onSuccess: async () => { toast.success("Valores confirmados e OS finalizada."); await onDone(); await queryClient.invalidateQueries(); },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Não foi possível confirmar."),
   });
   const canSubmit = Boolean(preview) && !rulePending && !ruleError && (!correction || reason.trim().length >= 3);
@@ -267,11 +267,11 @@ export function CompositionForm({ orderId, totalCents, partsCents, reportedParts
       <div className="flex justify-between gap-2"><dt>Técnico ({rule?.technicianPercent ?? 50}%)</dt><dd className="font-semibold">{preview ? formatBRL(preview.technicianShareCents) : "—"}</dd></div>
       <div className="flex justify-between gap-2"><dt>MaqnoLar ({rule?.companyPercent ?? 50}%) — entra em Receitas</dt><dd className="font-semibold">{preview ? formatBRL(preview.companyShareCents) : "—"}</dd></div>
     </dl>
-    <p className="text-xs text-muted-foreground">Somente a parte da MaqnoLar vira receita. Nenhum recebimento ou repasse é registrado.</p>
+    <p className="text-xs text-muted-foreground">Ao confirmar, a OS é finalizada como serviço. Somente a parte da MaqnoLar vira receita; nenhum recebimento ou repasse é registrado.</p>
     {validationError && <p role="alert" className="text-sm text-destructive">{validationError}</p>}
     {ruleError && <p role="alert" className="text-sm text-destructive">Não foi possível consultar a regra de divisão.</p>}
     {correction && <div className="grid gap-1.5"><Label htmlFor={`reason-${orderId}`}>Justificativa da correção</Label><Textarea id={`reason-${orderId}`} value={reason} onChange={(e) => setReason(e.target.value)} rows={2} /></div>}
-    <Button type="submit" disabled={mutation.isPending || !canSubmit}>{mutation.isPending ? "Confirmando…" : correction ? "Confirmar correção" : "Confirmar"}</Button>
+    <Button type="submit" disabled={mutation.isPending || !canSubmit}>{mutation.isPending ? "Confirmando…" : correction ? "Confirmar correção" : "Confirmar e finalizar"}</Button>
   </form>;
 }
 
