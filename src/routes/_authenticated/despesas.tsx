@@ -63,7 +63,7 @@ function Content() {
   const { data: categories } = useQuery(categoriesQuery);
   const overviewFn = useServerFn(getFinanceOverview);
   const { data: overview } = useQuery({ queryKey: ["fin-overview", start, end], queryFn: () => overviewFn({ data: { start, end } }) });
-  const [dateBy, setDateBy] = useState<"competence_date" | "due_date">("due_date");
+  const [dateBy, setDateBy] = useState<"competence_date" | "due_date">("competence_date");
   const { data: expenses } = useQuery({
     queryKey: ["fin-expenses", start, end, dateBy],
     queryFn: async (): Promise<ExpenseRow[]> => {
@@ -230,12 +230,12 @@ function ExpenseDialog({ target, onClose, onDone }: { target: ExpenseRow | "new"
   const m = useMutation({
     mutationFn: async () => {
       const receiptPath = file ? await uploadReceipt(file) : null;
-      return saveExpense({ data: { id: isNew ? null : (target as ExpenseRow).id, description: f.description, categoryId: f.categoryId || null, amountCents: cents, competenceDate: f.competence, dueDate: f.due, plannedAccountId: f.plannedAccountId || null, responsible: f.responsible, notes: f.notes, receiptPath, payNow: isNew && f.payNow ? { paidAt: f.paidAt, method: f.method, accountId: f.payAccountId } : null } });
+      return saveExpense({ data: { id: isNew ? null : (target as ExpenseRow).id, description: f.description, categoryId: f.categoryId || null, amountCents: cents, competenceDate: f.competence, dueDate: f.due, plannedAccountId: f.plannedAccountId || null, responsible: f.responsible, notes: f.notes, receiptPath, payNow: isNew && f.payNow ? { paidAt: f.paidAt, method: f.method, accountId: null } : null } });
     },
     onSuccess: async () => { toast.success(isNew ? "Despesa registrada." : "Despesa atualizada."); close(); await onDone(); },
     onError: (e) => { setConfirming(false); toast.error(e instanceof Error ? e.message : "Não foi possível salvar."); },
   });
-  const valid = f.description.trim() && cents > 0 && f.competence && f.due && (!f.payNow || f.payAccountId);
+  const valid = f.description.trim() && cents > 0 && f.competence && f.due && (!f.payNow || f.paidAt);
   return (
     <Dialog open={Boolean(target)} onOpenChange={(o) => !o && close()}>
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-md">
@@ -257,7 +257,6 @@ function ExpenseDialog({ target, onClose, onDone }: { target: ExpenseRow | "new"
               <div className="grid gap-1.5"><Label>Vencimento *</Label><Input type="date" value={f.due} onChange={(e) => set("due")(e.target.value)} /></div>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <AccountSelect label="Conta prevista" value={f.plannedAccountId} onChange={set("plannedAccountId")} allowNone />
               <div className="grid gap-1.5"><Label>Responsável</Label><Input value={f.responsible} onChange={(e) => set("responsible")(e.target.value)} placeholder="Ex.: Enison" /></div>
             </div>
             {isNew && <label className="flex items-center gap-2 text-sm"><Switch checked={f.payNow} onCheckedChange={set("payNow")} />Já foi paga</label>}
@@ -270,7 +269,6 @@ function ExpenseDialog({ target, onClose, onDone }: { target: ExpenseRow | "new"
                       <SelectContent>{Object.entries(METHOD_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent></Select>
                   </div>
                 </div>
-                <AccountSelect label="Conta utilizada" value={f.payAccountId} onChange={set("payAccountId")} required />
               </>
             )}
             <div className="grid gap-1.5"><Label>Observações</Label><Textarea rows={2} value={f.notes} onChange={(e) => set("notes")(e.target.value)} /></div>
@@ -296,7 +294,7 @@ function PayDialog({ expense, remaining, onClose, onDone }: { expense: ExpenseRo
   const m = useMutation({
     mutationFn: async () => {
       const receiptPath = file ? await uploadReceipt(file) : null;
-      return payExpense({ data: { expenseId: expense!.id, amountCents: cents, paidAt, method, accountId, receiptPath } });
+      return payExpense({ data: { expenseId: expense!.id, amountCents: cents, paidAt, method, accountId: null, receiptPath } });
     },
     onSuccess: async () => { toast.success("Pagamento registrado."); close(); await onDone(); },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Não foi possível registrar."),
@@ -315,9 +313,8 @@ function PayDialog({ expense, remaining, onClose, onDone }: { expense: ExpenseRo
             <Select value={method} onValueChange={setMethod}><SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>{Object.entries(METHOD_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent></Select>
           </div>
-          <AccountSelect label="Conta utilizada" value={accountId} onChange={setAccountId} required />
           <ReceiptInput file={file} onChange={setFile} />
-          <div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={close}>Cancelar</Button><Button type="submit" disabled={!accountId || cents <= 0 || cents > remaining || m.isPending}>Confirmar pagamento</Button></div>
+          <div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={close}>Cancelar</Button><Button type="submit" disabled={cents <= 0 || cents > remaining || m.isPending}>Confirmar pagamento</Button></div>
         </form>
       </DialogContent>
     </Dialog>

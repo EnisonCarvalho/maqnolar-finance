@@ -218,7 +218,7 @@ function PaymentDialog({
           receiverType: receiverIsTech ? "tecnico" : receiver,
           receiverTechnicianId,
           receiverLabel,
-          method, destinationAccount: account, accountId: receiver === "maqnolar" ? accountId || null : null, notes, receiptPath, authorizedReason: authorized,
+          method, destinationAccount: account, accountId: null, notes, receiptPath, authorizedReason: authorized,
         },
       });
     },
@@ -284,9 +284,6 @@ function PaymentDialog({
                 <Input value={account} onChange={(e) => setAccount(e.target.value)} placeholder="Opcional" />
               </div>
             </div>
-            {receiver === "maqnolar" && (
-              <AccountSelect label="Conta da MaqnoLar que recebeu" value={accountId} onChange={setAccountId} allowNone />
-            )}
             {overpay && amountCents > 0 && (
               <div className="grid gap-1.5 rounded-md border border-destructive/40 p-2">
                 <Label className="text-destructive">Valor acima do saldo do cliente. Justifique o ajuste autorizado *</Label>

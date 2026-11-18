@@ -127,6 +127,42 @@ export type AccountFlow = {
   closingCents: number;
 };
 
+/** Planilha: apenas participação da empresa efetivamente recebida e despesas pagas.
+ * Pagamentos são alocados cumulativamente para não duplicar centavos nem exceder a OS.
+ * Mantém buildMovements para o histórico bancário dos módulos anteriores.
+ */
+export function buildSpreadsheetMovements(raw: RawFinance, orders: { orderId: string; totalCents: number; companyShareCents: number; cancelled: boolean; code?: string }[]): Movement[] {
+  const byOrder = new Map(orders.filter((o) => !o.cancelled).map((o) => [o.orderId, o]));
+  const paid = new Map<string, number>();
+  const result: Movement[] = [];
+  const payments = raw.customerPayments.filter((p) => p.status === "ativo").slice().sort((a, b) => a.paid_at.localeCompare(b.paid_at) || a.id.localeCompare(b.id));
+  for (const p of payments) {
+    const order = byOrder.get(p.order_id);
+    if (!order || order.totalCents <= 0) continue;
+    const previous = paid.get(p.order_id) ?? 0;
+    const next = Math.min(order.totalCents, previous + p.amount_cents);
+    paid.set(p.order_id, next);
+    const amount = Math.round(next * order.companyShareCents / order.totalCents) - Math.round(previous * order.companyShareCents / order.totalCents);
+    if (p.receiver_type !== "maqnolar" || amount <= 0) continue;
+    result.push({ id: `cp-${p.id}`, kind: "recebimento_cliente", date: p.paid_at, accountId: null, amountCents: amount, description: `Parte MaqnoLar · ${order.code ?? "OS"}`, orderId: p.order_id });
+  }
+  for (const p of raw.expensePayments) {
+    if (p.status !== "ativo") continue;
+    result.push({ id: `ep-${p.id}`, kind: "despesa", date: p.paid_at, accountId: null, amountCents: -p.amount_cents, description: p.description ?? "Despesa", categoryId: p.category_id ?? null });
+  }
+  return result.sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
+}
+
+export function spreadsheetCash(movements: Movement[], start: string, end: string) {
+  const openingCents = movements.filter((m) => m.date < start).reduce((s, m) => s + m.amountCents, 0);
+  let balance = openingCents;
+  const rows = movements.filter((m) => m.date >= start && m.date <= end).map((m) => ({ ...m, balanceCents: balance += m.amountCents }));
+  const inflowCents = rows.reduce((s, m) => s + Math.max(m.amountCents, 0), 0);
+  const outflowCents = rows.reduce((s, m) => s + Math.max(-m.amountCents, 0), 0);
+  const totals = { openingCents, inflowCents, outflowCents, closingCents: balance };
+  return { cash: { totals, flows: [{ accountId: null, name: "Caixa", ...totals }] }, movements: rows };
+}
+
 /** Saldo por conta no período. Movimentos sem conta aparecem em "Sem conta definida". Contas de sócio ficam fora. */
 export function computeAccountFlows(accounts: Account[], movements: Movement[], start: string, end: string): { flows: AccountFlow[]; totals: Omit<AccountFlow, "accountId" | "name"> } {
   const company = accounts.filter((a) => a.ownership === "empresa");

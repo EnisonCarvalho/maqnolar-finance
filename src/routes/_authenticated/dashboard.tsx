@@ -7,7 +7,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { ordersQuery } from "@/lib/orders-queries";
 import { operationalCounts } from "@/lib/dashboard-math";
 import { getFinanceOverview } from "@/lib/finance-ops.functions";
-import { getSettlement } from "@/lib/settlement.functions";
 import { campaignPerformance, sumPerf, type PerfAlloc, type PerfLead, type PerfOrder } from "@/lib/campaign-math";
 import { PeriodFilter, StatCard, usePeriod } from "@/components/finance-ui";
 import { formatBRL } from "@/lib/format";
@@ -76,7 +75,7 @@ const SHORTCUTS = [
   { label: "Novo atendimento", to: "/atendimentos", icon: Plus },
   { label: "Novo lead", to: "/leads", icon: UserPlus },
   { label: "Nova despesa", to: "/despesas", icon: Receipt },
-  { label: "Acerto diário", to: "/acerto-diario", icon: HandCoins },
+  { label: "Receitas", to: "/receitas", icon: HandCoins },
 ] as const;
 
 function AdminDashboard({ first }: { first: string }) {
@@ -87,10 +86,6 @@ function AdminDashboard({ first }: { first: string }) {
   const { data: fin, isLoading: finLoading } = useQuery({
     queryKey: ["fin-overview", start, end],
     queryFn: () => getFinanceOverview({ data: { start, end } }),
-  });
-  const { data: settlement } = useQuery({
-    queryKey: ["settlement-overall"],
-    queryFn: () => getSettlement({ data: { start: null, end: null } }),
   });
   const { data: campaigns } = useQuery({
     queryKey: ["campaigns"],
@@ -118,16 +113,6 @@ function AdminDashboard({ first }: { first: string }) {
   const ops = operationalCounts(orders ?? [], start, end);
   const i = fin?.indicators;
   const saldoCents = fin?.cash.totals.closingCents;
-
-  const pend = (settlement?.technicians ?? []).reduce(
-    (acc, t) => {
-      const p = t.overallPendingCents;
-      if (p > 0) acc.pagar += p;
-      else acc.receber += -p;
-      return acc;
-    },
-    { pagar: 0, receber: 0 },
-  );
 
   const perf = sumPerf(
     (campaigns ?? []).map((c) => {
@@ -207,10 +192,9 @@ function AdminDashboard({ first }: { first: string }) {
               <StatCard label="Resultado econômico" cents={i.economicResultCents} hint="Receita − despesas (competência)" tone="auto" />
             </div>
             <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-              <StatCard label="Saldo financeiro das contas" cents={saldoCents ?? 0} hint={`Posição até ${end.split("-").reverse().join("/")}`} tone="auto" />
+              <StatCard label="Saldo do caixa" cents={saldoCents ?? 0} hint={`Posição até ${end.split("-").reverse().join("/")}`} tone="auto" />
               <StatCard label="A receber de clientes" cents={i.receivablesCents} hint="Total em aberto" />
               <StatCard label="A pagar" cents={i.payablesCents} hint="Despesas em aberto" />
-              <StatCard label="Acertos pendentes com técnicos" cents={pend.pagar - pend.receber} hint={`A pagar ${formatBRL(pend.pagar)} · a receber ${formatBRL(pend.receber)}`} tone="auto" />
             </div>
             <p className="text-xs text-muted-foreground">
               Do faturamento: técnicos {formatBRL(i.technicianShareCents)} · peças {formatBRL(i.partsCents)}. Recebido direto pelos técnicos: {formatBRL(i.receivedByTechniciansCents)} (fora do caixa). Repasses e transferências não são receita nem despesa.

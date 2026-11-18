@@ -23,9 +23,9 @@ export const Route = createFileRoute("/_authenticated/fluxo-de-caixa")({
   head: () => ({
     meta: [
       { title: "Fluxo de caixa — MaqnoLar Financeiro" },
-      { name: "description", content: "Entradas, saídas, saldo por conta, indicadores e fechamento mensal da MaqnoLar." },
+      { name: "description", content: "Participação recebida, despesas pagas e saldo de caixa da MaqnoLar." },
       { property: "og:title", content: "Fluxo de caixa — MaqnoLar Financeiro" },
-      { property: "og:description", content: "Entradas, saídas, saldo por conta, indicadores e fechamento mensal da MaqnoLar." },
+      { property: "og:description", content: "Participação recebida, despesas pagas e saldo de caixa da MaqnoLar." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -67,7 +67,7 @@ function Content() {
     <div className="grid grid-cols-[minmax(0,1fr)] gap-5">
       <div>
         <h1 className="font-display text-2xl font-semibold md:text-3xl">Fluxo de caixa</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Caixa = dinheiro efetivamente movimentado nas contas da MaqnoLar. Resultado econômico = receitas da empresa menos despesas, por competência. Lucro não é saldo bancário.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Participação da MaqnoLar recebida − despesas pagas.</p>
       </div>
       <PeriodFilter period={period} />
       {isLoading && <p className="text-sm text-muted-foreground">Carregando…</p>}
@@ -105,50 +105,10 @@ function Content() {
           </section>
 
           <section className="grid gap-2">
-            <h2 className="font-display text-base font-semibold">Movimentações por conta</h2>
-            <div className="grid gap-2 md:hidden">
-              {data.cash.flows.map((f) => (
-                <div key={f.accountId ?? "none"} className="rounded-md border p-3 text-sm">
-                  <div className="flex justify-between gap-2"><p className="font-medium">{f.name}</p><p className="font-semibold">{formatBRL(f.closingCents)}</p></div>
-                  <p className="text-xs text-muted-foreground">Inicial {formatBRL(f.openingCents)} · +{formatBRL(f.inflowCents)} · −{formatBRL(f.outflowCents)}</p>
-                </div>
-              ))}
-              {data.cash.flows.length === 0 && <p className="text-sm text-muted-foreground">Cadastre as contas da empresa na página Contas.</p>}
-            </div>
-            <Card className="hidden md:block"><CardContent className="overflow-x-auto p-0">
-              <table className="w-full text-sm">
-                <thead className="text-left text-xs text-muted-foreground"><tr className="border-b"><th className="p-3">Conta</th><th className="p-3 text-right">Saldo inicial</th><th className="p-3 text-right">Entradas</th><th className="p-3 text-right">Saídas</th><th className="p-3 text-right">Saldo final</th></tr></thead>
-                <tbody>
-                  {data.cash.flows.map((f) => (
-                    <tr key={f.accountId ?? "none"} className="border-b last:border-0"><td className="p-3 font-medium">{f.name}</td><td className="p-3 text-right">{formatBRL(f.openingCents)}</td><td className="p-3 text-right">{formatBRL(f.inflowCents)}</td><td className="p-3 text-right">{formatBRL(f.outflowCents)}</td><td className="p-3 text-right font-semibold">{formatBRL(f.closingCents)}</td></tr>
-                  ))}
-                </tbody>
-              </table>
-            </CardContent></Card>
-          </section>
-
-          <section className="grid gap-2">
             <h2 className="font-display text-base font-semibold">Movimentações realizadas</h2>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:max-w-3xl">
-              <Select value={kind} onValueChange={setKind}><SelectTrigger aria-label="Tipo"><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="todos">Todos os tipos</SelectItem>{Object.entries(MOVEMENT_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent></Select>
-              <Select value={account} onValueChange={setAccount}><SelectTrigger aria-label="Conta"><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="todas">Todas as contas</SelectItem>{(accounts ?? []).filter((a) => a.ownership === "empresa").map((a) => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}<SelectItem value="none">Sem conta definida</SelectItem></SelectContent></Select>
-              <Select value={tech} onValueChange={setTech}><SelectTrigger aria-label="Técnico"><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="todos">Todos os técnicos</SelectItem>{(technicians ?? []).map((t) => <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>)}</SelectContent></Select>
-            </div>
-            {movements.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma movimentação efetiva no período.</p>}
-            <div className="grid gap-2">
-              {movements.map((m) => (
-                <div key={m.id} className="flex items-start justify-between gap-2 rounded-md border p-3 text-sm">
-                  <div className="min-w-0">
-                    <p className="font-medium">{m.description}</p>
-                    <p className="text-xs text-muted-foreground">{formatISODate(m.date)} · {MOVEMENT_LABELS[m.kind as MovementKind]} · {accName(m.accountId)}</p>
-                  </div>
-                  <p className={`shrink-0 font-semibold ${m.amountCents < 0 ? "text-destructive" : "text-primary"}`}>{m.amountCents < 0 ? "−" : "+"}{formatBRL(Math.abs(m.amountCents))}</p>
-                </div>
-              ))}
-            </div>
+            {data.movements.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma movimentação efetiva no período.</p>}
+            <div className="grid gap-2 md:hidden">{data.movements.map((m) => <div key={m.id} className="grid gap-2 rounded-md border p-3 text-sm"><p className="font-medium">{formatISODate(m.date)} · {m.description}</p><dl className="grid grid-cols-3 gap-2"><div><dt className="text-xs text-muted-foreground">Entrada</dt><dd>{formatBRL(Math.max(m.amountCents, 0))}</dd></div><div><dt className="text-xs text-muted-foreground">Saída</dt><dd>{formatBRL(Math.max(-m.amountCents, 0))}</dd></div><div><dt className="text-xs text-muted-foreground">Saldo</dt><dd className="font-semibold">{formatBRL(m.balanceCents)}</dd></div></dl></div>)}</div>
+            <div className="hidden overflow-x-auto md:block"><table className="w-full text-sm"><thead><tr className="border-b text-left text-xs text-muted-foreground">{["Data", "Descrição", "Entrada", "Saída", "Saldo"].map((c) => <th key={c} className="p-3">{c}</th>)}</tr></thead><tbody>{data.movements.map((m) => <tr key={m.id} className="border-b"><td className="p-3">{formatISODate(m.date)}</td><td className="p-3">{m.description}</td><td className="p-3">{formatBRL(Math.max(m.amountCents, 0))}</td><td className="p-3">{formatBRL(Math.max(-m.amountCents, 0))}</td><td className="p-3 font-semibold">{formatBRL(m.balanceCents)}</td></tr>)}</tbody></table></div>
           </section>
 
           <section className="grid gap-2">

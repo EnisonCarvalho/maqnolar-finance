@@ -35,10 +35,8 @@ const adminGroups: { label: string; items: Item[] }[] = [
     label: "Financeiro",
     items: [
       { label: "Composição financeira", icon: Percent, to: "/divisao-financeira" },
-      { label: "Acerto diário", icon: Handshake, to: "/acerto-diario" },
       { label: "Receitas", icon: TrendingUp, to: "/receitas" },
       { label: "Despesas", icon: TrendingDown, to: "/despesas" },
-      { label: "Contas bancárias", icon: Landmark, to: "/contas" },
       { label: "Fluxo de caixa", icon: LineChart, to: "/fluxo-de-caixa" },
     ],
   },

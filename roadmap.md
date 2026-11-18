@@ -1,5 +1,12 @@
 # Roadmap
 
+## Financeiro em planilha e reset único — 18/11/2026
+- [x] Simplificar Receitas por OS, Despesas sem escolha de conta e Caixa efetivo da participação MaqnoLar.
+- [x] Retirar Acerto e Contas do painel, preservar área técnica e rotinas anteriores; lista compartilhada já exclui OS arquivadas.
+- [x] Reset atômico por IDs: 4 OS (2 já arquivadas), 2 clientes, 2 recebimentos R$230, 1 pagamento/despesa R$114; 4 apurações R$760, participação MaqnoLar R$255. Auditoria identifica Enison.
+- [x] 122 testes aprovados, exemplos sem persistência, Receitas/Despesas/Caixa/Dashboard/Relatórios autenticados em 360/390/430/768/1440px, filtros e abertura de Nova despesa verificados sem salvar. Banco: 0 clientes/OS ativos, nenhuma apuração/obrigação/pagamento antigo ativo; telas monetárias zeradas. Build OK.
+- [ ] Gravação de nova despesa sem conta não exercitada no site: preservar o estado final zerado sem criar registros fictícios; validações existentes e conta interna conferidas.
+
 ## Revisão final para uso real
 - [x] 97 testes aprovados; build sem erros
 - [x] Dashboard/relatórios/atendimentos validados como admin em 390/1440px, sem duplicidade nos valores

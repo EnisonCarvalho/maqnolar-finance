@@ -1,8 +1,16 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { buildMovements, computeAccountFlows, computeIndicators, nextDueDate, type Account } from "@/lib/cashflow-math";
+import { buildSpreadsheetMovements, spreadsheetCash, computeIndicators, nextDueDate } from "@/lib/cashflow-math";
 
 const METHODS = ["pix", "dinheiro", "credito", "debito", "transferencia", "outro"];
+
+async function paymentAccount(supabase: any, requested?: string | null): Promise<string> {
+  if (requested) return requested;
+  const { data, error } = await supabase.from("financial_accounts").select("id").eq("active", true).eq("ownership", "empresa").order("created_at").order("id").limit(1).maybeSingle();
+  dbErr(error);
+  if (!data) throw new Error("Não há conta interna ativa para registrar o pagamento.");
+  return data.id;
+}
 
 async function assertAdmin(supabase: any, userId: string) {
   const { data } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
@@ -130,7 +138,7 @@ export const voidRevenue = createServerFn({ method: "POST" })
   });
 
 // ---------- Despesas ----------
-type ExpenseInput = { id?: string | null; description: string; categoryId?: string | null; amountCents: number; competenceDate: string; dueDate: string; plannedAccountId?: string | null; responsible?: string; notes?: string; receiptPath?: string | null; payNow?: { paidAt: string; method: string; accountId: string } | null };
+type ExpenseInput = { id?: string | null; description: string; categoryId?: string | null; amountCents: number; competenceDate: string; dueDate: string; plannedAccountId?: string | null; responsible?: string; notes?: string; receiptPath?: string | null; payNow?: { paidAt: string; method: string; accountId?: string | null } | null };
 export const saveExpense = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: ExpenseInput) => {
@@ -138,9 +146,8 @@ export const saveExpense = createServerFn({ method: "POST" })
     if (!description) throw new Error("Informe a descrição.");
     let payNow: ExpenseInput["payNow"] = null;
     if (i.payNow) {
-      if (!isUuid(i.payNow.accountId)) throw new Error("Selecione a conta utilizada.");
       if (!METHODS.includes(i.payNow.method)) throw new Error("Forma de pagamento inválida.");
-      payNow = { paidAt: reqDate(i.payNow.paidAt, "Data do pagamento"), method: i.payNow.method, accountId: i.payNow.accountId };
+      payNow = { paidAt: reqDate(i.payNow.paidAt, "Data do pagamento"), method: i.payNow.method, accountId: optUuid(i.payNow.accountId) };
     }
     return { id: optUuid(i.id), description, categoryId: optUuid(i.categoryId), amount: cents(i.amountCents), competence: reqDate(i.competenceDate, "Data de competência"), due: reqDate(i.dueDate, "Data de vencimento"), planned: optUuid(i.plannedAccountId), responsible: clean(i.responsible, 120) || null, notes: clean(i.notes) || null, receiptPath: clean(i.receiptPath, 300) || null, payNow };
   })
@@ -155,8 +162,9 @@ export const saveExpense = createServerFn({ method: "POST" })
     }
     const { data: created, error } = await context.supabase.from("expenses").insert(row).select("id").single();
     dbErr(error);
-    if (data.payNow) {
-      const { error: pe } = await context.supabase.from("expense_payments").insert({ expense_id: created!.id, amount_cents: data.amount, paid_at: data.payNow.paidAt, method: data.payNow.method, account_id: data.payNow.accountId, receipt_path: data.receiptPath });
+    if (data.payNow && created) {
+      const accountId = await paymentAccount(context.supabase, data.payNow.accountId);
+      const { error: pe } = await context.supabase.from("expense_payments").insert({ expense_id: created.id, amount_cents: data.amount, paid_at: data.payNow.paidAt, method: data.payNow.method, account_id: accountId, receipt_path: data.receiptPath });
       if (pe) throw new Error(`Despesa criada como pendente, mas o pagamento não foi registrado: ${pe.message.replace(/^.*?ERROR:\s*/, "")}`);
     }
     return { ok: true as const };
@@ -164,14 +172,15 @@ export const saveExpense = createServerFn({ method: "POST" })
 
 export const payExpense = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: { expenseId: string; amountCents: number; paidAt: string; method: string; accountId: string; notes?: string; receiptPath?: string | null }) => {
-    if (!isUuid(i.expenseId) || !isUuid(i.accountId)) throw new Error("Selecione a conta utilizada.");
+  .inputValidator((i: { expenseId: string; amountCents: number; paidAt: string; method: string; accountId?: string | null; notes?: string; receiptPath?: string | null }) => {
+    if (!isUuid(i.expenseId)) throw new Error("Despesa inválida.");
     if (!METHODS.includes(i.method)) throw new Error("Forma inválida.");
-    return { expenseId: i.expenseId, amount: cents(i.amountCents), paidAt: reqDate(i.paidAt, "Data do pagamento"), method: i.method, accountId: i.accountId, notes: clean(i.notes) || null, receiptPath: clean(i.receiptPath, 300) || null };
+    return { expenseId: i.expenseId, amount: cents(i.amountCents), paidAt: reqDate(i.paidAt, "Data do pagamento"), method: i.method, accountId: optUuid(i.accountId), notes: clean(i.notes) || null, receiptPath: clean(i.receiptPath, 300) || null };
   })
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
-    const { error } = await context.supabase.from("expense_payments").insert({ expense_id: data.expenseId, amount_cents: data.amount, paid_at: data.paidAt, method: data.method, account_id: data.accountId, notes: data.notes, receipt_path: data.receiptPath });
+    const accountId = await paymentAccount(context.supabase, data.accountId);
+    const { error } = await context.supabase.from("expense_payments").insert({ expense_id: data.expenseId, amount_cents: data.amount, paid_at: data.paidAt, method: data.method, account_id: accountId, notes: data.notes, receipt_path: data.receiptPath });
     dbErr(error);
     return { ok: true as const };
   });
@@ -250,7 +259,7 @@ async function loadAll(supabase: any) {
     supabase.from("part_purchases").select("id, order_id, total_cents, purchased_at, buyer_type, account_id, description"),
     supabase.from("technician_transfers").select("id, technician_id, amount_cents, transfer_date, direction, account_id, status"),
     supabase.from("account_transfers").select("id, from_account_id, to_account_id, amount_cents, transfer_date, status"),
-    supabase.from("order_financials").select("order_id, total_cents, company_share_cents, technician_share_cents, parts_estimated_cents, labor_cents, kind, created_at, service_orders(code, status, completed_at, opened_at, customers(full_name))"),
+    supabase.from("order_financials").select("order_id, total_cents, company_share_cents, technician_share_cents, parts_estimated_cents, labor_cents, kind, created_at, service_orders(code, status, technician_id, completed_at, opened_at, customers(full_name), technicians(full_name))"),
     supabase.from("expenses").select("id, amount_cents, competence_date, due_date, status"),
     supabase.from("partner_movements").select("id, partner_id, type, amount_cents, movement_date, account_id, status, description"),
     supabase.from("profit_distribution_payments").select("id, distribution_id, partner_id, amount_cents, paid_at, account_id, status"),
@@ -271,7 +280,7 @@ async function loadAll(supabase: any) {
       partnerMovements: pm,
       distributionPayments: dp,
     },
-    orders: of.map((f: any) => ({
+    orders: (of as any[]).map((f: any) => ({
       orderId: f.order_id,
       // Competência do atendimento: conclusão; se ainda não concluído, abertura.
       competenceDate: String(f.service_orders?.completed_at ?? f.service_orders?.opened_at ?? f.created_at).slice(0, 10),
@@ -281,6 +290,8 @@ async function loadAll(supabase: any) {
       partsCents: f.kind === "servico" ? Math.max(f.total_cents - f.labor_cents, 0) : 0,
       cancelled: f.service_orders?.status === "cancelado",
       code: f.service_orders?.code ?? "",
+      technicianId: f.service_orders?.technician_id ?? null,
+      technicianName: f.service_orders?.technicians?.full_name ?? "Sem técnico",
       customerName: f.service_orders?.customers?.full_name ?? "",
       kind: f.kind as string,
     })),
@@ -294,10 +305,11 @@ export const getFinanceOverview = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
     const all = await loadAll(context.supabase);
-    const accounts: Account[] = all.accounts.map((a) => ({ id: a.id, name: a.name, ownership: a.ownership, openingBalanceCents: a.opening_balance_cents, openingDate: a.opening_date, active: a.active }));
-    const movements = buildMovements(all.raw as any);
-    const cash = computeAccountFlows(accounts, movements, data.start, data.end);
-    const indicators = computeIndicators({ orders: all.orders, customerPayments: all.raw.customerPayments, otherRevenues: all.raw.otherRevenues, expenses: all.expenses }, data.start, data.end);
+    const movements = buildSpreadsheetMovements(all.raw as any, all.orders);
+    const sheet = spreadsheetCash(movements, data.start, data.end);
+    const cash = sheet.cash;
+    const indicators = computeIndicators({ orders: all.orders, customerPayments: all.raw.customerPayments, otherRevenues: [], expenses: all.expenses }, data.start, data.end);
+    indicators.receivedByCompanyCents = sheet.cash.totals.inflowCents;
     // Previsto no período: despesas a vencer e receitas avulsas a receber
     const plannedOut = all.expenses.filter((e: any) => e.status !== "cancelada" && e.due_date >= data.start && e.due_date <= data.end).reduce((s: number, e: any) => s + Math.max(e.amount_cents - e.paid_cents, 0), 0);
     const plannedIn = all.raw.otherRevenues.filter((r: any) => r.status === "ativo" && !r.received_at && r.competence_date >= data.start && r.competence_date <= data.end).reduce((s: number, r: any) => s + r.amount_cents, 0);
@@ -306,12 +318,15 @@ export const getFinanceOverview = createServerFn({ method: "POST" })
       indicators,
       cash,
       planned: { inflowCents: plannedIn, outflowCents: plannedOut },
-      movements: movements.filter((m) => m.date >= data.start && m.date <= data.end).reverse(),
-      unassignedCount: movements.filter((m) => !m.accountId).length,
+      movements: sheet.movements,
+      unassignedCount: 0,
       closings: closings ?? [],
       // Uma linha por OS confirmada (order_financials é único por OS); só a parte da MaqnoLar conta como receita.
-      confirmedOrders: (all.orders as { orderId: string; code: string; customerName: string; kind: string; competenceDate: string; totalCents: number; partsCents: number; companyShareCents: number; cancelled: boolean }[]).filter((o) => !o.cancelled && o.competenceDate >= data.start && o.competenceDate <= data.end)
-        .map((o) => ({ orderId: o.orderId, code: o.code, customerName: o.customerName, kind: o.kind === "visita" ? "Visita" : "Serviço", date: o.competenceDate, totalCents: o.totalCents, partsCents: o.partsCents, companyShareCents: o.companyShareCents }))
+      confirmedOrders: all.orders.filter((o) => !o.cancelled && o.competenceDate >= data.start && o.competenceDate <= data.end)
+        .map((o) => {
+          const received = all.raw.customerPayments.filter((p: any) => p.order_id === o.orderId && p.status === "ativo").reduce((s: number, p: any) => s + p.amount_cents, 0);
+          return { orderId: o.orderId, code: o.code, customerName: o.customerName, technicianId: o.technicianId, technicianName: o.technicianName, technicianShareCents: o.technicianShareCents, kind: o.kind === "visita" ? "Visita" : "Serviço", date: o.competenceDate, totalCents: o.totalCents, partsCents: o.partsCents, companyShareCents: o.companyShareCents, receivedCents: received, receiptStatus: received >= o.totalCents ? "Recebido" : received > 0 ? "Parcial" : "Pendente" };
+        })
         .sort((a, b) => b.date.localeCompare(a.date)),
     };
   });
@@ -327,9 +342,9 @@ export const closeMonth = createServerFn({ method: "POST" })
     const [y, m] = data.month.split("-").map(Number) as [number, number];
     const end = new Date(Date.UTC(y, m, 0)).toISOString().slice(0, 10);
     const all = await loadAll(context.supabase);
-    const accounts: Account[] = all.accounts.map((a) => ({ id: a.id, name: a.name, ownership: a.ownership, openingBalanceCents: a.opening_balance_cents, openingDate: a.opening_date, active: a.active }));
-    const cash = computeAccountFlows(accounts, buildMovements(all.raw as any), data.month, end);
-    const indicators = computeIndicators({ orders: all.orders, customerPayments: all.raw.customerPayments, otherRevenues: all.raw.otherRevenues, expenses: all.expenses }, data.month, end);
+    const cash = spreadsheetCash(buildSpreadsheetMovements(all.raw as any, all.orders), data.month, end).cash;
+    const indicators = computeIndicators({ orders: all.orders, customerPayments: all.raw.customerPayments, otherRevenues: [], expenses: all.expenses }, data.month, end);
+    indicators.receivedByCompanyCents = cash.totals.inflowCents;
     const { error } = await context.supabase.from("monthly_closings").insert({ month: data.month, snapshot: { indicators, cash }, notes: data.notes });
     dbErr(error);
     return { ok: true as const };
