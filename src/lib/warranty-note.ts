@@ -41,15 +41,20 @@ const GREY: [number, number, number] = [100, 110, 125];
 const MONTHS = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
 const longDate = (iso: string) => { const [y = 0, m = 1, d = 1] = iso.split("-").map(Number); return `${d} de ${MONTHS[m - 1]} de ${y}`; };
 
-async function loadLogo(): Promise<string | null> {
+/** Notas emitidas antes desta data mantêm o PDF original, sem rubrica. */
+export const SIGNATURE_FROM = "2026-11-18T19:06:00Z";
+export const hasCompanySignature = (issuedAt: string) => !issuedAt || new Date(issuedAt) >= new Date(SIGNATURE_FROM);
+
+async function toDataUrl(url: string): Promise<string | null> {
   try {
-    const url = (await import("@/assets/maqnolar-logo.jpg")).default as string;
     const blob = await (await fetch(url)).blob();
     return await new Promise((res) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.readAsDataURL(blob); });
   } catch { return null; }
 }
+const loadLogo = async () => toDataUrl((await import("@/assets/maqnolar-logo.jpg")).default as string);
+const loadSignature = async () => toDataUrl((await import("@/assets/maqnolar-rubrica.png")).default as string);
 
-export async function buildWarrantyPdf(n: WarrantyNote, logoOverride?: string): Promise<Blob> {
+export async function buildWarrantyPdf(n: WarrantyNote, logoOverride?: string, signatureOverride?: string): Promise<Blob> {
   const { jsPDF } = await import("jspdf");
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
   const W = 210, M = 14, CW = W - 2 * M;
@@ -146,6 +151,11 @@ export async function buildWarrantyPdf(n: WarrantyNote, logoOverride?: string): 
   const sx = W - M - 45;
   doc.setFontSize(10); doc.setTextColor(30, 35, 45);
   doc.text(longDate(n.service_date), sx, termsY, { align: "center" });
+  if (hasCompanySignature(n.issued_at)) {
+    const sig = signatureOverride ?? (await loadSignature());
+    // Rubrica da empresa (760x387 px), acima da linha como no modelo.
+    if (sig) doc.addImage(sig, "PNG", sx - 22, termsY + 2.5, 44, 44 * 387 / 760);
+  }
   doc.setDrawColor(40); doc.setLineWidth(0.3); doc.line(sx - 40, termsY + 22, sx + 40, termsY + 22);
   doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(...NAVY);
   doc.text("MaqnoLar", sx, termsY + 27, { align: "center" });
