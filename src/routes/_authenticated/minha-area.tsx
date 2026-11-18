@@ -13,6 +13,7 @@ import { OrderDetailSheet, formatDateTimeBR } from "@/components/order-detail";
 import { getMySettlement } from "@/lib/settlement.functions";
 import { formatBRL, formatDateBR } from "@/lib/format";
 import { TechnicianStepActions } from "@/components/technician-step-actions";
+import { customerWhatsappLink } from "@/lib/whatsapp-summary";
 
 export const Route = createFileRoute("/_authenticated/minha-area")({
   head: () => ({
@@ -67,7 +68,12 @@ function MinhaAreaPage() {
             <Badge variant="outline" className="w-fit whitespace-normal">{o.financial_confirmed_at ? "Apuração financeira confirmada" : "Apuração financeira pendente"}</Badge>
           </div>
           <div className="text-sm">
-            <p className="font-medium">{o.customers?.full_name} {o.customers?.phone ? `· ${o.customers.phone}` : ""}</p>
+            <p className="font-medium">{o.customers?.full_name} {(() => {
+              const phone = o.customers?.phone;
+              if (!phone) return null;
+              const href = customerWhatsappLink(phone, o.customers?.full_name, o.technicians?.full_name);
+              return href ? <>· <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-2" aria-label={`Abrir WhatsApp de ${o.customers?.full_name ?? "cliente"}`}>{phone}</a></> : `· ${phone}`;
+            })()}</p>
             <p className="text-muted-foreground">
               {[o.endereco, o.numero].filter(Boolean).join(", ")}
               {o.bairro ? ` · ${o.bairro}` : ""}{o.cidade ? ` · ${o.cidade}` : ""}

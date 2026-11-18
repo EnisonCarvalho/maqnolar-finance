@@ -35,3 +35,24 @@ export function completionSummaryText(i: CompletionSummaryInput): string {
 export function whatsappLink(text: string): string {
   return `https://wa.me/${COMPANY_WHATSAPP}?text=${encodeURIComponent(text)}`;
 }
+
+/** Normaliza telefone brasileiro para o WhatsApp; null se ausente/inválido. */
+export function customerWhatsappNumber(phone: string | null | undefined): string | null {
+  let d = (phone ?? "").replace(/\D/g, "").replace(/^0+/, "");
+  if (d.length === 10 || d.length === 11) d = `55${d}`;
+  if (!/^55[1-9][1-9]\d{8,9}$/.test(d)) return null;
+  if (d.length === 13 && d[4] !== "9") return null;
+  return d;
+}
+
+export function customerGreeting(customerName: string | null | undefined, technicianName: string | null | undefined): string {
+  const first = (customerName ?? "").trim().split(/\s+/)[0];
+  const tech = (technicianName ?? "").trim();
+  const hello = first ? `Olá, ${first}! Tudo bem?` : "Olá! Tudo bem?";
+  return `${hello} Sou ${tech || "técnico"}, da equipe da MaqnoLar Assistência Técnica. Estou entrando em contato para combinar os detalhes do atendimento.`;
+}
+
+export function customerWhatsappLink(phone: string | null | undefined, customerName: string | null | undefined, technicianName: string | null | undefined): string | null {
+  const n = customerWhatsappNumber(phone);
+  return n ? `https://wa.me/${n}?text=${encodeURIComponent(customerGreeting(customerName, technicianName))}` : null;
+}
