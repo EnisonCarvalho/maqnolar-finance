@@ -348,6 +348,7 @@ async function loadAll(supabase: any) {
       technicianShareCents: f.technician_share_cents,
       partsCents: f.kind === "servico" ? Math.max(f.total_cents - f.labor_cents, 0) : 0,
       cancelled: f.service_orders?.status === "cancelado",
+      finalized: f.service_orders?.status === "finalizado" || f.service_orders?.status === "visita_concluida",
       code: f.service_orders?.code ?? "",
       technicianId: f.service_orders?.technician_id ?? null,
       technicianName: f.service_orders?.technicians?.full_name ?? "Sem técnico",
@@ -386,7 +387,7 @@ export const getFinanceOverview = createServerFn({ method: "POST" })
           const active = all.raw.customerPayments.filter((p: any) => p.order_id === o.orderId && p.status === "ativo");
           const received = active.reduce((s: number, p: any) => s + p.amount_cents, 0);
           const payments = active.map((p: any) => ({ id: p.id as string, amountCents: p.amount_cents as number, paidAt: p.paid_at as string }));
-          return { orderId: o.orderId, code: o.code, customerName: o.customerName, technicianId: o.technicianId, technicianName: o.technicianName, technicianShareCents: o.technicianShareCents, kind: o.kind === "visita" ? "Visita" : "Serviço", date: o.competenceDate, totalCents: o.totalCents, partsCents: o.partsCents, companyShareCents: o.companyShareCents, receivedCents: received, payments, receiptStatus: received >= o.totalCents ? "Recebido" : received > 0 ? "Parcial" : "Pendente" };
+          return { orderId: o.orderId, code: o.code, customerName: o.customerName, technicianId: o.technicianId, technicianName: o.technicianName, technicianShareCents: o.technicianShareCents, kind: o.kind === "visita" ? "Visita" : "Serviço", date: o.competenceDate, totalCents: o.totalCents, partsCents: o.partsCents, companyShareCents: o.companyShareCents, receivedCents: received, payments, receiptStatus: o.finalized || received >= o.totalCents ? "Pago na finalização" : received > 0 ? "Parcial" : "Pendente" };
         })
         .sort((a, b) => b.date.localeCompare(a.date)),
     };

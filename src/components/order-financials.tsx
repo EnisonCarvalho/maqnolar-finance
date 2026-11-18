@@ -157,39 +157,6 @@ export function OrderFinancials({ orderId, technicianId = null, technicianName =
         )}
       </div>
 
-      <div className="grid gap-2 rounded-md border p-3">
-        <Label>Responsável previsto pelo recebimento do cliente</Label>
-        <Select
-          value={fin.receiver_type ?? ""}
-          onValueChange={(v) => receiverMutation.mutate({ receiverType: v })}
-        >
-          <SelectTrigger><SelectValue placeholder="Definir recebedor" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="maqnolar">MaqnoLar</SelectItem>
-            <SelectItem value="tecnico">Técnico responsável</SelectItem>
-            <SelectItem value="outro">Outro recebedor autorizado</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="grid gap-1 rounded-md bg-muted p-3 text-sm">
-        <p className="font-medium">Acerto previsto (antes dos recebimentos)</p>
-        {fin.receiver_type === "maqnolar" && (
-          <p>A MaqnoLar recebe e repassa ao técnico: <strong>{formatBRL(settlement.transferToTechnicianCents)}</strong>
-            {settlement.partsPaidByTechnicianCents > 0 && ` (${formatBRL(settlement.partsPaidByTechnicianCents)} de reembolso de peças + ${formatBRL(fin.technician_share_cents)} de participação)`}.
-            Parte econômica da MaqnoLar: <strong>{formatBRL(settlement.companyEconomicShareCents)}</strong>.</p>
-        )}
-        {fin.receiver_type === "tecnico" && (
-          <p>O técnico recebeu e deve repassar à MaqnoLar: <strong>{formatBRL(settlement.transferToCompanyCents)}</strong>
-            {settlement.partsPaidByCompanyCents > 0 && ` (${formatBRL(settlement.partsPaidByCompanyCents)} de peças + ${formatBRL(fin.company_share_cents)} de participação)`}.
-            Participação do técnico: <strong>{formatBRL(settlement.technicianEconomicShareCents)}</strong>.</p>
-        )}
-        {!fin.receiver_type && <p className="text-muted-foreground">Defina quem receberá o pagamento do cliente para calcular o acerto previsto.</p>}
-        {fin.receiver_type === "outro" && <p className="text-muted-foreground">Recebedor externo — acerto calculado na etapa de recebimentos.</p>}
-        <p className="text-xs text-muted-foreground">Estimativa. O acerto real usa os recebimentos registrados abaixo.</p>
-      </div>
-
-      <OrderPayments orderId={orderId} technicianId={technicianId} technicianName={technicianName} fin={fin} purchases={data.purchases} />
 
       <Button variant="outline" size="sm" className="w-fit" onClick={() => setAdjustOpen(true)}>
         Ajustar participações (com registro)
