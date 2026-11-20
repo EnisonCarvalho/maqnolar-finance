@@ -134,6 +134,14 @@ export function OrderDetailSheet({ orderId, onClose, isAdmin }: Props) {
                     {(order.technician_reported_parts as { description: string; cents: number }[]).map((p, i) => <li key={i}>Peça: {p.description} — {formatBRL(p.cents)}</li>)}
                   </ul>
                 )}
+                {order.status !== "visita_concluida" && (
+                  <p className="text-sm">
+                    Garantia informada:{" "}
+                    <span className={order.offered_warranty_days != null ? "font-medium" : "text-muted-foreground"}>
+                      {order.offered_warranty_days != null ? `${order.offered_warranty_days} ${order.offered_warranty_days === 1 ? "dia" : "dias"}` : "Prazo não informado"}
+                    </span>
+                  </p>
+                )}
                 {!isAdmin && <div className="pt-2"><TechnicianStepActions order={order} /></div>}
               </section>
               {order.visit_billable && (
@@ -179,7 +187,7 @@ export function OrderDetailSheet({ orderId, onClose, isAdmin }: Props) {
               <Separator />
 
               {isAdmin && order.status === "finalizado" && (
-                <WarrantyNoteActions order={{ id: order.id, code: order.code, status: order.status, financial_confirmed_at: order.financial_confirmed_at, reported_problem: order.reported_problem, completed_at: order.completed_at, kind: finData?.financial?.kind ?? null }} />
+                <WarrantyNoteActions order={{ id: order.id, code: order.code, status: order.status, financial_confirmed_at: order.financial_confirmed_at, reported_problem: order.reported_problem, completed_at: order.completed_at, kind: finData?.financial?.kind ?? null, offered_warranty_days: order.offered_warranty_days }} />
               )}
 
               {isAdmin && <OrderFinancials key={order.id} orderId={order.id} technicianId={order.technician_id} technicianName={order.technicians?.full_name ?? null} reportedCents={order.technician_reported_cents} reportedPartsCents={reportedParts.reduce((a, p) => a + (Number(p.cents) || 0), 0)} reportedParts={reportedParts} orderStatus={order.status} confirmedAt={order.financial_confirmed_at} />}

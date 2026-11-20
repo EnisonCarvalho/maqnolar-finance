@@ -13,6 +13,7 @@ import { formatBRL } from "@/lib/format";
 import { formatISODate } from "@/components/finance-shared";
 import { deliverFile } from "@/lib/report-export";
 import { PAYMENT_METHODS, buildWarrantyPdf, warrantyEnd, type WarrantyNote } from "@/lib/warranty-note";
+import { initialWarrantyNoteDays } from "@/lib/technician-service";
 
 export const warrantyNoteQuery = (orderId: string) => ({
   queryKey: ["warranty-note", orderId],
@@ -23,7 +24,7 @@ export const warrantyNoteQuery = (orderId: string) => ({
   },
 });
 
-export type EligibleOrder = { id: string; code: string; status: string; financial_confirmed_at: string | null; reported_problem: string | null; completed_at: string | null; kind: string | null };
+export type EligibleOrder = { id: string; code: string; status: string; financial_confirmed_at: string | null; reported_problem: string | null; completed_at: string | null; kind: string | null; offered_warranty_days?: number | null };
 /** Somente serviço finalizado pelo admin (nunca "somente visita"). */
 export const canIssueWarranty = (o: Pick<EligibleOrder, "status" | "financial_confirmed_at" | "kind">) =>
   o.status === "finalizado" && Boolean(o.financial_confirmed_at) && o.kind === "servico";
@@ -49,7 +50,7 @@ export function WarrantyNoteActions({ order, size = "sm" }: { order: EligibleOrd
   return (
     <>
       <Button size={size} onClick={() => setOpen(true)}><ShieldCheck className="mr-1 h-4 w-4" />Emitir nota de garantia</Button>
-      <IssueDialog order={order} open={open} onOpenChange={setOpen} />
+      <IssueDialog key={`${order.id}-${open}`} order={order} open={open} onOpenChange={setOpen} />
     </>
   );
 }
@@ -60,7 +61,7 @@ function IssueDialog({ order, open, onOpenChange }: { order: EligibleOrder; open
   const [desc, setDesc] = useState(order.reported_problem ?? "");
   const [method, setMethod] = useState("Pix");
   const [inst, setInst] = useState("1");
-  const [days, setDays] = useState("90");
+  const [days, setDays] = useState(() => initialWarrantyNoteDays(order.offered_warranty_days));
   const [start, setStart] = useState(order.completed_at ? order.completed_at.slice(0, 10) : today);
   const [obs, setObs] = useState("");
   const d = Number(days);

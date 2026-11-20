@@ -38,13 +38,22 @@ export const confirmServiceComposition = createServerFn({ method: "POST" })
   });
 export const completeServiceWithValues = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { orderId: string; totalReais: string; parts: { description: string; valueReais: string }[] }) => {
+  .inputValidator((input: { orderId: string; totalReais: string; parts: { description: string; valueReais: string }[]; warrantyDays?: string }) => {
     if (!Array.isArray(input.parts) || input.parts.length > 50) throw new Error("Lista de peças inválida.");
-    const preview = completionPreview(String(input.totalReais ?? ""), input.parts.map((p) => ({ description: String(p?.description ?? "").slice(0, 200), valueReais: String(p?.valueReais ?? "") })));
-    return { orderId: orderId(input.orderId), cents: preview.totalCents, parts: preview.parts };
+    const preview = completionPreview(
+      String(input.totalReais ?? ""),
+      input.parts.map((p) => ({ description: String(p?.description ?? "").slice(0, 200), valueReais: String(p?.valueReais ?? "") })),
+      input.warrantyDays,
+    );
+    return { orderId: orderId(input.orderId), cents: preview.totalCents, parts: preview.parts, warrantyDays: preview.warrantyDays };
   })
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.rpc("complete_service_with_values", { _order: data.orderId, _cents: data.cents, _parts: data.parts });
+    const { error } = await context.supabase.rpc("complete_service_with_values", {
+      _order: data.orderId,
+      _cents: data.cents,
+      _parts: data.parts,
+      ...(data.warrantyDays != null ? { _warranty_days: data.warrantyDays } : {}),
+    });
     if (error) throw new Error(error.message);
     return { ok: true };
   });

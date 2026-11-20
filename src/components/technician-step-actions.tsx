@@ -105,13 +105,14 @@ export function TechnicianStepActions({ order }: { order: StepOrder }) {
 function CompleteServiceDialog({ order, open, onOpenChange, onDone }: { order: Pick<OrderRow, "id" | "code">; open: boolean; onOpenChange: (o: boolean) => void; onDone: (r: { totalCents: number; parts: { description: string; cents: number }[] }) => Promise<unknown> }) {
   const [total, setTotal] = useState("");
   const [parts, setParts] = useState<{ description: string; valueReais: string }[]>([]);
+  const [warrantyDays, setWarrantyDays] = useState("");
   const complete = useServerFn(completeServiceWithValues);
   let preview: ReturnType<typeof completionPreview> | null = null;
   let previewError = "";
-  try { if (total.trim()) preview = completionPreview(total, parts.filter((p) => p.description.trim() || p.valueReais.trim())); } catch (e) { previewError = e instanceof Error ? e.message : "Valores inválidos."; }
+  try { if (total.trim()) preview = completionPreview(total, parts.filter((p) => p.description.trim() || p.valueReais.trim()), warrantyDays); } catch (e) { previewError = e instanceof Error ? e.message : "Valores inválidos."; }
   const mutation = useMutation({
-    mutationFn: () => complete({ data: { orderId: order.id, totalReais: total, parts } }),
-    onSuccess: async () => { const r = preview ? { totalCents: preview.totalCents, parts: preview.parts } : { totalCents: 0, parts: [] }; toast.success("Serviço concluído e valores enviados para conferência."); onOpenChange(false); setTotal(""); setParts([]); await onDone(r); },
+    mutationFn: () => complete({ data: { orderId: order.id, totalReais: total, parts, warrantyDays } }),
+    onSuccess: async () => { const r = preview ? { totalCents: preview.totalCents, parts: preview.parts } : { totalCents: 0, parts: [] }; toast.success("Serviço concluído e valores enviados para conferência."); onOpenChange(false); setTotal(""); setParts([]); setWarrantyDays(""); await onDone(r); },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Não foi possível concluir. O serviço continua iniciado."),
   });
   return (
@@ -136,6 +137,10 @@ function CompleteServiceDialog({ order, open, onOpenChange, onDone }: { order: P
               </div>
             ))}
             <Button type="button" variant="outline" className="w-fit" onClick={() => setParts([...parts, { description: "", valueReais: "" }])}><Plus className="mr-1 h-4 w-4" />Adicionar peça</Button>
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor={`complete-warranty-${order.id}`}>Garantia oferecida ao cliente (em dias)</Label>
+            <Input id={`complete-warranty-${order.id}`} inputMode="numeric" placeholder="90 dias" value={warrantyDays} onChange={(e) => setWarrantyDays(e.target.value)} />
           </div>
           <div className="rounded-md border p-3 text-sm">
             {preview ? (

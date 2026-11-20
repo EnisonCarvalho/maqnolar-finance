@@ -1563,6 +1563,7 @@ export type Database = {
           lead_id: string | null
           notes: string | null
           numero: string | null
+          offered_warranty_days: number | null
           opened_at: string
           origin: string | null
           ponto_referencia: string | null
@@ -1604,6 +1605,7 @@ export type Database = {
           lead_id?: string | null
           notes?: string | null
           numero?: string | null
+          offered_warranty_days?: number | null
           opened_at?: string
           origin?: string | null
           ponto_referencia?: string | null
@@ -1645,6 +1647,7 @@ export type Database = {
           lead_id?: string | null
           notes?: string | null
           numero?: string | null
+          offered_warranty_days?: number | null
           opened_at?: string
           origin?: string | null
           ponto_referencia?: string | null
@@ -2104,7 +2107,12 @@ export type Database = {
       assert_month_open: { Args: { _d: string }; Returns: undefined }
       bootstrap_first_admin: { Args: never; Returns: undefined }
       complete_service_with_values: {
-        Args: { _cents: number; _order: string; _parts: Json }
+        Args: {
+          _cents: number
+          _order: string
+          _parts: Json
+          _warranty_days?: number
+        }
         Returns: undefined
       }
       confirm_service_composition: {

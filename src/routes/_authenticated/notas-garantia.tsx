@@ -32,7 +32,7 @@ function Page() {
     enabled: Boolean(session?.isAdmin),
     queryFn: async (): Promise<Row[]> => {
       const { data, error } = await supabase.from("service_orders")
-        .select("id, code, status, financial_confirmed_at, reported_problem, completed_at, customers(full_name), order_financials(kind, total_cents), warranty_notes(number)")
+        .select("id, code, status, financial_confirmed_at, reported_problem, completed_at, offered_warranty_days, customers(full_name), order_financials(kind, total_cents), warranty_notes(number)")
         .eq("status", "finalizado").is("archived_at", null).order("completed_at", { ascending: false });
       if (error) throw error;
       return (data ?? []).map((o: any) => {

@@ -54,7 +54,23 @@ export function technicianStep(status: OrderStatus): TechnicianStep | null {
 }
 
 export type ReportedPart = { description: string; cents: number };
-export function completionPreview(totalReais: string, parts: { description: string; valueReais: string }[]) {
+
+export function parseWarrantyDays(value: string | null | undefined): number | null {
+  const trimmed = (value ?? "").trim();
+  if (!trimmed) return null;
+  if (!/^\d+$/.test(trimmed)) throw new Error("Informe um número inteiro positivo de dias para a garantia.");
+  const days = Number(trimmed);
+  if (!Number.isSafeInteger(days) || days < 1 || days > 2147483647) {
+    throw new Error("Informe um número inteiro positivo de dias para a garantia.");
+  }
+  return days;
+}
+
+export function initialWarrantyNoteDays(offeredWarrantyDays: number | null | undefined): string {
+  return offeredWarrantyDays != null && offeredWarrantyDays > 0 ? String(offeredWarrantyDays) : "90";
+}
+
+export function completionPreview(totalReais: string, parts: { description: string; valueReais: string }[], warrantyDays?: string) {
   const totalCents = reportedReaisToCents(totalReais);
   const normalized: ReportedPart[] = parts.map((p) => {
     const description = p.description.trim();
@@ -63,5 +79,5 @@ export function completionPreview(totalReais: string, parts: { description: stri
   });
   const partsCents = normalized.reduce((a, p) => a + p.cents, 0);
   if (partsCents > totalCents) throw new Error("A soma das peças não pode ultrapassar o total cobrado.");
-  return { totalCents, partsCents, parts: normalized };
+  return { totalCents, partsCents, parts: normalized, warrantyDays: parseWarrantyDays(warrantyDays) };
 }
