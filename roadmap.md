@@ -1,5 +1,10 @@
 # Roadmap
 
+## Correção de OS confirmada e versões de notas — 22/11/2026
+- [x] Reutilizar Editar para correção administrativa atômica, sem mudar status, com confirmação, motivo e histórico; declaração original do técnico preservada.
+- [x] Recalcular a apuração existente pela regra da OS e preservar versões anteriores da nota com o mesmo número; Ver/Baixar compartilham a versão atual nas duas telas.
+- [x] 152 testes passaram; regressão SQL fictícia desfeita validou 500/200, correção 600/200, ausência de duplicidade/pagamentos, versões e leitura/bloqueio do técnico. Contagens finais: 32 OS, 31 clientes e 6 notas, nenhum registro fictício restante. Interface autenticada simulada em 360/390/430/768/1440px: editar, confirmar, reabrir, baixar PDF atual no detalhe e na Gestão e consultar versões; PDF nítido com logo/rubrica e único valor; build OK. Gravação pela interface foi simulada; persistência foi validada separadamente na transação desfeita.
+
 ## Financeiro em planilha e reset único — 18/11/2026
 - [x] Simplificar Receitas por OS, Despesas sem escolha de conta e Caixa efetivo da participação MaqnoLar.
 - [x] Retirar Acerto e Contas do painel, preservar área técnica e rotinas anteriores; lista compartilhada já exclui OS arquivadas.

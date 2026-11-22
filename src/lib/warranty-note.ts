@@ -11,7 +11,14 @@ export type WarrantyNote = {
   equipment: string | null; service_description: string; part_names: string[]; technician_name: string | null;
   service_date: string; total_cents: number; payment_method: string; installments: number | null;
   warranty_days: number; warranty_start: string; warranty_end: string; observations: string | null; issued_at: string;
+  current_snapshot?: WarrantyNote | null;
+  revision_history?: WarrantyNote[];
 };
+
+/** Original imutável; a versão atual é um snapshot, nunca outra nota numerada. */
+export function currentWarrantyNote(note: WarrantyNote): WarrantyNote {
+  return note.current_snapshot ? { ...note.current_snapshot, revision_history: note.revision_history ?? [] } : note;
+}
 
 export const PAYMENT_METHODS = ["Pix", "Dinheiro", "Cartão de débito", "Cartão de crédito", "Transferência bancária", "Boleto"];
 

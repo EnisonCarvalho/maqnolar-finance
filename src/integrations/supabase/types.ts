@@ -1549,6 +1549,7 @@ export type Database = {
           code: string
           complemento: string | null
           completed_at: string | null
+          corrected_parts: Json | null
           created_at: string
           created_by: string | null
           creative_code: string | null
@@ -1569,6 +1570,7 @@ export type Database = {
           ponto_referencia: string | null
           reported_problem: string
           scheduled_start: string | null
+          service_description: string | null
           status: Database["public"]["Enums"]["order_status"]
           technician_id: string | null
           technician_reported_at: string | null
@@ -1591,6 +1593,7 @@ export type Database = {
           code?: string
           complemento?: string | null
           completed_at?: string | null
+          corrected_parts?: Json | null
           created_at?: string
           created_by?: string | null
           creative_code?: string | null
@@ -1611,6 +1614,7 @@ export type Database = {
           ponto_referencia?: string | null
           reported_problem?: string
           scheduled_start?: string | null
+          service_description?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           technician_id?: string | null
           technician_reported_at?: string | null
@@ -1633,6 +1637,7 @@ export type Database = {
           code?: string
           complemento?: string | null
           completed_at?: string | null
+          corrected_parts?: Json | null
           created_at?: string
           created_by?: string | null
           creative_code?: string | null
@@ -1653,6 +1658,7 @@ export type Database = {
           ponto_referencia?: string | null
           reported_problem?: string
           scheduled_start?: string | null
+          service_description?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           technician_id?: string | null
           technician_reported_at?: string | null
@@ -2006,6 +2012,7 @@ export type Database = {
       }
       warranty_notes: {
         Row: {
+          current_snapshot: Json | null
           customer_address: string | null
           customer_cpf: string | null
           customer_name: string
@@ -2024,6 +2031,7 @@ export type Database = {
           order_id: string
           part_names: string[]
           payment_method: string
+          revision_history: Json
           service_date: string
           service_description: string
           technician_name: string | null
@@ -2033,6 +2041,7 @@ export type Database = {
           warranty_start: string
         }
         Insert: {
+          current_snapshot?: Json | null
           customer_address?: string | null
           customer_cpf?: string | null
           customer_name: string
@@ -2051,6 +2060,7 @@ export type Database = {
           order_id: string
           part_names?: string[]
           payment_method: string
+          revision_history?: Json
           service_date: string
           service_description: string
           technician_name?: string | null
@@ -2060,6 +2070,7 @@ export type Database = {
           warranty_start: string
         }
         Update: {
+          current_snapshot?: Json | null
           customer_address?: string | null
           customer_cpf?: string | null
           customer_name?: string
@@ -2078,6 +2089,7 @@ export type Database = {
           order_id?: string
           part_names?: string[]
           payment_method?: string
+          revision_history?: Json
           service_date?: string
           service_description?: string
           technician_name?: string | null
@@ -2128,6 +2140,18 @@ export type Database = {
         Args: { _order: string; _reason: string }
         Returns: undefined
       }
+      correct_confirmed_order: {
+        Args: {
+          _data: Json
+          _expected_updated_at: string
+          _order: string
+          _parts: Json
+          _reason: string
+          _total: number
+          _warranty_days: number
+        }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2156,6 +2180,18 @@ export type Database = {
         Returns: undefined
       }
       reset_operation: { Args: { _reason: string }; Returns: Json }
+      save_confirmed_order_correction: {
+        Args: {
+          _data: Json
+          _expected_updated_at: string
+          _order: string
+          _parts: Json
+          _reason: string
+          _total: number
+          _warranty_days?: number
+        }
+        Returns: undefined
+      }
       set_user_active: {
         Args: { _active: boolean; _target: string }
         Returns: undefined

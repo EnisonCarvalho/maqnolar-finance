@@ -24,6 +24,9 @@ export type OrderRow = {
   status: OrderStatus;
   visit_billable: boolean;
   created_at: string;
+  updated_at: string;
+  service_description: string | null;
+  corrected_parts: unknown;
   executed_at: string | null;
   completed_at: string | null;
   technician_reported_cents: number | null;
@@ -39,7 +42,7 @@ export type OrderRow = {
 };
 
 const ORDER_SELECT =
-  "id, code, customer_id, equipment_type_id, reported_problem, technician_id, opened_at, scheduled_start, estimated_minutes, endereco, numero, complemento, bairro, cidade, estado, cep, ponto_referencia, notes, status, visit_billable, created_at, executed_at, completed_at, technician_reported_cents, technician_reported_at, technician_reported_by, technician_reported_name, technician_reported_parts, offered_warranty_days, financial_confirmed_at, customers(full_name, phone), technicians(full_name), equipment_types(name)";
+  "id, code, customer_id, equipment_type_id, reported_problem, technician_id, opened_at, scheduled_start, estimated_minutes, endereco, numero, complemento, bairro, cidade, estado, cep, ponto_referencia, notes, status, visit_billable, created_at, updated_at, service_description, corrected_parts, executed_at, completed_at, technician_reported_cents, technician_reported_at, technician_reported_by, technician_reported_name, technician_reported_parts, offered_warranty_days, financial_confirmed_at, customers(full_name, phone), technicians(full_name), equipment_types(name)";
 
 export const ordersQuery = queryOptions({
   queryKey: ["service-orders"],

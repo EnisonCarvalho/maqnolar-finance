@@ -3,7 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { calcQuoteTotals, type QuotePartInput } from "@/lib/quote-math";
 import { splitLabor, type SplitRuleSnapshot } from "@/lib/settlement-math";
 import { ORDER_STATUSES, type OrderStatus } from "@/lib/order-status";
-import { technicianStep } from "@/lib/technician-service";
+import { completionPreview, technicianStep } from "@/lib/technician-service";
 import type { Database } from "@/integrations/supabase/types";
 
 type OrderUpdate = Database["public"]["Tables"]["service_orders"]["Update"];
@@ -186,10 +186,13 @@ export const updateOrder = createServerFn({ method: "POST" })
     if (data.technicianId) await assertActiveTechnician(context.supabase, data.technicianId);
     const { data: current } = await context.supabase
       .from("service_orders")
-      .select("status")
+      .select("status, financial_confirmed_at")
       .eq("id", data.orderId)
       .single();
     if (!current) throw new Error("Atendimento não encontrado.");
+    if (current.financial_confirmed_at && ["finalizado", "visita_concluida"].includes(current.status)) {
+      throw new Error("Use Editar com confirmação e motivo para corrigir esta OS finalizada.");
+    }
     const { error } = await context.supabase
       .from("service_orders")
       .update({
@@ -203,6 +206,40 @@ export const updateOrder = createServerFn({ method: "POST" })
         ...data.address,
       })
       .eq("id", data.orderId);
+    throwIfError(error);
+    return { ok: true as const };
+  });
+
+export const correctConfirmedOrder = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: OrderInput & { orderId: string; expectedUpdatedAt: string; customerName: string; customerPhone: string; serviceDescription: string; totalReais: string; parts: { description: string; valueReais: string }[]; warrantyDays: string; reason: string }) => {
+    if (!isUuid(input.orderId) || !isUuid(input.customerId)) throw new Error("Atendimento ou cliente inválido.");
+    const customerName = clean(input.customerName, 150);
+    const serviceDescription = clean(input.serviceDescription, 2000);
+    const reason = clean(input.reason, 1000);
+    if (!customerName || !serviceDescription || reason.length < 3) throw new Error("Informe cliente, descrição do serviço e motivo da correção.");
+    if (Number.isNaN(new Date(input.expectedUpdatedAt).getTime())) throw new Error("Reabra a OS antes de editar.");
+    const values = completionPreview(input.totalReais, input.parts, input.warrantyDays);
+    return {
+      orderId: input.orderId, expectedUpdatedAt: input.expectedUpdatedAt, reason, values,
+      details: {
+        customerId: input.customerId, customerName, customerPhone: clean(input.customerPhone, 30),
+        equipmentTypeId: isUuid(input.equipmentTypeId) ? input.equipmentTypeId : null,
+        reportedProblem: clean(input.reportedProblem, 1000), serviceDescription, notes: clean(input.notes, 2000),
+        endereco: clean(input.endereco, 200), numero: clean(input.numero, 20), complemento: clean(input.complemento, 100),
+        bairro: clean(input.bairro, 100), cidade: clean(input.cidade, 100), estado: clean(input.estado, 2),
+        cep: clean(input.cep, 9), ponto_referencia: clean(input.ponto_referencia, 200),
+      },
+    };
+  })
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { error } = await context.supabase.rpc("save_confirmed_order_correction", {
+      _order: data.orderId, _data: data.details, _total: data.values.totalCents,
+      _parts: data.values.parts,
+      ...(data.values.warrantyDays == null ? {} : { _warranty_days: data.values.warrantyDays }),
+      _reason: data.reason, _expected_updated_at: data.expectedUpdatedAt,
+    });
     throwIfError(error);
     return { ok: true as const };
   });

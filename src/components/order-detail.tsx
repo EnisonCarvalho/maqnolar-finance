@@ -43,7 +43,7 @@ export function OrderDetailSheet({ orderId, onClose, isAdmin }: Props) {
   const [rejectQuote, setRejectQuote] = useState<QuoteRow | null>(null);
   const [billVisit, setBillVisit] = useState(true);
   const [serviceConfirmOpen, setServiceConfirmOpen] = useState(false);
-  const { data: finData } = useQuery({ ...orderFinancialsQuery(orderId ?? ""), enabled: Boolean(orderId && isAdmin) });
+  const { data: finData } = useQuery({ ...orderFinancialsQuery(orderId ?? ""), enabled: Boolean(orderId) });
 
   const refresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ["service-orders"] });
@@ -124,6 +124,15 @@ export function OrderDetailSheet({ orderId, onClose, isAdmin }: Props) {
               {order.notes && (
                 <div><p className="text-muted-foreground">Observações</p><p>{order.notes}</p></div>
               )}
+              {order.service_description && <div><p className="text-muted-foreground">Descrição do serviço</p><p>{order.service_description}</p></div>}
+              {finData?.financial && <section className="grid gap-1 border-t pt-3">
+                <h3 className="font-display font-semibold">Valores confirmados — {finData.financial.kind === "visita" ? "Somente visita" : "Serviço"}</h3>
+                <p>Total cobrado: <strong>{formatBRL(finData.financial.total_cents)}</strong></p>
+                <p>Peças: {formatBRL(finData.financial.parts_estimated_cents)}</p>
+                <p>Participação do técnico: {formatBRL(finData.financial.technician_share_cents)}</p>
+                {isAdmin && <p>Participação MAQNOLAR: {formatBRL(finData.financial.company_share_cents)}</p>}
+                {Array.isArray(order.corrected_parts) && order.corrected_parts.map((p: { description: string; cents: number }, i: number) => <p key={i} className="text-xs">{p.description} — {formatBRL(p.cents)}</p>)}
+              </section>}
               <section className="grid gap-1 border-t pt-3">
                 <h3 className="font-display font-semibold">Valor informado pelo técnico</h3>
                 <p className="font-semibold">{order.technician_reported_cents == null ? "Não informado" : formatBRL(order.technician_reported_cents)}</p>
@@ -187,7 +196,7 @@ export function OrderDetailSheet({ orderId, onClose, isAdmin }: Props) {
               <Separator />
 
               {isAdmin && order.status === "finalizado" && (
-                <WarrantyNoteActions order={{ id: order.id, code: order.code, status: order.status, financial_confirmed_at: order.financial_confirmed_at, reported_problem: order.reported_problem, completed_at: order.completed_at, kind: finData?.financial?.kind ?? null, offered_warranty_days: order.offered_warranty_days }} />
+                <WarrantyNoteActions order={{ id: order.id, code: order.code, status: order.status, financial_confirmed_at: order.financial_confirmed_at, reported_problem: order.reported_problem, service_description: order.service_description, completed_at: order.completed_at, kind: finData?.financial?.kind ?? null, offered_warranty_days: order.offered_warranty_days }} />
               )}
 
               {isAdmin && <OrderFinancials key={order.id} orderId={order.id} technicianId={order.technician_id} technicianName={order.technicians?.full_name ?? null} reportedCents={order.technician_reported_cents} reportedPartsCents={reportedParts.reduce((a, p) => a + (Number(p.cents) || 0), 0)} reportedParts={reportedParts} orderStatus={order.status} confirmedAt={order.financial_confirmed_at} />}

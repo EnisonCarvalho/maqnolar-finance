@@ -1,0 +1,4 @@
+CREATE OR REPLACE FUNCTION public.save_confirmed_order_correction(_order uuid,_data jsonb,_total integer,_parts jsonb,_reason text,_expected_updated_at timestamptz,_warranty_days integer DEFAULT NULL)
+RETURNS void LANGUAGE sql SECURITY INVOKER SET search_path=public AS $$ SELECT public.correct_confirmed_order(_order,_data,_total,_parts,_warranty_days,_reason,_expected_updated_at); $$;
+REVOKE ALL ON FUNCTION public.save_confirmed_order_correction(uuid,jsonb,integer,jsonb,text,timestamptz,integer) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.save_confirmed_order_correction(uuid,jsonb,integer,jsonb,text,timestamptz,integer) TO authenticated;
