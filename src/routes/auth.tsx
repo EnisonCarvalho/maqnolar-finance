@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/password-input";
 import { Label } from "@/components/ui/label";
 import { Wrench } from "lucide-react";
+import { normalizeEmail } from "@/lib/user-email";
+import { classifyResetRequestError } from "@/lib/password-recovery";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -31,18 +33,19 @@ function AuthPage() {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    const cleanEmail = normalizeEmail(email);
     setLoading(true);
     if (mode === "reset") {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
       setLoading(false);
-      if (error) { toast.error("Não foi possível enviar o e-mail."); return; }
+      if (error) { toast.error(classifyResetRequestError(error)); return; }
       toast.success("Enviamos um link para redefinir sua senha.");
       setMode("login");
       return;
     }
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
     setLoading(false);
     if (error) { toast.error("E-mail ou senha inválidos."); return; }
     navigate({ to: "/dashboard", replace: true });
