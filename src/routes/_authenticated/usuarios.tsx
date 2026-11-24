@@ -3,10 +3,11 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
-import { UserPlus } from "lucide-react";
+import { Mail, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
-import { inviteUser } from "@/lib/users.functions";
+import { inviteUser, updateTechnicianEmail } from "@/lib/users.functions";
+import { isValidEmail, normalizeEmail } from "@/lib/user-email";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -38,6 +39,7 @@ const actionLabel: Record<string, string> = {
   role_removed: "Perfil removido",
   user_activated: "Usuário ativado",
   user_deactivated: "Usuário desativado",
+  email_updated: "E-mail alterado",
   bootstrap_first_admin: "Administrador inicial configurado",
 };
 
@@ -101,13 +103,43 @@ function UsersPage() {
       </div>
 
       <Card>
-        <CardContent className="overflow-x-auto p-0">
+        <CardContent className="p-0">
+          <div className="divide-y md:hidden">
+            {data?.users.map((u) => (
+              <div key={u.id} className="space-y-3 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="font-medium">
+                      {u.full_name}
+                      {u.id === session.userId && <Badge variant="secondary" className="ml-2">você</Badge>}
+                    </div>
+                    <p className="break-all text-sm text-muted-foreground">{u.email}</p>
+                  </div>
+                  <Switch checked={u.active} onCheckedChange={(v) => changeActive(u.id, v)} aria-label={`Ativo ${u.full_name}`} />
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Select value={u.role ?? ""} onValueChange={(v) => changeRole(u.id, v as Role)}>
+                    <SelectTrigger className="w-40"><SelectValue placeholder="Sem perfil" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="admin">Administrador</SelectItem>
+                      <SelectItem value="tecnico">Técnico</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {u.role === "tecnico" && (
+                    <EditEmailDialog user={u} onDone={() => qc.invalidateQueries()} />
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="hidden overflow-x-auto md:block">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Nome</TableHead>
                 <TableHead>E-mail</TableHead>
                 <TableHead>Perfil</TableHead>
+                <TableHead>Ações</TableHead>
                 <TableHead className="text-right">Ativo</TableHead>
               </TableRow>
             </TableHeader>
@@ -128,6 +160,11 @@ function UsersPage() {
                       </SelectContent>
                     </Select>
                   </TableCell>
+                  <TableCell>
+                    {u.role === "tecnico" && (
+                      <EditEmailDialog user={u} onDone={() => qc.invalidateQueries()} />
+                    )}
+                  </TableCell>
                   <TableCell className="text-right">
                     <Switch checked={u.active} onCheckedChange={(v) => changeActive(u.id, v)} />
                   </TableCell>
@@ -135,6 +172,7 @@ function UsersPage() {
               ))}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
 
@@ -151,6 +189,7 @@ function UsersPage() {
                 <strong>{actionLabel[a.action] ?? a.action}</strong>
                 {a.new_value && roleLabel[a.new_value] ? ` (${roleLabel[a.new_value]})` : ""}
                 {a.old_value && roleLabel[a.old_value] ? ` (${roleLabel[a.old_value]})` : ""} — {a.target}
+                {a.action === "email_updated" && a.old_value && a.new_value ? ` (${a.old_value} → ${a.new_value})` : ""}
               </span>
               <span className="text-muted-foreground">
                 por {a.actor} · {new Date(a.created_at).toLocaleString("pt-BR")}
@@ -160,6 +199,80 @@ function UsersPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function EditEmailDialog({
+  user,
+  onDone,
+}: {
+  user: { id: string; full_name: string; email: string | null };
+  onDone: () => void;
+}) {
+  const saveEmail = useServerFn(updateTechnicianEmail);
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [email, setEmail] = useState(user.email ?? "");
+
+  function handleOpenChange(next: boolean) {
+    if (next) setEmail(user.email ?? "");
+    setOpen(next);
+  }
+
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    const normalized = normalizeEmail(email);
+    if (!isValidEmail(normalized)) {
+      toast.error("Informe um e-mail válido.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await saveEmail({ data: { userId: user.id, email: normalized } });
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
+      toast.success("E-mail atualizado. O técnico já pode entrar com o novo endereço.");
+      setOpen(false);
+      onDone();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao atualizar e-mail.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm">
+          <Mail className="mr-1.5 h-3.5 w-3.5" />Editar e-mail
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Editar e-mail — {user.full_name}</DialogTitle></DialogHeader>
+        <form onSubmit={submit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor={`email-${user.id}`}>Novo e-mail de login</Label>
+            <Input
+              id={`email-${user.id}`}
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="tecnico@exemplo.com"
+            />
+            <p className="text-xs text-muted-foreground">
+              Atualiza o e-mail de acesso e o cadastro vinculado, preservando senha, permissões e histórico.
+            </p>
+          </div>
+          <Button type="submit" className="w-full" disabled={busy}>
+            {busy ? "Salvando..." : "Salvar e-mail"}
+          </Button>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
